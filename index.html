@@ -9,16 +9,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // Companion to public/404.html: restores the original deep-link path
-      // (encoded as ?redirect=) before the router mounts.
-      (function () {
-        var redirect = new URLSearchParams(window.location.search).get('redirect')
-        if (redirect) {
-          window.history.replaceState(null, '', redirect)
-        }
-      })()
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
