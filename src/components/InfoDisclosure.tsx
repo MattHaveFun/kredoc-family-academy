@@ -43,10 +43,10 @@ function InfoDisclosure({ what, why, academyAnchor }: InfoDisclosureProps) {
             <p className="mt-1.5 leading-relaxed text-slate-300">{why}</p>
           </div>
           <Link
-            to={`/academy#${academyAnchor}`}
+            to={`/academy/lesson/${academyAnchor}`}
             className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-up transition-colors hover:text-emerald-300"
           >
-            Learn more in the Academy
+            Go to Academy lesson
             <span aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5">
               →
             </span>

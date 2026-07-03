@@ -43,11 +43,13 @@ function About() {
         </p>
 
         <p className="text-sm leading-relaxed text-slate-300 sm:text-base">
-          Version 1 is a foundation: a live-feeling dashboard, a growing Academy of explainers, and
-          a commitment to keep the two connected — every chart links to a lesson, and every lesson
-          ties back to a real number you can watch move. What comes next builds on top of that:
-          deeper lessons, more markets, and eventually a full knowledge graph connecting every
-          concept to everything it touches.
+          And here's the part that matters: finance is only Chapter 1. Markets are the gateway
+          drug, not the destination. The real curriculum is judgment — understanding incentives,
+          spotting bad arguments, sizing risks, thinking in decades. The Academy grows one chapter
+          at a time, and the family votes on what gets built next. Every chart links to a lesson,
+          every lesson connects to a knowledge map, and every number on the site is labeled honestly
+          — live, cached, or unavailable — because a site about clear thinking shouldn't fake
+          anything, ever.
         </p>
 
         <div className="flex items-center gap-4 pt-4">

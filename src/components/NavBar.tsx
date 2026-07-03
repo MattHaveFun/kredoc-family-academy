@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useFeedStatus } from '../context/FeedStatusContext'
+import { describeStatus, type DataStatus } from '../data/twelveDataService'
+import ProfileChip from './ProfileChip'
 
 const LINKS = [
   { to: '/', label: 'Dashboard', end: true },
+  { to: '/academy', label: 'Academy', end: false },
+  { to: '/about', label: 'About', end: false },
+]
+
+const MOBILE_LINKS = [
+  { to: '/brief', label: 'Daily Brief', end: false },
+  { to: '/', label: 'Full Dashboard', end: true },
   { to: '/academy', label: 'Academy', end: false },
   { to: '/about', label: 'About', end: false },
 ]
@@ -23,16 +32,18 @@ function SessionClock() {
   )
 }
 
-const STATUS_COPY: Record<string, { label: string; dot: string; text: string; pulse: boolean }> = {
-  live: { label: 'LIVE FEED', dot: 'bg-up', text: 'text-up', pulse: true },
-  sim: { label: 'SIM FEED', dot: 'bg-amber-400', text: 'text-amber-400', pulse: false },
-  connecting: { label: 'CONNECTING', dot: 'bg-slate-500', text: 'text-slate-500', pulse: false },
+const STATUS_STYLE: Record<DataStatus, { dot: string; text: string; pulse: boolean }> = {
+  live: { dot: 'bg-up', text: 'text-up', pulse: true },
+  cached: { dot: 'bg-sky-400', text: 'text-sky-300', pulse: false },
+  loading: { dot: 'bg-slate-500', text: 'text-slate-500', pulse: false },
+  unavailable: { dot: 'bg-amber-400', text: 'text-amber-400', pulse: false },
 }
 
 function NavBar() {
   const [open, setOpen] = useState(false)
-  const { status } = useFeedStatus()
-  const statusCopy = STATUS_COPY[status]
+  const { status, fetchedAt } = useFeedStatus()
+  const style = STATUS_STYLE[status]
+  const label = status === 'live' ? 'LIVE DATA' : describeStatus(status, fetchedAt)
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `relative rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
@@ -66,48 +77,52 @@ function NavBar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2.5 rounded-full border border-slate-400/10 bg-ink-850/80 py-1.5 pl-3 pr-4 font-mono text-[11px] font-medium tracking-wider text-slate-400 md:flex">
-          <span className="relative flex h-1.5 w-1.5">
-            {statusCopy.pulse && (
-              <span
-                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${statusCopy.dot}`}
-              />
-            )}
-            <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${statusCopy.dot}`} />
-          </span>
-          <span className={statusCopy.text}>{statusCopy.label}</span>
-          <span className="text-slate-600">|</span>
-          <SessionClock />
-        </div>
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2.5 rounded-full border border-slate-400/10 bg-ink-850/80 py-1.5 pl-3 pr-4 font-mono text-[11px] font-medium tracking-wider text-slate-400 lg:flex">
+            <span className="relative flex h-1.5 w-1.5">
+              {style.pulse && (
+                <span
+                  className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${style.dot}`}
+                />
+              )}
+              <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${style.dot}`} />
+            </span>
+            <span className={style.text}>{label}</span>
+            <span className="text-slate-600">|</span>
+            <SessionClock />
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="rounded-md border border-slate-400/15 bg-ink-850/60 p-2.5 text-slate-300 transition-colors hover:border-slate-400/30 sm:hidden"
-          aria-label="Toggle navigation"
-          aria-expanded={open}
-        >
-          <span
-            className={`block h-0.5 w-5 bg-current transition-transform duration-200 ${
-              open ? 'translate-y-[6px] rotate-45' : ''
-            }`}
-          />
-          <span
-            className={`mt-1 block h-0.5 w-5 bg-current transition-opacity duration-200 ${
-              open ? 'opacity-0' : ''
-            }`}
-          />
-          <span
-            className={`mt-1 block h-0.5 w-5 bg-current transition-transform duration-200 ${
-              open ? '-translate-y-[6px] -rotate-45' : ''
-            }`}
-          />
-        </button>
+          <ProfileChip />
+
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="rounded-md border border-slate-400/15 bg-ink-850/60 p-2.5 text-slate-300 transition-colors hover:border-slate-400/30 sm:hidden"
+            aria-label="Toggle navigation"
+            aria-expanded={open}
+          >
+            <span
+              className={`block h-0.5 w-5 bg-current transition-transform duration-200 ${
+                open ? 'translate-y-[6px] rotate-45' : ''
+              }`}
+            />
+            <span
+              className={`mt-1 block h-0.5 w-5 bg-current transition-opacity duration-200 ${
+                open ? 'opacity-0' : ''
+              }`}
+            />
+            <span
+              className={`mt-1 block h-0.5 w-5 bg-current transition-transform duration-200 ${
+                open ? '-translate-y-[6px] -rotate-45' : ''
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {open && (
         <nav className="animate-fade-in flex flex-col gap-1 border-t border-slate-400/10 bg-ink-950/95 px-4 py-3 backdrop-blur-xl sm:hidden">
-          {LINKS.map((link) => (
+          {MOBILE_LINKS.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

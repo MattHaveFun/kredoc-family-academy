@@ -48,6 +48,10 @@ export default {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.25' },
         },
+        'node-float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         ticker: 'ticker 55s linear infinite',
@@ -55,6 +59,7 @@ export default {
         'fade-in': 'fade-in 0.6s ease both',
         draw: 'draw 1.2s cubic-bezier(0.65, 0, 0.35, 1) both',
         blink: 'blink 1.6s ease-in-out infinite',
+        'node-float': 'node-float 4s ease-in-out infinite',
       },
     },
   },

@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Candle } from '../data/markets'
+import { CHART_CONCEPTS } from '../data/concepts'
 
 interface ChartCanvasProps {
   candles: Candle[]
   type: 'line' | 'candlestick'
   positiveColor?: string
   negativeColor?: string
+  /** When provided, candle anatomy becomes clickable teaching material. */
+  onConceptSelect?: (conceptId: string) => void
 }
+
+type CandlePart = 'upper-wick' | 'candle-body' | 'lower-wick'
 
 const WIDTH = 1000
 const HEIGHT = 360
@@ -18,8 +23,11 @@ function ChartCanvas({
   type,
   positiveColor = '#2dd4a7',
   negativeColor = '#ff6b7f',
+  onConceptSelect,
 }: ChartCanvasProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const [hoverPart, setHoverPart] = useState<CandlePart | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
 
   const { min, max } = useMemo(() => {
     let lo = Infinity
@@ -44,6 +52,8 @@ function ChartCanvas({
     return candles
       .map((c, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(2)} ${yFor(c.close).toFixed(2)}`)
       .join(' ')
+    // xFor/yFor are derived entirely from candles + min/max
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, min, max])
 
   const areaPath = useMemo(() => {
@@ -54,6 +64,8 @@ function ChartCanvas({
     const bottomRight = `L ${xFor(candles.length - 1).toFixed(2)} ${HEIGHT - PADDING.bottom}`
     const bottomLeft = `L ${xFor(0).toFixed(2)} ${HEIGHT - PADDING.bottom} Z`
     return `${top} ${bottomRight} ${bottomLeft}`
+    // xFor/yFor are derived entirely from candles + min/max
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, min, max])
 
   const first = candles[0]
@@ -89,13 +101,33 @@ function ChartCanvas({
 
   const hoveredChangePct = hovered ? ((hovered.close - hovered.open) / hovered.open) * 100 : 0
 
+  const teachable = type === 'candlestick' && onConceptSelect !== undefined
+
+  // Which part of the hovered candle the pointer is over, in viewBox coords.
+  const partForPointer = (clientY: number, candle: Candle): CandlePart => {
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect || rect.height === 0) return 'candle-body'
+    const yView = ((clientY - rect.top) / rect.height) * HEIGHT
+    const bodyTop = Math.min(yFor(candle.open), yFor(candle.close))
+    const bodyBottom = Math.max(yFor(candle.open), yFor(candle.close))
+    if (yView < bodyTop - 1) return 'upper-wick'
+    if (yView > bodyBottom + 1) return 'lower-wick'
+    return 'candle-body'
+  }
+
+  const teachTip = teachable && hoverPart ? CHART_CONCEPTS[hoverPart]?.hover : null
+
   return (
     <div className="relative w-full">
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-[280px] w-full sm:h-[360px]"
         preserveAspectRatio="none"
-        onMouseLeave={() => setHoverIndex(null)}
+        onMouseLeave={() => {
+          setHoverIndex(null)
+          setHoverPart(null)
+        }}
       >
         <defs>
           <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
@@ -154,15 +186,16 @@ function ChartCanvas({
               const up = c.close >= c.open
               const color = up ? positiveColor : negativeColor
               const x = xFor(i)
+              const isHovered = hoverIndex === i
               return (
-                <g key={c.time}>
+                <g key={c.time} opacity={teachable && hoverIndex !== null && !isHovered ? 0.75 : 1}>
                   <line
                     x1={x}
                     x2={x}
                     y1={yFor(c.high)}
                     y2={yFor(c.low)}
                     stroke={color}
-                    strokeWidth={1.2}
+                    strokeWidth={isHovered && (hoverPart === 'upper-wick' || hoverPart === 'lower-wick') ? 2.4 : 1.2}
                     strokeOpacity={0.85}
                   />
                   <rect
@@ -171,6 +204,8 @@ function ChartCanvas({
                     width={candleWidth}
                     height={Math.max(Math.abs(yFor(c.open) - yFor(c.close)), 1)}
                     fill={color}
+                    stroke={isHovered && hoverPart === 'candle-body' ? '#f8fafc' : 'none'}
+                    strokeWidth={isHovered && hoverPart === 'candle-body' ? 1 : 0}
                   />
                 </g>
               )
@@ -192,7 +227,7 @@ function ChartCanvas({
           />
         )}
 
-        {/* hover targets */}
+        {/* hover + teach targets */}
         {candles.map((c, i) => (
           <rect
             key={`hover-${c.time}`}
@@ -201,7 +236,14 @@ function ChartCanvas({
             width={plotWidth / candles.length}
             height={HEIGHT}
             fill="transparent"
+            style={teachable ? { cursor: 'pointer' } : undefined}
             onMouseEnter={() => setHoverIndex(i)}
+            onMouseMove={teachable ? (e) => setHoverPart(partForPointer(e.clientY, c)) : undefined}
+            onClick={
+              teachable
+                ? (e) => onConceptSelect(partForPointer(e.clientY, c))
+                : undefined
+            }
           />
         ))}
 
@@ -262,7 +304,7 @@ function ChartCanvas({
       )}
 
       {/* crosshair dot (HTML so it stays round) */}
-      {hoverIndex !== null && hovered && (
+      {hoverIndex !== null && hovered && type === 'line' && (
         <span
           className="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink-950"
           style={{
@@ -273,10 +315,10 @@ function ChartCanvas({
         />
       )}
 
-      {/* OHLC readout */}
+      {/* OHLC readout + teach tooltip */}
       {hovered && (
         <div
-          className={`pointer-events-none absolute top-2 z-10 rounded-lg border border-slate-400/15 bg-ink-950/95 px-3 py-2 font-mono text-[11px] shadow-xl backdrop-blur ${
+          className={`pointer-events-none absolute top-2 z-10 max-w-[260px] rounded-lg border border-slate-400/15 bg-ink-950/95 px-3 py-2 font-mono text-[11px] shadow-xl backdrop-blur ${
             hoverIndex !== null && hoverIndex > candles.length / 2 ? 'left-2' : 'right-12'
           }`}
         >
@@ -302,11 +344,17 @@ function ChartCanvas({
               C <span className="text-slate-200">{hovered.close.toFixed(2)}</span>
             </span>
           </div>
-          <div
-            className={`mt-1 font-semibold ${hoveredChangePct >= 0 ? 'text-up' : 'text-down'}`}
-          >
+          <div className={`mt-1 font-semibold ${hoveredChangePct >= 0 ? 'text-up' : 'text-down'}`}>
             {hoveredChangePct >= 0 ? '▲' : '▼'} {Math.abs(hoveredChangePct).toFixed(2)}%
           </div>
+          {teachTip && (
+            <div className="mt-2 border-t border-slate-400/15 pt-2 font-sans text-[11px] leading-snug text-sky-200/90">
+              {teachTip}
+              <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-slate-500">
+                Click to learn more
+              </span>
+            </div>
+          )}
         </div>
       )}
 

@@ -1,24 +1,23 @@
-export interface TickerQuote {
+// The watchlist shown in the scrolling ticker strip. Quotes come live from
+// Twelve Data (see useQuotes) — this file only defines which symbols to show
+// and their display names. Symbols are already in Twelve Data format
+// (BRK.B keeps its dot, unlike Yahoo's BRK-B).
+export interface WatchlistEntry {
   symbol: string
   name: string
-  price: number
-  changePct: number
 }
 
-// Static snapshot values for the scrolling ticker strip — used as the
-// fallback if the live feed (src/data/liveFeed.ts) is unreachable, see
-// useLiveTicker.
-export const TOP_COMPANIES: TickerQuote[] = [
-  { symbol: 'AAPL', name: 'Apple', price: 227.52, changePct: 0.84 },
-  { symbol: 'MSFT', name: 'Microsoft', price: 441.06, changePct: 0.31 },
-  { symbol: 'NVDA', name: 'NVIDIA', price: 118.11, changePct: 2.47 },
-  { symbol: 'GOOGL', name: 'Alphabet', price: 176.23, changePct: -0.42 },
-  { symbol: 'AMZN', name: 'Amazon', price: 197.85, changePct: 1.05 },
-  { symbol: 'META', name: 'Meta Platforms', price: 512.34, changePct: -0.63 },
-  { symbol: 'TSLA', name: 'Tesla', price: 251.77, changePct: 3.18 },
-  { symbol: 'BRK.B', name: 'Berkshire Hathaway', price: 447.90, changePct: 0.12 },
-  { symbol: 'JPM', name: 'JPMorgan Chase', price: 213.44, changePct: 0.55 },
-  { symbol: 'V', name: 'Visa', price: 279.61, changePct: -0.18 },
-  { symbol: 'UNH', name: 'UnitedHealth', price: 498.20, changePct: -1.02 },
-  { symbol: 'XOM', name: 'Exxon Mobil', price: 118.65, changePct: 0.72 },
+export const TOP_COMPANIES: WatchlistEntry[] = [
+  { symbol: 'AAPL', name: 'Apple' },
+  { symbol: 'MSFT', name: 'Microsoft' },
+  { symbol: 'NVDA', name: 'NVIDIA' },
+  { symbol: 'GOOGL', name: 'Alphabet' },
+  { symbol: 'AMZN', name: 'Amazon' },
+  { symbol: 'META', name: 'Meta Platforms' },
+  { symbol: 'TSLA', name: 'Tesla' },
+  { symbol: 'BRK.B', name: 'Berkshire Hathaway' },
+  { symbol: 'JPM', name: 'JPMorgan Chase' },
+  { symbol: 'V', name: 'Visa' },
+  { symbol: 'UNH', name: 'UnitedHealth' },
+  { symbol: 'XOM', name: 'Exxon Mobil' },
 ]

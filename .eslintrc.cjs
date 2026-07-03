@@ -15,4 +15,13 @@ module.exports = {
       { allowConstantExport: true },
     ],
   },
+  overrides: [
+    {
+      // Context modules intentionally co-locate their provider with its hook
+      // and shared constants — a standard pattern worth more than fast-refresh
+      // purity in these two files.
+      files: ['src/context/**/*.tsx'],
+      rules: { 'react-refresh/only-export-components': 'off' },
+    },
+  ],
 }
