@@ -5,8 +5,9 @@ export interface TickerQuote {
   changePct: number
 }
 
-// Static snapshot values for the scrolling ticker strip. In a future phase
-// these will be replaced by a live market-data feed.
+// Static snapshot values for the scrolling ticker strip — used as the
+// fallback if the live feed (src/data/liveFeed.ts) is unreachable, see
+// useLiveTicker.
 export const TOP_COMPANIES: TickerQuote[] = [
   { symbol: 'AAPL', name: 'Apple', price: 227.52, changePct: 0.84 },
   { symbol: 'MSFT', name: 'Microsoft', price: 441.06, changePct: 0.31 },

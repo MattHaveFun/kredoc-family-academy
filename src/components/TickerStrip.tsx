@@ -1,7 +1,16 @@
-import { TOP_COMPANIES } from '../data/companies'
+import { useEffect } from 'react'
+import { useLiveTicker } from '../hooks/useLiveTicker'
+import { useFeedStatus } from '../context/FeedStatusContext'
 
 function TickerStrip() {
-  const doubled = [...TOP_COMPANIES, ...TOP_COMPANIES]
+  const { quotes, status } = useLiveTicker()
+  const { setStatus } = useFeedStatus()
+
+  useEffect(() => {
+    setStatus(status)
+  }, [status, setStatus])
+
+  const doubled = [...quotes, ...quotes]
 
   return (
     <div className="relative border-b border-slate-400/10 bg-ink-900/70">

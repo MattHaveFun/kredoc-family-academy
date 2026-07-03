@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { formatPrice, generateSeries, type MarketSymbol } from '../data/markets'
+import { formatPrice, type MarketSymbol } from '../data/markets'
+import { useLiveSeries } from '../hooks/useLiveSeries'
 import InfoDisclosure from './InfoDisclosure'
 
 interface MarketCardProps {
@@ -12,8 +13,14 @@ interface MarketCardProps {
 const SPARK_W = 100
 const SPARK_H = 40
 
+const STATUS_DOT: Record<string, string> = {
+  live: 'bg-up',
+  sim: 'bg-amber-400',
+  connecting: 'bg-slate-600',
+}
+
 function MarketCard({ market, selected, onSelect, index }: MarketCardProps) {
-  const candles = useMemo(() => generateSeries(market, '1M'), [market])
+  const { candles, status } = useLiveSeries(market, '1M')
   const first = candles[0]
   const last = candles[candles.length - 1]
   const changePct = ((last.close - first.open) / first.open) * 100
@@ -46,6 +53,13 @@ function MarketCard({ market, selected, onSelect, index }: MarketCardProps) {
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold tracking-wide text-sky-400/90">
                 {market.symbol}
+              </span>
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[status]}`}
+                aria-hidden
+              />
+              <span className="sr-only">
+                {status === 'live' ? 'Live data' : status === 'sim' ? 'Simulated data' : 'Connecting'}
               </span>
               <span className="chip">{market.assetClass}</span>
             </div>

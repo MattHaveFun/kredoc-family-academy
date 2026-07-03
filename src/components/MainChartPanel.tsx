@@ -1,10 +1,25 @@
 import { useMemo, useState } from 'react'
-import { MARKET_SYMBOLS, formatPrice, generateSeries, type RangeKey } from '../data/markets'
+import { MARKET_SYMBOLS, formatPrice, type RangeKey } from '../data/markets'
+import { useLiveSeries } from '../hooks/useLiveSeries'
 import ChartCanvas from './ChartCanvas'
 import VolumeBars from './VolumeBars'
 import TimeRangeSelector from './TimeRangeSelector'
 import ChartTypeToggle, { type ChartType } from './ChartTypeToggle'
 import InfoDisclosure from './InfoDisclosure'
+
+const FEED_BADGE: Record<string, { label: string; className: string; dotClassName: string }> = {
+  live: { label: 'Live', className: 'border-up/30 bg-up/10 text-up', dotClassName: 'animate-blink bg-up' },
+  sim: {
+    label: 'Simulated',
+    className: 'border-amber-400/30 bg-amber-400/10 text-amber-300',
+    dotClassName: 'bg-amber-400',
+  },
+  connecting: {
+    label: 'Connecting',
+    className: 'border-slate-400/20 bg-slate-400/5 text-slate-500',
+    dotClassName: 'bg-slate-500',
+  },
+}
 
 interface MainChartPanelProps {
   selectedId: string
@@ -25,7 +40,8 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
     () => MARKET_SYMBOLS.find((m) => m.id === selectedId) ?? MARKET_SYMBOLS[0],
     [selectedId],
   )
-  const candles = useMemo(() => generateSeries(market, range), [market, range])
+  const { candles, status } = useLiveSeries(market, range)
+  const badge = FEED_BADGE[status]
   const first = candles[0]
   const last = candles[candles.length - 1]
   const changePct = ((last.close - first.open) / first.open) * 100
@@ -80,6 +96,12 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="font-display text-lg font-semibold text-slate-100">{market.name}</h2>
               <span className="chip">{market.assetClass}</span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${badge.className}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${badge.dotClassName}`} />
+                {badge.label}
+              </span>
             </div>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
               <span

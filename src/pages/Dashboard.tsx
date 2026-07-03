@@ -3,9 +3,17 @@ import { MARKET_SYMBOLS } from '../data/markets'
 import TickerStrip from '../components/TickerStrip'
 import MainChartPanel from '../components/MainChartPanel'
 import MarketCard from '../components/MarketCard'
+import { useFeedStatus } from '../context/FeedStatusContext'
+
+const DATA_STAT_LABEL: Record<string, string> = {
+  live: 'LIVE',
+  sim: 'SIM',
+  connecting: '···',
+}
 
 function Dashboard() {
   const [selectedId, setSelectedId] = useState(MARKET_SYMBOLS[0].id)
+  const { status } = useFeedStatus()
 
   const sessionDate = new Date()
     .toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
@@ -23,8 +31,9 @@ function Dashboard() {
               Markets Dashboard
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-              A live-look console for the six numbers that dominate financial headlines. Prices
-              below are illustrative — built for learning the shape of markets, not for trading on.
+              A live console for the six numbers that dominate financial headlines, pulling real
+              quotes from public market feeds with an automatic simulated fallback if a symbol is
+              temporarily unreachable. Not investment advice.
             </p>
           </div>
 
@@ -34,7 +43,7 @@ function Dashboard() {
           >
             {[
               { label: 'Symbols', value: String(MARKET_SYMBOLS.length).padStart(2, '0') },
-              { label: 'Data', value: 'SIM' },
+              { label: 'Data', value: DATA_STAT_LABEL[status] },
               { label: 'Session', value: sessionDate },
             ].map((stat) => (
               <div key={stat.label} className="bg-ink-900/90 px-4 py-3">

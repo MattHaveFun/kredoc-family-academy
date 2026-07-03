@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useFeedStatus } from '../context/FeedStatusContext'
 
 const LINKS = [
   { to: '/', label: 'Dashboard', end: true },
@@ -22,8 +23,16 @@ function SessionClock() {
   )
 }
 
+const STATUS_COPY: Record<string, { label: string; dot: string; text: string; pulse: boolean }> = {
+  live: { label: 'LIVE FEED', dot: 'bg-up', text: 'text-up', pulse: true },
+  sim: { label: 'SIM FEED', dot: 'bg-amber-400', text: 'text-amber-400', pulse: false },
+  connecting: { label: 'CONNECTING', dot: 'bg-slate-500', text: 'text-slate-500', pulse: false },
+}
+
 function NavBar() {
   const [open, setOpen] = useState(false)
+  const { status } = useFeedStatus()
+  const statusCopy = STATUS_COPY[status]
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `relative rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
@@ -59,10 +68,14 @@ function NavBar() {
 
         <div className="hidden items-center gap-2.5 rounded-full border border-slate-400/10 bg-ink-850/80 py-1.5 pl-3 pr-4 font-mono text-[11px] font-medium tracking-wider text-slate-400 md:flex">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-up" />
+            {statusCopy.pulse && (
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${statusCopy.dot}`}
+              />
+            )}
+            <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${statusCopy.dot}`} />
           </span>
-          <span className="text-up">SIM FEED</span>
+          <span className={statusCopy.text}>{statusCopy.label}</span>
           <span className="text-slate-600">|</span>
           <SessionClock />
         </div>

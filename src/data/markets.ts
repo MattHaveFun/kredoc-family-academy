@@ -106,8 +106,10 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
   },
 ]
 
-// Deterministic pseudo-random number generator (mulberry32) so charts are
-// stable across renders instead of jumping around on every re-render.
+// Deterministic pseudo-random number generator (mulberry32) so simulated
+// charts are stable across renders instead of jumping around on every
+// re-render. This series is the fallback used when the live feed
+// (src/data/liveFeed.ts) is unreachable — see useLiveSeries.
 function mulberry32(seed: number) {
   return function () {
     seed |= 0
