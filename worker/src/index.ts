@@ -276,7 +276,13 @@ export default {
     }
 
     const auth = request.headers.get('Authorization') ?? ''
-    if (auth !== `Bearer ${env.FAMILY_ACCESS_TOKEN}`) {
+    // .trim() guards against a stray trailing newline/space baked into the
+    // secret when it was set (e.g. via `echo "x" | wrangler secret put`) —
+    // an invisible mismatch that would otherwise 401 every request forever.
+    const expectedAuth = `Bearer ${(env.FAMILY_ACCESS_TOKEN ?? '').trim()}`
+    console.log(`[daily-update] request received, origin=${origin}, authMatches=${auth === expectedAuth}`)
+    if (auth !== expectedAuth) {
+      console.log('[daily-update] rejecting: passphrase mismatch')
       return new Response(JSON.stringify({ error: 'Invalid family passphrase' }), {
         status: 401,
         headers: { ...cors, 'Content-Type': 'application/json' },
@@ -288,20 +294,26 @@ export default {
 
     const cached = await env.DAILY_KV.get(kvKey, 'json')
     if (cached) {
+      console.log(`[daily-update] cache hit for ${kvKey}`)
       return new Response(JSON.stringify(cached), { headers: { ...cors, 'Content-Type': 'application/json' } })
     }
+    console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
 
     try {
       const markets = await buildMarkets()
+      console.log(`[daily-update] buildMarkets ok, ${Object.keys(markets).length} markets`)
       const tickers = await buildTickers()
+      console.log(`[daily-update] buildTickers ok, ${Object.keys(tickers).length} tickers`)
       const narrative = await generateNarrative(env, day, markets)
+      console.log(`[daily-update] narrative state=${narrative.state}`)
 
       const payload: DailyPayload = { day, generatedAt: Date.now(), markets, tickers, narrative }
       await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 3 })
+      console.log(`[daily-update] KV put ok for ${kvKey}, returning 200`)
 
       return new Response(JSON.stringify(payload), { headers: { ...cors, 'Content-Type': 'application/json' } })
     } catch (err) {
-      console.error('[daily-update] generation failed:', err instanceof Error ? err.message : err)
+      console.error('[daily-update] generation failed:', err instanceof Error ? err.message : err, err instanceof Error ? err.stack : '')
       return new Response(JSON.stringify({ error: 'Failed to generate daily update' }), {
         status: 502,
         headers: { ...cors, 'Content-Type': 'application/json' },

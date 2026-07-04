@@ -26,8 +26,13 @@ function DailyUpdatePanel() {
     setState('error')
     setError(result.error)
     if (result.error.toLowerCase().includes('rejected')) {
-      clearFamilyToken()
-      window.location.reload()
+      // Give the rejection message a moment on screen before bouncing back
+      // to the passphrase gate — reloading immediately meant it never
+      // actually painted, so a wrong passphrase looked like nothing happened.
+      setTimeout(() => {
+        clearFamilyToken()
+        window.location.reload()
+      }, 3000)
     }
   }
 
