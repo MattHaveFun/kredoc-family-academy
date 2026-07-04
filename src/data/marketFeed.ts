@@ -1,6 +1,7 @@
 import type { Candle, RangeKey } from './markets'
 import { fetchYahooQuote, fetchYahooSeries, YAHOO_MARKET_SYMBOL, yahooSymbolForTicker } from './yahooFinance'
 import {
+  MARKET_FEEDS,
   getMarketQuote as tdGetMarketQuote,
   getMarketSeries as tdGetMarketSeries,
   getQuote as tdGetQuote,
@@ -169,23 +170,6 @@ async function resolveQuote(key: string, fetchers: Array<() => Promise<FetchOutc
   return { quote: null, status: 'unavailable', fetchedAt: null, proxyNote: null }
 }
 
-async function resolveSeries(key: string, fetchers: Array<() => Promise<FetchOutcome<Candle[]>>>): Promise<SeriesResolution> {
-  for (const fetcher of fetchers) {
-    try {
-      const { value, proxyNote } = await fetcher()
-      cacheSet(key, 'series', value, proxyNote)
-      return { candles: value, status: 'live', fetchedAt: Date.now(), proxyNote }
-    } catch (err) {
-      logError(`series ${key}`, err)
-    }
-  }
-  const cached = memoryCache.get(key)
-  if (cached && cached.kind === 'series') {
-    return { candles: cached.payload as Candle[], status: 'cached', fetchedAt: cached.fetchedAt, proxyNote: cached.proxyNote }
-  }
-  return { candles: [], status: 'unavailable', fetchedAt: null, proxyNote: null }
-}
-
 // --- Synchronous cache peeks --------------------------------------------------
 // Used by hooks to seed initial React state from whatever we already have,
 // so a component mount/remount never flashes to a blank/loading UI when good
@@ -224,30 +208,128 @@ function marketSeriesKey(marketId: string, range: RangeKey): string {
   return `ms|${marketId}|${range}`
 }
 
-// --- Cross-request source pinning --------------------------------------------
-// A market's quote and its six range series (1D…5Y) are each fetched as
-// separate network requests, cached and resolved independently. Yahoo goes
-// through public CORS relays with no formal rate limit but observed 429s/
-// timeouts under load (see yahooFinance.ts), so it's entirely possible for
-// one of those independent requests to succeed via Yahoo (the true index
-// level, e.g. IXIC ~25,000) while another fails over to Twelve Data's ETF
-// proxy (e.g. QQQ ~$700) — showing two wildly different "current values" for
-// the same symbol on screen at once. Once any request for a market learns
-// which source actually answered, pin that source for the rest so sibling
-// requests (other ranges, the quote, other components) agree with it instead
-// of independently re-rolling the Yahoo/proxy dice.
-const SOURCE_PIN_MS = 5 * 60 * 1000
-const sourceDecisions = new Map<string, { proxyNote: string | null; decidedAt: number }>()
+// --- Per-market source lock (guarantees no mixed-scale displays) -------------
+// A market's quote and its six range series (1D…5Y) are each a separate
+// network request, each independently trying Yahoo (the true index, e.g.
+// IXIC ~25,000) then falling back to Twelve Data's ETF proxy (e.g. QQQ ~$700)
+// when Yahoo's flaky public CORS relay fails (see yahooFinance.ts). Left
+// uncoordinated, one request lands on the real index while a sibling lands on
+// the proxy, so the SAME symbol shows two wildly different values at once —
+// the reported IXIC / RUT / VIX / SPX mismatch.
+//
+// So the source is decided ONCE per market and every request honors it:
+//   * The first request to run for a market becomes the "decider": it prefers
+//     the real index (Yahoo) and only falls back to the proxy if Yahoo can't
+//     be reached, then records which source actually answered.
+//   * Concurrent/later requests (any range, the quote, any component) await
+//     that decision and fetch ONLY the agreed source — never re-rolling the
+//     dice, never mixing scales. (claimSource is synchronous so a same-tick
+//     burst of siblings all see the decider's pending decision.)
+//   * A cached value is honored only when its source matches the decision, so
+//     a stale proxy-scale entry can't leak onto a market that resolved to the
+//     real index.
+//   * The lock expires after a few minutes, so a market stuck on the proxy
+//     during a Yahoo outage upgrades back to the real index once it recovers.
+//
+// A `note` of null means "the true index / real asset" (Yahoo, or Twelve
+// Data's same-scale crypto feed); a non-null note means a differently-scaled
+// ETF proxy stood in.
+const SOURCE_LOCK_MS = 5 * 60 * 1000
+interface SourceLock {
+  note: string | null
+  at: number
+}
+const sourceLocks = new Map<string, SourceLock>()
+const pendingDecisions = new Map<string, Promise<string | null>>()
 
-/** undefined = no recent decision (try Yahoo as usual); null = Yahoo was pinned; string = proxy note was pinned. */
-function pinnedProxyNote(marketId: string): string | null | undefined {
-  const decision = sourceDecisions.get(marketId)
-  if (!decision || Date.now() - decision.decidedAt > SOURCE_PIN_MS) return undefined
-  return decision.proxyNote
+type SourceClaim =
+  | { kind: 'known'; note: string | null }
+  | { kind: 'await'; note: Promise<string | null> }
+  | { kind: 'decide'; settle: (note: string | null) => void }
+
+// Synchronous on purpose: the decider registers its pending decision before
+// yielding so a same-tick burst of sibling requests observes it and awaits.
+function claimSource(marketId: string): SourceClaim {
+  const lock = sourceLocks.get(marketId)
+  if (lock && Date.now() - lock.at < SOURCE_LOCK_MS) return { kind: 'known', note: lock.note }
+
+  const pending = pendingDecisions.get(marketId)
+  if (pending) return { kind: 'await', note: pending }
+
+  let resolve!: (note: string | null) => void
+  const promise = new Promise<string | null>((r) => {
+    resolve = r
+  })
+  pendingDecisions.set(marketId, promise)
+
+  let settled = false
+  const settle = (note: string | null) => {
+    if (settled) return
+    settled = true
+    sourceLocks.set(marketId, { note, at: Date.now() })
+    pendingDecisions.delete(marketId)
+    resolve(note)
+  }
+  return { kind: 'decide', settle }
 }
 
-function pinSource(marketId: string, proxyNote: string | null) {
-  sourceDecisions.set(marketId, { proxyNote, decidedAt: Date.now() })
+type SourcedFetcher<T> = () => Promise<{ value: T; note: string | null }>
+
+interface SourcedResult<T> {
+  value: T | null
+  status: DataStatus
+  fetchedAt: number | null
+  note: string | null
+}
+
+// Picks which fetchers to try, honoring the agreed source so we never mix a
+// differently-scaled ETF proxy onto a market that resolved to the real index.
+function pickFetchers<T>(
+  claimKind: SourceClaim['kind'],
+  note: string | null | undefined,
+  hasYahoo: boolean,
+  hasScaleProxy: boolean,
+  yahoo: SourcedFetcher<T>,
+  proxy: SourcedFetcher<T>,
+): Array<SourcedFetcher<T>> {
+  const yahooList = hasYahoo ? [yahoo] : []
+  // Decider: no decision yet — prefer the real index, fall back to the proxy.
+  if (claimKind === 'decide') return [...yahooList, proxy]
+  // Locked to the real index. Include the proxy only when it's the SAME scale
+  // (markets with no ETF stand-in, e.g. crypto) so resilience is kept without
+  // ever mixing a differently-scaled ETF onto an index.
+  if (note === null) {
+    if (!hasScaleProxy) return [...yahooList, proxy]
+    return yahooList.length > 0 ? yahooList : [proxy]
+  }
+  // Locked to the proxy scale.
+  return [proxy]
+}
+
+async function fetchLocked<T extends Quote | Candle[]>(
+  key: string,
+  kind: 'quote' | 'series',
+  fetchers: Array<SourcedFetcher<T>>,
+  requireNote: string | null | undefined,
+): Promise<SourcedResult<T>> {
+  for (const fetcher of fetchers) {
+    try {
+      const { value, note } = await fetcher()
+      cacheSet(key, kind, value, note)
+      return { value, status: 'live', fetchedAt: Date.now(), note }
+    } catch (err) {
+      logError(`${kind} ${key}`, err)
+    }
+  }
+  // Every fetcher failed — hold the last-known-good value, but only if it came
+  // from the same source we're locked to, so a real-index market never falls
+  // back to a differently-scaled proxy value sitting in cache. `undefined`
+  // (the decider, no lock yet) accepts any cached value.
+  const cached = memoryCache.get(key)
+  if (cached && cached.kind === kind && (requireNote === undefined || cached.proxyNote === requireNote)) {
+    return { value: cached.payload as T, status: 'cached', fetchedAt: cached.fetchedAt, note: cached.proxyNote }
+  }
+  return { value: null, status: 'unavailable', fetchedAt: null, note: requireNote ?? null }
 }
 
 export function peekMarketQuote(marketId: string): MarketQuoteResult {
@@ -260,71 +342,85 @@ export function peekMarketSeries(marketId: string, range: RangeKey): MarketSerie
 
 export async function getMarketQuote(marketId: string, priority = 5): Promise<MarketQuoteResult> {
   const key = marketQuoteKey(marketId)
-  const cached = memoryCache.get(key)
-  if (cached && cached.kind === 'quote' && isFresh(cached)) {
-    return { quote: cached.payload as Quote, status: 'cached', fetchedAt: cached.fetchedAt, proxyNote: cached.proxyNote }
-  }
-
   const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
-  const tryYahoo = Boolean(yahooSymbol) && typeof pinnedProxyNote(marketId) !== 'string'
+  const hasScaleProxy = Boolean(MARKET_FEEDS[marketId]?.proxy)
 
-  const result = await resolveQuote(key, [
-    ...(tryYahoo
-      ? [
-          async (): Promise<FetchOutcome<Quote>> => {
-            const q = await fetchYahooQuote(yahooSymbol)
-            return {
-              proxyNote: null,
-              value: {
-                symbol: marketId,
-                price: q.price,
-                previousClose: q.previousClose,
-                change: q.price - q.previousClose,
-                changePct: q.previousClose !== 0 ? ((q.price - q.previousClose) / q.previousClose) * 100 : 0,
-                open: q.open,
-                high: q.high,
-                low: q.low,
-                volume: q.volume,
-                name: marketId,
-              },
-            }
-          },
-        ]
-      : []),
-    async (): Promise<FetchOutcome<Quote>> => {
+  const claim = claimSource(marketId)
+  try {
+    const note: string | null | undefined =
+      claim.kind === 'known' ? claim.note : claim.kind === 'await' ? await claim.note : undefined
+
+    // Fast path: fresh cache, but only when it came from the agreed source.
+    const cached = memoryCache.get(key)
+    if (cached && cached.kind === 'quote' && isFresh(cached) && (note === undefined || cached.proxyNote === note)) {
+      if (claim.kind === 'decide') claim.settle(cached.proxyNote)
+      return { quote: cached.payload as Quote, status: 'cached', fetchedAt: cached.fetchedAt, proxyNote: cached.proxyNote }
+    }
+
+    const yahoo: SourcedFetcher<Quote> = async () => {
+      const q = await fetchYahooQuote(yahooSymbol)
+      return {
+        note: null,
+        value: {
+          symbol: marketId,
+          price: q.price,
+          previousClose: q.previousClose,
+          change: q.price - q.previousClose,
+          changePct: q.previousClose !== 0 ? ((q.price - q.previousClose) / q.previousClose) * 100 : 0,
+          open: q.open,
+          high: q.high,
+          low: q.low,
+          volume: q.volume,
+          name: marketId,
+        },
+      }
+    }
+    const proxy: SourcedFetcher<Quote> = async () => {
       const td = await tdGetMarketQuote(marketId, priority)
       if (!td.quote) throw new Error('Twelve Data fallback returned no quote')
-      return { value: td.quote, proxyNote: td.proxyNote }
-    },
-  ])
+      return { value: td.quote, note: td.proxyNote }
+    }
 
-  if (result.status === 'live') pinSource(marketId, result.proxyNote)
-  return result
+    const fetchers = pickFetchers(claim.kind, note, Boolean(yahooSymbol), hasScaleProxy, yahoo, proxy)
+    const out = await fetchLocked<Quote>(key, 'quote', fetchers, note)
+    if (claim.kind === 'decide') claim.settle(out.status === 'unavailable' ? null : out.note)
+    return { quote: out.value, status: out.status, fetchedAt: out.fetchedAt, proxyNote: out.note }
+  } finally {
+    // Guarantee awaiters are released even if something unexpected threw.
+    if (claim.kind === 'decide') claim.settle(null)
+  }
 }
 
 export async function getMarketSeries(marketId: string, range: RangeKey, priority = 5): Promise<MarketSeriesResult> {
   const key = marketSeriesKey(marketId, range)
-  const cached = memoryCache.get(key)
-  if (cached && cached.kind === 'series' && isFresh(cached)) {
-    return { candles: cached.payload as Candle[], status: 'cached', fetchedAt: cached.fetchedAt, proxyNote: cached.proxyNote }
-  }
-
   const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
-  const tryYahoo = Boolean(yahooSymbol) && typeof pinnedProxyNote(marketId) !== 'string'
+  const hasScaleProxy = Boolean(MARKET_FEEDS[marketId]?.proxy)
 
-  const result = await resolveSeries(key, [
-    ...(tryYahoo
-      ? [async (): Promise<FetchOutcome<Candle[]>> => ({ value: await fetchYahooSeries(yahooSymbol, range), proxyNote: null })]
-      : []),
-    async (): Promise<FetchOutcome<Candle[]>> => {
+  const claim = claimSource(marketId)
+  try {
+    const note: string | null | undefined =
+      claim.kind === 'known' ? claim.note : claim.kind === 'await' ? await claim.note : undefined
+
+    const cached = memoryCache.get(key)
+    if (cached && cached.kind === 'series' && isFresh(cached) && (note === undefined || cached.proxyNote === note)) {
+      if (claim.kind === 'decide') claim.settle(cached.proxyNote)
+      return { candles: cached.payload as Candle[], status: 'cached', fetchedAt: cached.fetchedAt, proxyNote: cached.proxyNote }
+    }
+
+    const yahoo: SourcedFetcher<Candle[]> = async () => ({ value: await fetchYahooSeries(yahooSymbol, range), note: null })
+    const proxy: SourcedFetcher<Candle[]> = async () => {
       const td = await tdGetMarketSeries(marketId, range, priority)
       if (td.candles.length < 2) throw new Error('Twelve Data fallback returned insufficient series')
-      return { value: td.candles, proxyNote: td.proxyNote }
-    },
-  ])
+      return { value: td.candles, note: td.proxyNote }
+    }
 
-  if (result.status === 'live') pinSource(marketId, result.proxyNote)
-  return result
+    const fetchers = pickFetchers(claim.kind, note, Boolean(yahooSymbol), hasScaleProxy, yahoo, proxy)
+    const out = await fetchLocked<Candle[]>(key, 'series', fetchers, note)
+    if (claim.kind === 'decide') claim.settle(out.status === 'unavailable' ? null : out.note)
+    return { candles: out.value ?? [], status: out.status, fetchedAt: out.fetchedAt, proxyNote: out.note }
+  } finally {
+    if (claim.kind === 'decide') claim.settle(null)
+  }
 }
 
 // --- Plain tickers (watchlist stocks, sector ETFs) ---------------------------
