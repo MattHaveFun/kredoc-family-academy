@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { getQuotes, peekQuote, type DataStatus, type QuoteResult } from '../data/marketFeed'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import type { DataStatus, QuoteResult } from '../data/marketFeed'
+import { getQuotesListSnapshot, subscribe, wantTickerQuote } from '../data/marketStore'
 
 export interface QuotesState {
   results: Record<string, QuoteResult>
@@ -9,36 +10,25 @@ export interface QuotesState {
   fetchedAt: number | null
 }
 
-function peekAll(symbols: string[]): Record<string, QuoteResult> {
-  const seeded: Record<string, QuoteResult> = {}
-  for (const symbol of symbols) seeded[symbol] = peekQuote(symbol)
-  return seeded
-}
-
 /**
- * Quotes for a list of symbols, updating progressively as each resolves
- * (Yahoo first, Twelve Data fallback per symbol). Seeded synchronously from
- * cache so a re-render never blanks symbols that have previously loaded —
- * a failed refresh holds the last good quote instead of dropping it.
+ * Quotes for a list of tickers. Reading is pure cache lookup — marketStore
+ * owns fetching, batching every wanted symbol into one shared cycle instead
+ * of each caller (ticker strip, sector heat map, watchlist card) triggering
+ * its own request.
  */
-export function useQuotes(symbols: string[], priority = 5): QuotesState {
+export function useQuotes(symbols: string[], _priority?: number): QuotesState {
   const key = symbols.join(',')
-  const [results, setResults] = useState<Record<string, QuoteResult>>(() => peekAll(symbols))
-  const generation = useRef(0)
 
   useEffect(() => {
-    const gen = ++generation.current
-    const list = key ? key.split(',') : []
-    setResults(peekAll(list))
-    if (list.length === 0) return
+    for (const symbol of key ? key.split(',') : []) wantTickerQuote(symbol)
+  }, [key])
 
-    getQuotes(list, {
-      priority,
-      onPartial: (partial) => {
-        if (generation.current === gen) setResults((prev) => ({ ...prev, ...partial }))
-      },
-    }).catch(() => {}) // per-symbol resolution never rejects; guards against the unexpected
-  }, [key, priority])
+  const list = useMemo(() => (key ? key.split(',') : []), [key])
+  const results = useSyncExternalStore(
+    subscribe,
+    () => getQuotesListSnapshot(list),
+    () => getQuotesListSnapshot(list),
+  )
 
   return useMemo(() => {
     const values = Object.values(results)
@@ -47,11 +37,11 @@ export function useQuotes(symbols: string[], priority = 5): QuotesState {
     if (values.length === 0) status = 'loading'
     else if (resolved.some((v) => v.status === 'live')) status = 'live'
     else if (resolved.length > 0) status = 'cached'
-    else if (values.length < (key ? key.split(',').length : 0)) status = 'loading'
+    else if (values.length < list.length) status = 'loading'
     else status = 'unavailable'
 
     const fetchedTimes = resolved.map((v) => v.fetchedAt ?? 0).filter((t) => t > 0)
     const fetchedAt = fetchedTimes.length ? Math.min(...fetchedTimes) : null
     return { results, status, fetchedAt }
-  }, [results, key])
+  }, [results, list])
 }
