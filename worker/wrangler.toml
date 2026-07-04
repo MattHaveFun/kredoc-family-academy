@@ -1,0 +1,17 @@
+name = "kredoc-daily-update"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Filled in by `npm run kv:create` (see README in this folder) — paste the
+# printed id here before first deploy.
+kv_namespaces = [
+  { binding = "DAILY_KV", id = "88460a40345844a0b250e143b8263fe3" }
+]
+
+# Secrets (never put these here — set via `wrangler secret put <NAME>`):
+#   FAMILY_ACCESS_TOKEN  — the shared family passphrase, checked verbatim
+#   GEMINI_API_KEY       — Gemini API key used server-side only
+#
+# Plain (non-secret) vars can live here:
+[vars]
+ALLOWED_ORIGIN = "https://kredoc.me"

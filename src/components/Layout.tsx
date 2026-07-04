@@ -2,6 +2,8 @@ import { NavLink, Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import ProfileGate from './ProfileGate'
 import WelcomeBack from './WelcomeBack'
+import FamilyGate from './FamilyGate'
+import DailyUpdatePanel from './DailyUpdatePanel'
 import { FeedStatusProvider } from '../context/FeedStatusContext'
 import { ProfileProvider, useProfiles } from '../context/ProfileContext'
 
@@ -17,6 +19,7 @@ function Shell() {
   return (
     <div className="relative flex min-h-screen flex-col text-slate-100">
       <NavBar />
+      <DailyUpdatePanel />
       <main className="flex-1">
         {activeProfile ? (
           <>
@@ -58,9 +61,9 @@ function Shell() {
           </nav>
 
           <p className="max-w-xs font-mono text-[11px] leading-relaxed text-slate-600">
-            Market data is provided by Twelve Data and labeled honestly everywhere it appears: LIVE
-            when fresh from the feed, CACHED with its age when served from memory, and DATA
-            UNAVAILABLE when neither exists. Educational only — never investment advice.
+            Market close data comes from Yahoo Finance, fetched once per trading day by a family
+            member pressing the update button. The daily narrative is written by Gemini. Educational
+            only — never investment advice.
           </p>
         </div>
         <div className="border-t border-slate-400/5 py-4 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-slate-700">
@@ -73,11 +76,13 @@ function Shell() {
 
 function Layout() {
   return (
-    <ProfileProvider>
-      <FeedStatusProvider>
-        <Shell />
-      </FeedStatusProvider>
-    </ProfileProvider>
+    <FamilyGate>
+      <ProfileProvider>
+        <FeedStatusProvider>
+          <Shell />
+        </FeedStatusProvider>
+      </ProfileProvider>
+    </FamilyGate>
   )
 }
 

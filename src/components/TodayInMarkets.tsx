@@ -1,22 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getNewsSnippets, type NewsResult } from '../data/newsFeed'
-import { getDailyNarrative, hasNarrativeKey, type NarrativeResult } from '../data/aiNarrative'
-import { SECTORS } from '../data/sectors'
-import { useQuotes } from '../hooks/useQuotes'
-import { useMarketQuote } from '../hooks/useMarketQuote'
-
-const SECTOR_ETFS = SECTORS.map((s) => s.etf)
+import { getNarrative } from '../data/aiNarrative'
+import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
 
 function TodayInMarkets() {
   const [news, setNews] = useState<NewsResult | null>(null)
-  const [narrative, setNarrative] = useState<NarrativeResult | null>(null)
-
-  // Reuses the heat map's quotes (deduped + cached) to describe the day to
-  // the narrative model — no extra API credits.
-  const { results: sectorResults } = useQuotes(SECTOR_ETFS, 6)
-  // marketId-based (not a raw ticker): resolves to the true ^VIX index via
-  // Yahoo first, same as the mood gauge and daily brief.
-  const vixQuote = useMarketQuote('vix', 6)
+  const [, bumpOnUpdate] = useState(0)
+  useEffect(() => subscribeDailyUpdate(() => bumpOnUpdate((n) => n + 1)), [])
+  const narrative = getNarrative()
 
   useEffect(() => {
     let cancelled = false
@@ -27,32 +18,6 @@ function TodayInMarkets() {
       cancelled = true
     }
   }, [])
-
-  const summaryReady = useMemo(() => {
-    const sectors = SECTORS.flatMap((s) => {
-      const q = sectorResults[s.etf]?.quote
-      return q ? [{ label: s.name, changePct: q.changePct }] : []
-    })
-    // Only the genuine VIX level (not an ETF proxy) fits the "fear index" framing.
-    const vix = vixQuote.proxyNote === null ? vixQuote.quote : null
-    if (vix) sectors.push({ label: 'VIX (fear index)', changePct: vix.changePct })
-    return sectors
-  }, [sectorResults, vixQuote])
-
-  useEffect(() => {
-    if (!hasNarrativeKey()) {
-      setNarrative({ text: null, state: 'no-key', generatedAt: null })
-      return
-    }
-    if (summaryReady.length < 6 || narrative?.state === 'ready') return
-    let cancelled = false
-    getDailyNarrative(summaryReady).then((result) => {
-      if (!cancelled) setNarrative(result)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [summaryReady, narrative?.state])
 
   return (
     <section className="panel overflow-hidden">
@@ -111,7 +76,7 @@ function TodayInMarkets() {
             What it actually means
           </h3>
 
-          {narrative?.state === 'ready' && narrative.text ? (
+          {narrative.state === 'ready' && narrative.text ? (
             <div className="animate-fade-in mt-4 space-y-3 text-sm leading-relaxed text-slate-300">
               {narrative.text.split(/\n{2,}/).map((p, i) => (
                 <p key={i}>{p}</p>
@@ -120,27 +85,22 @@ function TodayInMarkets() {
                 AI-written · educational · never advice
               </p>
             </div>
-          ) : narrative?.state === 'error' ? (
+          ) : narrative.state === 'error' ? (
             <p className="mt-4 text-sm leading-relaxed text-slate-500">
-              The daily narrative couldn't be written just now — it'll try again on the next visit.
-              Meanwhile, the headlines on the left have you covered.
+              Today's narrative couldn't be written — try pressing "Get today's update" again in a
+              bit. Meanwhile, the headlines on the left have you covered.
             </p>
-          ) : narrative?.state === 'no-key' ? (
+          ) : (
             <div className="mt-4 rounded-xl border border-dashed border-slate-400/20 p-4">
               <p className="text-sm leading-relaxed text-slate-400">
-                This panel will hold a daily plain-English read on the markets — 200 words in the
-                spirit of Morgan Housel meets Morning Brew, always answering "so what does this mean
-                for your life?"
+                This panel holds a daily plain-English read on the markets — 200 words in the spirit
+                of Morgan Housel meets Morning Brew, always answering "so what does this mean for
+                your life?"
               </p>
               <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                It switches on when the site owner adds an OpenAI API key (VITE_OPENAI_API_KEY) —
-                see the README. Until then, no fake insight, just this honest placeholder.
+                Press "Get today's update" up top to have it written for today.
               </p>
             </div>
-          ) : (
-            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-600">
-              Writing today's read…
-            </p>
           )}
         </div>
       </div>

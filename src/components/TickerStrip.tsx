@@ -36,7 +36,7 @@ function TickerStrip() {
           {rows.length === 0 ? (
             <p className="py-2.5 text-center font-mono text-[11px] uppercase tracking-[0.25em] text-slate-600">
               {status === 'unavailable'
-                ? 'Live data is taking a break — check back in a few minutes'
+                ? "No numbers loaded yet — press \"Get today's update\" up top"
                 : 'Tuning in to the watchlist…'}
             </p>
           ) : (

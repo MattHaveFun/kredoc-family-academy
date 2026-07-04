@@ -1,7 +1,7 @@
-// The watchlist shown in the scrolling ticker strip. Quotes come live from
-// Twelve Data (see useQuotes) — this file only defines which symbols to show
-// and their display names. Symbols are already in Twelve Data format
-// (BRK.B keeps its dot, unlike Yahoo's BRK-B).
+// The watchlist shown in the scrolling ticker strip. Quotes come from the
+// daily-update Worker (see useQuotes) — this file only defines which symbols
+// to show and their display names. BRK.B keeps its dot for display; the
+// Worker maps it to Yahoo's BRK-B internally.
 export interface WatchlistEntry {
   symbol: string
   name: string

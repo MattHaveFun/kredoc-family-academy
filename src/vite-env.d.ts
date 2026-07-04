@@ -1,10 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Twelve Data API key — market quotes and time series. */
-  readonly VITE_TWELVEDATA_API_KEY?: string
-  /** Optional restricted OpenAI key for the daily narrative panel. */
-  readonly VITE_OPENAI_API_KEY?: string
+  /** Base URL of the kredoc-daily-update Cloudflare Worker (no trailing slash). */
+  readonly VITE_WORKER_URL?: string
 }
 
 interface ImportMeta {

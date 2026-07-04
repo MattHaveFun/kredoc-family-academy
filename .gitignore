@@ -31,3 +31,6 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Wrangler (Cloudflare Workers) local dev state
+.wrangler

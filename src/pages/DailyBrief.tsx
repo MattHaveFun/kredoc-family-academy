@@ -6,7 +6,8 @@ import { TOP_COMPANIES } from '../data/companies'
 import { useProfiles } from '../context/ProfileContext'
 import { useQuotes } from '../hooks/useQuotes'
 import { useMarketQuote } from '../hooks/useMarketQuote'
-import { getDailyNarrative, hasNarrativeKey, type NarrativeResult } from '../data/aiNarrative'
+import { getNarrative } from '../data/aiNarrative'
+import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
 import MarketMoodGauge from '../components/MarketMoodGauge'
 import LearningModeCheck from '../components/LearningModeCheck'
 import DataBadge from '../components/DataBadge'
@@ -60,7 +61,9 @@ function DailyBrief() {
   const vixQuote = useMarketQuote('vix', 1)
   const sectorQuotes = useQuotes(SECTOR_ETFS, 2)
   const watchlistQuotes = useQuotes(WATCHLIST, 3)
-  const [narrative, setNarrative] = useState<NarrativeResult | null>(null)
+  const [, bumpOnUpdate] = useState(0)
+  useEffect(() => subscribeDailyUpdate(() => bumpOnUpdate((n) => n + 1)), [])
+  const narrative = getNarrative()
 
   const spx = spxQuote.quote
   // Only the true VIX level means anything on its famous 12–40 scale.
@@ -97,27 +100,7 @@ function DailyBrief() {
     ? LESSON_BY_ID[activeProfile.lastLessonId] ?? lessonOfTheDay
     : lessonOfTheDay
 
-  useEffect(() => {
-    if (!hasNarrativeKey()) {
-      setNarrative({ text: null, state: 'no-key', generatedAt: null })
-      return
-    }
-    const summary = SECTORS.flatMap((s) => {
-      const q = sectorQuotes.results[s.etf]?.quote
-      return q ? [{ label: s.name, changePct: q.changePct }] : []
-    })
-    if (spx) summary.push({ label: 'S&P 500', changePct: spx.changePct })
-    if (summary.length < 6 || narrative?.state === 'ready') return
-    let cancelled = false
-    getDailyNarrative(summary).then((r) => {
-      if (!cancelled) setNarrative(r)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [sectorQuotes.results, spx, narrative?.state])
-
-  const insight = narrative?.state === 'ready' && narrative.text ? narrative.text.split(/\n{2,}/)[0] : null
+  const insight = narrative.state === 'ready' && narrative.text ? narrative.text.split(/\n{2,}/)[0] : null
 
   return (
     <div className="mx-auto max-w-lg snap-y px-4 py-6 sm:px-6">
@@ -166,14 +149,15 @@ function DailyBrief() {
         <BriefCard step={2} title="Today's insight" delay={80}>
           {insight ? (
             <p className="text-sm leading-relaxed text-slate-300">{insight}</p>
-          ) : narrative?.state === 'no-key' ? (
+          ) : narrative.state === 'pending' ? (
             <p className="text-sm leading-relaxed text-slate-500">
-              The daily AI-written read on the markets lands here once the site owner adds an OpenAI
-              key. Until then: the mood gauge above and the movers below tell most of today's story.
+              Press "Get today's update" up top to pull today's close and have Gemini write today's
+              read. Until then: the mood gauge above tells most of today's story.
             </p>
           ) : (
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-600">
-              Writing today's read…
+            <p className="text-sm leading-relaxed text-slate-500">
+              Today's read couldn't be written — the numbers above are still good, try the update
+              button again in a bit.
             </p>
           )}
         </BriefCard>
@@ -206,7 +190,7 @@ function DailyBrief() {
           {movers.length === 0 ? (
             <p className="text-sm text-slate-500">
               {watchlistQuotes.status === 'unavailable'
-                ? 'Live data is taking a break — check back in a few minutes.'
+                ? 'No numbers loaded yet — press "Get today\'s update" up top.'
                 : 'Checking the tape…'}
             </p>
           ) : (

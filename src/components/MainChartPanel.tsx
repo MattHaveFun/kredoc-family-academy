@@ -207,21 +207,15 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
               <>
                 <span className="h-2 w-2 animate-ping rounded-full bg-sky-400" />
                 <p className="font-mono text-xs uppercase tracking-[0.25em] text-slate-500">
-                  Powering up the feed…
-                </p>
-                <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-                  First load can take a moment — the free data feed allows 8 requests per minute, so
-                  panels fill in progressively.
+                  Loading today's update…
                 </p>
               </>
             ) : (
               <>
                 <span className="text-2xl">☕</span>
-                <p className="text-sm font-medium text-slate-300">
-                  Live data is taking a break — check back in a few minutes.
-                </p>
+                <p className="text-sm font-medium text-slate-300">No numbers loaded yet.</p>
                 <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-                  The chart will return automatically once the feed is reachable again.
+                  Press "Get today's update" at the top of the page to pull the latest close.
                 </p>
               </>
             )}
