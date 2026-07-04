@@ -233,11 +233,42 @@ async function decideMarket(marketId: string, priority: number): Promise<MarketD
   return { useYahoo: false, tdSymbol: null, note: null }
 }
 
+// The decision made the last time a market was fully synced (see
+// refreshMarket below). A range top-up (refreshMarketRange) reuses this
+// instead of re-deciding, so a range added mid-session — e.g. the user
+// clicking a different time-range tab — can never land on a different
+// source than what's already on screen for that market.
+const lastDecisions = new Map<string, MarketDecision>()
+
+async function fetchSeriesWithDecision(
+  marketId: string,
+  range: RangeKey,
+  decision: MarketDecision,
+  priority: number,
+): Promise<void> {
+  const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
+  try {
+    if (decision.useYahoo && yahooSymbol) {
+      const candles = await fetchYahooSeries(yahooSymbol, range)
+      cacheSet(marketSeriesKey(marketId, range), 'series', candles, null)
+    } else if (decision.tdSymbol) {
+      const result = await tdGetTimeSeries(decision.tdSymbol, range, priority)
+      if (result.candles.length >= 2) {
+        cacheSet(marketSeriesKey(marketId, range), 'series', result.candles, decision.note)
+      }
+    }
+    // No viable source this pass — leave whatever's cached (never drop good data).
+  } catch (err) {
+    logError(`series ${marketId} ${range}`, err)
+  }
+}
+
 /**
- * Refreshes one market's quote and every range in `ranges`, all from the same
- * decided source. Called only by marketStore's poll cycle — never by
- * components directly — which is what guarantees the big chart and the small
- * cards never disagree on scale for the same market.
+ * Full sync: re-decides the source fresh, refreshes the quote, and refreshes
+ * every range in `ranges` from that one decision. Called only for a market's
+ * first-ever sync and on marketStore's periodic (15-minute) tick — never on
+ * every newly-wanted range, which is what used to let a transient Yahoo
+ * hiccup re-decide mid-session and split a market across two scales.
  */
 export async function refreshMarket(
   marketId: string,
@@ -246,26 +277,35 @@ export async function refreshMarket(
   onUpdate?: () => void,
 ): Promise<void> {
   const decision = await decideMarket(marketId, priority)
+  lastDecisions.set(marketId, decision)
   onUpdate?.()
 
-  const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
   for (const range of ranges) {
-    try {
-      if (decision.useYahoo && yahooSymbol) {
-        const candles = await fetchYahooSeries(yahooSymbol, range)
-        cacheSet(marketSeriesKey(marketId, range), 'series', candles, null)
-      } else if (decision.tdSymbol) {
-        const result = await tdGetTimeSeries(decision.tdSymbol, range, priority)
-        if (result.candles.length >= 2) {
-          cacheSet(marketSeriesKey(marketId, range), 'series', result.candles, decision.note)
-        }
-      }
-      // No viable source this pass — leave whatever's cached (never drop good data).
-    } catch (err) {
-      logError(`series ${marketId} ${range}`, err)
-    }
+    await fetchSeriesWithDecision(marketId, range, decision, priority)
     onUpdate?.()
   }
+}
+
+/**
+ * Range top-up: fetches one additional range for a market that's already
+ * been synced, reusing its established decision (deciding fresh only if this
+ * market has somehow never been synced). Never changes the source an
+ * already-visible quote/range is relying on.
+ */
+export async function refreshMarketRange(
+  marketId: string,
+  range: RangeKey,
+  priority = 5,
+  onUpdate?: () => void,
+): Promise<void> {
+  let decision = lastDecisions.get(marketId)
+  if (!decision) {
+    decision = await decideMarket(marketId, priority)
+    lastDecisions.set(marketId, decision)
+    onUpdate?.()
+  }
+  await fetchSeriesWithDecision(marketId, range, decision, priority)
+  onUpdate?.()
 }
 
 // --- Plain tickers (watchlist stocks, sector ETFs) ---------------------------

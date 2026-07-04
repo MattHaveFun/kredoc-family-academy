@@ -4,6 +4,7 @@ import {
   peekMarketSeries,
   peekQuote,
   refreshMarket,
+  refreshMarketRange,
   refreshTickers,
   type MarketQuoteResult,
   type MarketSeriesResult,
@@ -53,47 +54,82 @@ export function subscribe(listener: Listener): () => void {
 const wantedMarketRanges = new Map<string, Set<RangeKey>>()
 const wantedTickers = new Set<string>()
 
+// 'pending' = queued or in-flight full sync, no decision to reuse yet.
+// 'synced'  = has a decision; a newly-wanted range can safely top up from it.
+const marketSyncState = new Map<string, 'pending' | 'synced'>()
+
+const pendingFullSync = new Set<string>()
+const pendingRangeTopUps: Array<{ marketId: string; range: RangeKey }> = []
+
+// Serializes every fetch operation through one chain so a debounced flush,
+// an on-demand top-up, and the periodic tick can never run concurrently and
+// step on each other's in-flight decisions.
+let queue: Promise<void> = Promise.resolve()
+function enqueue(task: () => Promise<void>) {
+  queue = queue.then(task).catch((err) => console.error('[marketStore] task failed:', err))
+}
+
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
-function scheduleCycle() {
+function scheduleFlush() {
   if (debounceTimer) return
   debounceTimer = setTimeout(() => {
     debounceTimer = null
-    runCycle().catch((err) => console.error('[marketStore] cycle failed:', err))
+    enqueue(flushPending)
   }, DEBOUNCE_MS)
+}
+
+async function flushPending(): Promise<void> {
+  const fullSyncTargets = [...pendingFullSync]
+  pendingFullSync.clear()
+  const topUps = pendingRangeTopUps.splice(0, pendingRangeTopUps.length)
+
+  await Promise.all(
+    fullSyncTargets.map(async (marketId) => {
+      await refreshMarket(marketId, [...(wantedMarketRanges.get(marketId) ?? [])], 5, bumpAndNotify)
+      marketSyncState.set(marketId, 'synced')
+    }),
+  )
+  await Promise.all(
+    topUps.map(({ marketId, range }) => refreshMarketRange(marketId, range, 5, bumpAndNotify)),
+  )
+  if (wantedTickers.size > 0) {
+    await refreshTickers([...wantedTickers], 5, bumpAndNotify)
+  }
+}
+
+/** Periodic resync: re-decides every wanted market fresh (self-healing a
+ * stuck proxy once Yahoo recovers, or vice versa) and refreshes every
+ * currently-wanted range under that one decision, atomically per market. */
+async function periodicResync(): Promise<void> {
+  const marketIds = [...wantedMarketRanges.keys()]
+  await Promise.all(
+    marketIds.map(async (marketId) => {
+      await refreshMarket(marketId, [...(wantedMarketRanges.get(marketId) ?? [])], 5, bumpAndNotify)
+      marketSyncState.set(marketId, 'synced')
+    }),
+  )
+  if (wantedTickers.size > 0) {
+    await refreshTickers([...wantedTickers], 5, bumpAndNotify)
+  }
 }
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 function ensurePolling() {
   if (pollTimer) return
   pollTimer = setInterval(() => {
-    runCycle().catch((err) => console.error('[marketStore] cycle failed:', err))
+    enqueue(periodicResync)
   }, POLL_INTERVAL_MS)
-}
-
-let cycleInFlight: Promise<void> | null = null
-function runCycle(): Promise<void> {
-  if (cycleInFlight) return cycleInFlight
-  cycleInFlight = (async () => {
-    const marketIds = [...wantedMarketRanges.keys()]
-    await Promise.all(
-      marketIds.map((marketId) =>
-        refreshMarket(marketId, [...(wantedMarketRanges.get(marketId) ?? [])], 5, bumpAndNotify),
-      ),
-    )
-    if (wantedTickers.size > 0) {
-      await refreshTickers([...wantedTickers], 5, bumpAndNotify)
-    }
-  })()
-  return cycleInFlight.finally(() => {
-    cycleInFlight = null
-  })
 }
 
 export function wantMarketQuote(marketId: string) {
   const isNew = !wantedMarketRanges.has(marketId)
-  if (isNew) wantedMarketRanges.set(marketId, new Set())
+  if (isNew) {
+    wantedMarketRanges.set(marketId, new Set())
+    marketSyncState.set(marketId, 'pending')
+    pendingFullSync.add(marketId)
+    scheduleFlush()
+  }
   ensurePolling()
-  if (isNew) scheduleCycle()
 }
 
 export function wantMarketSeries(marketId: string, range: RangeKey) {
@@ -106,14 +142,30 @@ export function wantMarketSeries(marketId: string, range: RangeKey) {
   const isNewRange = !ranges.has(range)
   ranges.add(range)
   ensurePolling()
-  if (isNewMarket || isNewRange) scheduleCycle()
+
+  if (isNewMarket) {
+    marketSyncState.set(marketId, 'pending')
+    pendingFullSync.add(marketId)
+    scheduleFlush()
+    return
+  }
+  if (!isNewRange) return
+
+  if (marketSyncState.get(marketId) === 'synced') {
+    pendingRangeTopUps.push({ marketId, range })
+    scheduleFlush()
+  }
+  // Otherwise a full sync for this market is already queued or in flight —
+  // it will read this range from wantedMarketRanges when it runs, or (if
+  // already mid-flight) the range simply arrives on the next periodic tick.
+  // Either way, never a second decision racing the first.
 }
 
 export function wantTickerQuote(symbol: string) {
   const isNew = !wantedTickers.has(symbol)
   wantedTickers.add(symbol)
   ensurePolling()
-  if (isNew) scheduleCycle()
+  if (isNew) scheduleFlush()
 }
 
 // --- Snapshots ---------------------------------------------------------------
