@@ -30,8 +30,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # API keys come from repository secrets, injected only at build time.
+      # Note: VITE_-prefixed variables are bundled into the client JS — that's
+      # acceptable for the rate-limited free-tier Twelve Data key, and the
+      # optional OpenAI key must be a restricted/low-limit key for the same
+      # reason. Never echo these values in workflow logs.
       - name: Build
         run: npm run build
+        env:
+          VITE_TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          VITE_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
