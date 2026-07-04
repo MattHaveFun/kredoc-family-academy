@@ -43,7 +43,7 @@ function NavBar() {
   const [open, setOpen] = useState(false)
   const { status, fetchedAt } = useFeedStatus()
   const style = STATUS_STYLE[status]
-  const label = status === 'live' ? 'LIVE DATA' : describeStatus(status, fetchedAt)
+  const label = describeStatus(status, fetchedAt)
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `relative rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-200 ${

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SECTORS } from '../data/sectors'
 import { useQuotes } from '../hooks/useQuotes'
 import DataBadge from './DataBadge'
+import InfoDisclosure from './InfoDisclosure'
 
 const SECTOR_ETFS = SECTORS.map((s) => s.etf)
 
@@ -76,6 +77,12 @@ function SectorHeatMap() {
           )
         })}
       </div>
+
+      <InfoDisclosure
+        what="Each tile is one of the market's 11 GICS sectors — Tech, Healthcare, Energy, and the rest — tracked through its SPDR sector ETF and colored by how far it moved today. Deeper green or red means a bigger swing."
+        why="The overall market can look flat while sectors underneath it tell completely different stories — energy roaring while tech slumps, or vice versa. Watching which sectors lead or lag is how professionals tell whether a rally is broad and healthy or narrow and fragile."
+        academyAnchor="indices-vs-stocks"
+      />
     </div>
   )
 }

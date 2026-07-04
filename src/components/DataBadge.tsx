@@ -18,8 +18,8 @@ const STYLES: Record<DataStatus, { className: string; dot: string; pulse: boolea
   },
 }
 
-// The site's honesty label: every market number carries LIVE, CACHED · Xm
-// ago, or DATA UNAVAILABLE — never a fake feed dressed up as real.
+// The site's honesty label: every market number carries TODAY'S CLOSE, CACHED
+// · Xm ago, or DATA UNAVAILABLE — never a fake feed dressed up as real.
 function DataBadge({ status, fetchedAt, compact = false }: DataBadgeProps) {
   const style = STYLES[status]
   const label = describeStatus(status, fetchedAt)

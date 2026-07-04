@@ -4,6 +4,7 @@ import { SECTORS } from '../data/sectors'
 import { useQuotes } from '../hooks/useQuotes'
 import { useSeries } from '../hooks/useSeries'
 import { useMarketQuote } from '../hooks/useMarketQuote'
+import InfoDisclosure from './InfoDisclosure'
 
 // One number for "how does the market feel today," blended from three real
 // signals:
@@ -159,6 +160,12 @@ function MarketMoodGauge() {
         <span>Neutral</span>
         <span className="text-up/80">Euphoria</span>
       </div>
+
+      <InfoDisclosure
+        what="One number, 0 to 100, blended from three real signals: the VIX (fear priced into options), the S&P 500's momentum versus its 20-day average, and how many of the 11 sectors closed green today."
+        why="Markets run on emotion as much as math. This gauge turns three separate signals into a single mood reading, so you can see at a glance when the crowd is fearful (historically often a buying opportunity) or euphoric (historically often a warning sign)."
+        academyAnchor="vix"
+      />
     </div>
   )
 }

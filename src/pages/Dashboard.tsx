@@ -42,8 +42,9 @@ function Dashboard() {
               Markets Dashboard
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-              A live console for the numbers that dominate financial headlines — every one of them
-              explained in plain English one hover away. Not investment advice.
+              A console for the numbers that dominate financial headlines, updated once a trading
+              day — every one of them explained in plain English one hover away. Not investment
+              advice.
             </p>
           </div>
 

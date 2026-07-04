@@ -32,6 +32,8 @@ export interface Lesson {
   tagline: string
   /** Live chart hook: MARKET_SYMBOLS id whose mini-chart is shown on the surface layer. */
   marketId?: string
+  /** Flagged risk callout for unusually volatile assets — shown right under the surface layer. */
+  riskNote?: string
   surface: string // 1 paragraph, always visible
   middle: string[] // 2–3 paragraphs: analogies, history, why a 22-year-old should care
   deep: string[] // mechanics, edge cases, what professionals actually watch
@@ -360,6 +362,8 @@ export const LESSONS: Lesson[] = [
     marketId: 'bitcoin',
     surface:
       'Bitcoin is a decentralized digital currency — no central bank, no company, no CEO. It runs on a public ledger (the blockchain) maintained by a global swarm of computers, its supply is capped at 21 million coins by code, and it trades 24/7/365. There is no closing bell, no earnings report, and no customer service line.',
+    riskNote:
+      'Bitcoin routinely moves 5–10% in a single day and has lost 50–80% of its value four separate times — swings that would be front-page financial news for the S&P 500 are an ordinary Tuesday here. It has recovered to new highs every time so far, but "so far" is doing a lot of work in that sentence. Only put in money you could watch drop 80% without it changing your life.',
     middle: [
       'The most useful way to study Bitcoin here isn\'t "should I buy it" — it\'s as a contrast agent. Stocks have cash flows you can value; Bitcoin has only what the next person will pay. That makes it the purest live experiment in belief-driven pricing ever run, and watching it teaches you how much of ALL asset pricing is psychology.',
       'The volatility is the tuition and the lesson: Bitcoin has lost 50–80% of its value four separate times — and recovered to new highs each time so far. People who sized their bets to survive the drops did fine historically; people who bet rent money learned about leverage and liquidation the expensive way. "So far" is load-bearing: four recoveries is a pattern, not a law of physics.',

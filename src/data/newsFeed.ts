@@ -45,12 +45,12 @@ const NEWS_CACHE_KEY = 'kredoc.news.v1'
 const NEWS_TTL_MS = 30 * 60 * 1000
 const FETCH_TIMEOUT_MS = 8_000
 
-// Shown when every live feed is unreachable — honest pointers, not fake news.
+// Shown when every feed is unreachable — honest pointers, not fake news.
 const FALLBACK_SNIPPETS: NewsSnippet[] = FEED_SOURCES.map((f) => ({
   source: f.source,
   sourceInitial: f.sourceInitial,
   title: `${f.source} — latest market coverage`,
-  summary: 'Live headlines are unreachable right now. Tap through to read what the pros are covering directly at the source.',
+  summary: 'Headlines are unreachable right now. Tap through to read what the pros are covering directly at the source.',
   link: f.homepage,
 }))
 

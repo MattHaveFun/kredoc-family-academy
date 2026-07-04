@@ -88,7 +88,11 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
             </button>
           ))}
         </div>
-        <ChartTypeToggle value={chartType} onChange={setChartType} />
+        <ChartTypeToggle
+          value={chartType}
+          onChange={setChartType}
+          onLearnMore={() => setConceptId('chart-type')}
+        />
       </div>
 
       <div className="p-4 sm:p-6">

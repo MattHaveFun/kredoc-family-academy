@@ -90,12 +90,9 @@ export function peekQuote(symbol: string): QuoteResult {
 }
 
 // --- Badge helpers ------------------------------------------------------------
-// NOTE: still labels the freshest state "LIVE" for now — that wording (and
-// the red/green treatment) is being revisited in the copy/content pass that
-// was explicitly sequenced after this data-layer swap, not skipped.
-/** Human label for a badge: "LIVE", "CACHED · Xm ago" / "· Xh ago" / "· Xd ago", or "DATA UNAVAILABLE". */
+/** Human label for a badge: "TODAY'S CLOSE", "CACHED · Xm ago" / "· Xh ago" / "· Xd ago", or "DATA UNAVAILABLE". */
 export function describeStatus(status: DataStatus, fetchedAt: number | null): string {
-  if (status === 'live') return 'LIVE'
+  if (status === 'live') return "TODAY'S CLOSE"
   if (status === 'cached' && fetchedAt) {
     const mins = Math.max(0, Math.round((Date.now() - fetchedAt) / 60_000))
     if (mins < 1) return 'CACHED · just now'

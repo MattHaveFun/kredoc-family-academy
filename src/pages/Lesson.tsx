@@ -269,6 +269,14 @@ function Lesson() {
             </p>
             <p className="mt-5 text-[15px] leading-relaxed text-slate-300">{lesson.surface}</p>
             {lesson.marketId && <LessonMiniChart marketId={lesson.marketId} />}
+            {lesson.riskNote && (
+              <div className="mt-5 rounded-2xl border border-down/25 bg-down/[0.06] p-4 sm:p-5">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-down">
+                  ⚠ Volatility risk
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-300">{lesson.riskNote}</p>
+              </div>
+            )}
           </header>
 
           {/* MIDDLE + DEEP LAYERS */}

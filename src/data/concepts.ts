@@ -132,6 +132,23 @@ export const CHART_CONCEPTS: Record<string, ChartConcept> = {
     aiPrompt:
       'Explain "support levels" in charts, why panic selling clusters at market lows, and what behavioral finance says about why humans are wired to sell at exactly the wrong time.',
   },
+  'chart-type': {
+    id: 'chart-type',
+    name: 'Line vs. Candlestick',
+    tagline: 'Same price data, two different lenses.',
+    hover: 'LINE connects only the closes into one smooth trend. CANDLES show open/high/low/close for every period — more detail, more noise.',
+    paragraphs: [
+      'A line chart connects only the closing prices, one point per period, into a single smooth curve. It\'s the cleanest way to see the big picture — is this thing trending up, down, or sideways — with no distraction.',
+      'A candlestick chart plots four prices per period instead of one: open, high, low, and close. Each candle is a compressed battle report between buyers and sellers, which is why professional traders default to candles once they\'re reading for more than just direction.',
+      'Neither view is more "correct" — they\'re the same underlying data at different resolutions. A line chart is a zoomed-out summary; candles are the zoomed-in blow-by-blow. Zoom out to judge the trend, zoom in to judge the fight.',
+      'A practical rule: if you\'re deciding whether to check on an investment at all, the line chart is enough. If you\'re studying how a specific move happened — who won, how convincingly — candles are where the story lives.',
+    ],
+    scenario:
+      'Wendy Wealthbuilder glances at the line chart on her index fund twice a year and moves on with her life. Max Momentum stares at candlestick charts every morning trying to divine the market\'s mood from wicks on a fund he\'s holding for the next 30 years. Both funds performed identically. Only one of them lost sleep over it.',
+    connects: ['candlesticks', 'sp500'],
+    aiPrompt:
+      'Explain the practical differences between reading a line chart and a candlestick chart, when professional traders prefer each, and why a long-term investor usually only needs the line.',
+  },
   close: {
     id: 'close',
     name: 'Close',
