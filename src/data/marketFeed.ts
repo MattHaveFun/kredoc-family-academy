@@ -224,6 +224,32 @@ function marketSeriesKey(marketId: string, range: RangeKey): string {
   return `ms|${marketId}|${range}`
 }
 
+// --- Cross-request source pinning --------------------------------------------
+// A market's quote and its six range series (1D…5Y) are each fetched as
+// separate network requests, cached and resolved independently. Yahoo goes
+// through public CORS relays with no formal rate limit but observed 429s/
+// timeouts under load (see yahooFinance.ts), so it's entirely possible for
+// one of those independent requests to succeed via Yahoo (the true index
+// level, e.g. IXIC ~25,000) while another fails over to Twelve Data's ETF
+// proxy (e.g. QQQ ~$700) — showing two wildly different "current values" for
+// the same symbol on screen at once. Once any request for a market learns
+// which source actually answered, pin that source for the rest so sibling
+// requests (other ranges, the quote, other components) agree with it instead
+// of independently re-rolling the Yahoo/proxy dice.
+const SOURCE_PIN_MS = 5 * 60 * 1000
+const sourceDecisions = new Map<string, { proxyNote: string | null; decidedAt: number }>()
+
+/** undefined = no recent decision (try Yahoo as usual); null = Yahoo was pinned; string = proxy note was pinned. */
+function pinnedProxyNote(marketId: string): string | null | undefined {
+  const decision = sourceDecisions.get(marketId)
+  if (!decision || Date.now() - decision.decidedAt > SOURCE_PIN_MS) return undefined
+  return decision.proxyNote
+}
+
+function pinSource(marketId: string, proxyNote: string | null) {
+  sourceDecisions.set(marketId, { proxyNote, decidedAt: Date.now() })
+}
+
 export function peekMarketQuote(marketId: string): MarketQuoteResult {
   return peekQuoteResult(marketQuoteKey(marketId))
 }
@@ -240,9 +266,10 @@ export async function getMarketQuote(marketId: string, priority = 5): Promise<Ma
   }
 
   const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
+  const tryYahoo = Boolean(yahooSymbol) && typeof pinnedProxyNote(marketId) !== 'string'
 
-  return resolveQuote(key, [
-    ...(yahooSymbol
+  const result = await resolveQuote(key, [
+    ...(tryYahoo
       ? [
           async (): Promise<FetchOutcome<Quote>> => {
             const q = await fetchYahooQuote(yahooSymbol)
@@ -270,6 +297,9 @@ export async function getMarketQuote(marketId: string, priority = 5): Promise<Ma
       return { value: td.quote, proxyNote: td.proxyNote }
     },
   ])
+
+  if (result.status === 'live') pinSource(marketId, result.proxyNote)
+  return result
 }
 
 export async function getMarketSeries(marketId: string, range: RangeKey, priority = 5): Promise<MarketSeriesResult> {
@@ -280,9 +310,10 @@ export async function getMarketSeries(marketId: string, range: RangeKey, priorit
   }
 
   const yahooSymbol = YAHOO_MARKET_SYMBOL[marketId]
+  const tryYahoo = Boolean(yahooSymbol) && typeof pinnedProxyNote(marketId) !== 'string'
 
-  return resolveSeries(key, [
-    ...(yahooSymbol
+  const result = await resolveSeries(key, [
+    ...(tryYahoo
       ? [async (): Promise<FetchOutcome<Candle[]>> => ({ value: await fetchYahooSeries(yahooSymbol, range), proxyNote: null })]
       : []),
     async (): Promise<FetchOutcome<Candle[]>> => {
@@ -291,6 +322,9 @@ export async function getMarketSeries(marketId: string, range: RangeKey, priorit
       return { value: td.candles, proxyNote: td.proxyNote }
     },
   ])
+
+  if (result.status === 'live') pinSource(marketId, result.proxyNote)
+  return result
 }
 
 // --- Plain tickers (watchlist stocks, sector ETFs) ---------------------------
