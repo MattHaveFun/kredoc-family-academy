@@ -207,7 +207,7 @@ async function buildTickers(): Promise<Record<string, Quote>> {
   return Object.fromEntries([...sectorEntries, ...watchlistEntries])
 }
 
-const SYSTEM_PROMPT = `You write a short daily markets narrative for a family financial-literacy site read by smart, curious 20-year-olds. Voice: Morgan Housel meets Morning Brew — warm, plainspoken, lightly irreverent, stories over jargon. Rules: 200-300 words. No financial advice, ever — educate about how to think, never what to buy. Be honest about uncertainty ("historically this has tended to…" not "this means…"). Always land on "so what does this mean for your life" for a young adult. No headers, no bullet lists, just 2-4 short paragraphs. This is describing the PREVIOUS trading day's close, not live/intraday action — write accordingly (e.g. "yesterday" / the given date, never "right now" or "today so far").`
+const SYSTEM_PROMPT = `You write a short daily markets narrative for a family financial-literacy site read by smart, curious 20-year-olds. Voice: Morgan Housel meets Morning Brew — warm, plainspoken, lightly irreverent, stories over jargon. Rules: aim for about 220-250 words — stop with a complete, landed final sentence well before any length limit, never mid-thought. No financial advice, ever — educate about how to think, never what to buy. Be honest about uncertainty ("historically this has tended to…" not "this means…"). Always land on "so what does this mean for your life" for a young adult. No headers, no bullet lists, just 2-4 short paragraphs. This is describing the PREVIOUS trading day's close, not live/intraday action — write accordingly (e.g. "yesterday" / the given date, never "right now" or "today so far").`
 
 async function generateNarrative(env: Env, day: string, markets: Record<string, MarketEntry>): Promise<DailyPayload['narrative']> {
   const snapshot = Object.values(markets)
@@ -228,7 +228,15 @@ async function generateNarrative(env: Env, day: string, markets: Record<string, 
               parts: [{ text: `Market close for ${day}: ${snapshot}. Write today's "what it actually means" narrative.` }],
             },
           ],
-          generationConfig: { maxOutputTokens: 500 },
+          // gemini-flash-latest thinks by default, and thinking tokens are
+          // deducted from maxOutputTokens — that silent budget contention is
+          // what was truncating the narrative mid-sentence. Disable thinking
+          // (not needed for writing a short narrative) so the whole budget
+          // goes to visible text, with headroom above the ~250-word target.
+          generationConfig: {
+            maxOutputTokens: 700,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       },
     )
