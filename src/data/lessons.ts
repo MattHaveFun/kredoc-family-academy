@@ -5,7 +5,7 @@
 // Writing rules (see project voice guidelines): stories first, plain English
 // always, honest about uncertainty, never financial advice, never preachy.
 
-export type LessonCategory = 'index' | 'volatility' | 'crypto' | 'chart-literacy' | 'foundations'
+export type LessonCategory = 'index' | 'volatility' | 'crypto' | 'chart-literacy' | 'foundations' | 'commodity' | 'rates'
 
 export type LearningMode = 'gut-check' | 'real-scenario' | 'myth-vs-reality'
 
@@ -56,7 +56,7 @@ export const CHAPTERS: Chapter[] = [
   {
     number: 1,
     title: 'Reading the Market',
-    subtitle: 'The nine ideas that turn a wall of numbers into a story you can follow.',
+    subtitle: 'The ideas that turn a wall of numbers into a story you can follow.',
   },
 ]
 
@@ -172,7 +172,7 @@ export const LESSONS: Lesson[] = [
       explanation:
         'Close enough for headlines, wrong enough to matter. The Nasdaq is an exchange — a venue where stocks list — and it hosts plenty of non-tech companies (Costco, PepsiCo, Marriott). Meanwhile lots of "tech" lives elsewhere. The tech tilt is real; the equivalence is lazy.',
     },
-    connects: ['sp500', 'vix', 'indices-vs-stocks'],
+    connects: ['sp500', 'vix', 'indices-vs-stocks', 'tnx'],
     aiPrompt:
       'Walk me through the 2000 dot-com crash: what inflated the bubble, what popped it, how long recovery took, and what a 22-year-old investing today should actually take away from it.',
     depth: 2,
@@ -346,7 +346,7 @@ export const LESSONS: Lesson[] = [
       explanation:
         'Backwards, historically. Extreme VIX spikes cluster near market BOTTOMS, not the start of declines — by the time fear is that expensive, much of the selling has often happened. Extremely LOW readings, oddly, deserve more suspicion. None of this is a timing tool; it\'s a reminder that crowd emotion peaks at exactly the wrong moments.',
     },
-    connects: ['sp500', 'candlesticks', 'volume'],
+    connects: ['sp500', 'candlesticks', 'volume', 'gold'],
     aiPrompt:
       'Explain how the VIX is actually calculated from options prices in plain English, what "contango" and "backwardation" in VIX futures mean, and tell the story of the February 2018 "Volmageddon" blowup.',
     depth: 3,
@@ -406,7 +406,7 @@ export const LESSONS: Lesson[] = [
       explanation:
         'It\'s pseudonymous, which is nearly the opposite: every transaction ever made is public, forever, on the blockchain. Addresses aren\'t names, but once an address links to an identity (an exchange account, a purchase), the entire history unspools. Law enforcement has gotten very good at exactly this.',
     },
-    connects: ['nasdaq', 'vix', 'volume'],
+    connects: ['nasdaq', 'vix', 'volume', 'gold'],
     aiPrompt:
       'Explain how Bitcoin\'s proof-of-work actually secures the ledger without a central authority, what the halving is, and steelman both the strongest bull case and strongest bear case for Bitcoin as a long-term asset.',
     depth: 3,
@@ -585,6 +585,182 @@ export const LESSONS: Lesson[] = [
       'Explain Hendrik Bessembinder\'s research finding that most stocks underperform treasury bills, what it implies about diversification, and the strongest counterargument a skilled stock-picker would make.',
     depth: 3,
   },
+  {
+    id: 'gold',
+    chapter: 1,
+    order: 10,
+    category: 'commodity',
+    tag: 'Commodity',
+    title: 'Gold',
+    tagline: "The oldest trade in the world: money nobody can print more of.",
+    marketId: 'gold',
+    surface:
+      "Gold doesn't pay a dividend, doesn't grow earnings, and doesn't build anything — it just sits there, shiny, the way it has for six thousand years. What's tracked here is the front-month futures price for one troy ounce, the same contract traders use to bet on where gold is headed next. And yet, in every currency crisis, every war, every moment central banks lose the room's trust, humans reach for the same yellow metal their ancestors did.",
+    middle: [
+      "The case for owning gold isn't growth — it's insurance. When stocks, bonds, and currencies all wobble at once (a genuine crisis, not a routine dip), gold has historically been one of the few assets that holds its footing or even rises, because it's nobody's liability. A stock can go bankrupt. A bond can default. Gold just is what it is, no counterparty required.",
+      "The honest complication: gold pays you nothing while you hold it, and over long stretches — decades at a time — it has badly lagged stocks. From 1980 to 2000, gold went essentially nowhere while the S&P 500 multiplied many times over. Gold's job in a portfolio isn't 'grow your money'; it's 'zig when everything else zags,' and that job only shows its value during the exact years everyone least expects to need it.",
+      "Why care at 22? Because gold is the cleanest real-world lesson in what 'store of value' actually means, separate from 'growth investment.' Every generation rediscovers this distinction the hard way — usually during the one crisis nobody saw coming.",
+    ],
+    deep: [
+      "Mechanics: what's quoted here is a COMEX futures contract, not a bar of metal in a vault. Futures expire and get 'rolled' into the next contract monthly, which is why professional gold-tracking funds (like GLD) actually hold physical bullion instead — futures rolling has its own cost and quirks that a spot-price chart doesn't show.",
+      "The single best predictor of gold's price, more than inflation headlines, is real interest rates — the yield on inflation-protected Treasury bonds. When real yields fall (cash and bonds pay less after inflation), gold's 'costs nothing to hold, but also pays nothing' downside shrinks, and it tends to rise. When real yields climb, gold usually struggles. Watch the 10-year Treasury real yield, not the CPI report, if you want to understand a gold move.",
+      "What professionals actually watch: central bank buying. Governments (China, India, and dozens of others) have been net buyers of gold reserves for over a decade, partly to diversify away from holding U.S. dollars — a slow-moving geopolitical story that shows up in gold's price long before it shows up in headlines.",
+      "Edge case worth knowing: gold's 'inflation hedge' reputation is weaker than the pitch. Over any single decade, its correlation with inflation is inconsistent — it has underperformed during some genuine inflationary stretches and outperformed during calm ones. The reputation survives on a handful of dramatic examples (1970s stagflation) doing a lot of narrative work.",
+    ],
+    scenario:
+      "Gary Goldbug moved a third of his portfolio into gold in 2011, convinced hyperinflation was one Fed meeting away. It wasn't, and gold went sideways for the next decade while everything else compounded without him. Nora Nestegg kept a boring 5% sliver of gold through the same years — never enough to notice, never enough to regret — until a real crisis a decade later made that 5% the only part of her portfolio that was up. Neither of them 'won.' Sizing, not conviction, was the actual variable.",
+    gutCheck: {
+      prompt: 'Gold is best understood in a portfolio as…',
+      options: [
+        'A growth investment that should compound like stocks over decades',
+        'A form of insurance that tends to hold up when other assets are falling, at the cost of paying no income while you wait',
+        'A guaranteed hedge against inflation in any given year',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Gold's history is long stretches of doing nothing punctuated by real crises where it holds value while other assets don't. That's a genuinely different job than 'grow my money,' and judging it by stock-market standards misses the point.",
+    },
+    realScenario: {
+      prompt:
+        'Stocks, bonds, and the dollar are all falling together during a crisis, but gold is up 8% this month. What\'s the most likely explanation?',
+      options: [
+        "A data error — assets don't diverge like that",
+        'Investors are fleeing to an asset with no issuer and no counterparty risk while confidence in paper assets wobbles',
+        'Gold mining companies just reported strong earnings',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is gold's classic moment: when trust in currencies, governments, or the financial system itself is being questioned, an asset that isn't anyone's promise to pay becomes unusually attractive. Mining company earnings barely move the futures price.",
+    },
+    mythVsReality: {
+      statement: 'Gold is a reliable hedge against inflation — when prices rise, gold rises with them.',
+      isMyth: true,
+      explanation:
+        "It's a popular pitch with a shaky report card. Gold did spectacularly well during 1970s stagflation, which cemented the reputation — but across many other inflationary periods since, the correlation has been weak or even negative over multi-year stretches. What gold reliably responds to is falling real interest rates and crises of confidence, which often — but not always — overlap with inflation.",
+    },
+    connects: ['tnx', 'bitcoin', 'vix'],
+    aiPrompt:
+      "Explain why real interest rates predict gold's price better than the inflation rate does, walk through gold's actual performance during the 1970s versus the 1980-2000 period, and steelman the case for and against holding gold today.",
+    depth: 2,
+  },
+  {
+    id: 'oil',
+    chapter: 1,
+    order: 11,
+    category: 'commodity',
+    tag: 'Commodity',
+    title: 'WTI Crude Oil',
+    tagline: 'The barrel price that quietly sets what everything costs to make and move.',
+    marketId: 'oil',
+    riskNote:
+      "Oil is one of the most genuinely volatile things tracked on this dashboard — prices have swung 10%+ in a single day on OPEC news, wars, and demand shocks. In April 2020, WTI futures did something that had never happened before: the price went NEGATIVE, closing around -$37 a barrel, because traders holding expiring contracts had nowhere to physically store the oil and had to pay someone to take it off their hands. It recovered within weeks. Unlike a stock, there's no company management or fundamentals meeting behind this price — just the raw math of barrels versus buyers.",
+    surface:
+      'WTI crude oil is the U.S. benchmark price for one barrel (42 gallons) of light, sweet crude — the raw material that becomes gasoline, jet fuel, plastics, and a thousand things in between. Unlike a stock index, oil is a physical commodity: someone, somewhere, eventually has to take delivery of an actual barrel, and that physical reality occasionally breaks the market in ways no stock ever could.',
+    middle: [
+      "Oil is unusual among the assets on this dashboard because it's consumed, not just traded. Every barrel produced eventually gets burned, refined, or used up — which means price is set by a genuine tug-of-war between how much the world is pumping and how much it's burning, refereed by however much storage capacity exists in between.",
+      "Why a 22-year-old should care regardless of whether you'll ever trade a futures contract: oil prices move inflation reports, gas station prices, and airline ticket costs faster and more directly than almost anything else in markets. When oil spikes, the Fed's inflation fight gets harder overnight — a connection worth having in your head the next time a Middle East headline breaks.",
+      "The energy sector (ticker XLE on the sector heat map) is Wall Street's most direct way to bet on oil without touching a futures contract — energy company profits track the oil price closely, since it's literally what they sell.",
+    ],
+    deep: [
+      "Mechanics behind the 2020 negative-price event: WTI futures are contracts to buy oil at a specific delivery point (Cushing, Oklahoma) on a specific date. When a contract nears expiration, whoever still holds it either takes physical delivery or sells to someone who will. In April 2020, COVID had crushed demand so completely that storage tanks at Cushing were nearly full — nobody wanted the oil, so holders paid buyers to take the contracts off their hands rather than be stuck owning barrels with nowhere to put them. It's a plumbing problem, not proof oil is 'worthless' — the very next contract month traded around $20.",
+      "WTI vs. Brent: WTI is the U.S. benchmark; Brent crude (North Sea) is the global one, and headlines often quote whichever is more dramatic that week. They usually track closely but can diverge on regional supply disruptions — a useful reminder that 'the price of oil' is actually several related but distinct numbers.",
+      "What professionals actually watch: OPEC+ production quotas (a cartel of oil-exporting nations that deliberately restricts supply to support prices), weekly U.S. inventory reports from the EIA (a build means more supply than expected, a draw means less), and rig counts as a lagging signal of how much new supply is coming.",
+      "Edge case worth knowing: oil demand is famously 'inelastic' in the short run — people still need to drive to work and fly to see family even when gas is expensive — which is why supply shocks (a war, a pipeline outage) move the price so much faster and harder than a slow shift in demand ever does.",
+    ],
+    scenario:
+      "Ollie Overleveraged bought oil futures on margin in early 2020 because 'oil always bounces back,' and got wiped out by the negative-price plumbing crisis he'd never heard of before it happened. Diane Diversified owned a small energy-sector ETF position, sized so a total sector wipeout wouldn't change her retirement date, rode out the same crash, and quietly bought more near the bottom. The lesson wasn't about oil — it was about the difference between a leveraged bet on a mechanism you don't understand and a sized position in a sector you do.",
+    gutCheck: {
+      prompt: 'What made oil prices briefly turn negative in April 2020?',
+      options: [
+        'The government banned oil sales',
+        'Storage capacity at the delivery point nearly ran out, so holders of expiring contracts paid buyers to take the oil rather than be stuck storing it',
+        'A calculation error at the exchange',
+      ],
+      answerIndex: 1,
+      explanation:
+        'It was a real, physical plumbing problem: with demand collapsed and tanks nearly full, some contract holders found it cheaper to pay someone else to take delivery than to find somewhere to put the oil themselves. Prices recovered within weeks once the immediate storage crunch eased.',
+    },
+    realScenario: {
+      prompt:
+        'A war breaks out in a major oil-producing region and WTI jumps 12% in a day, while the S&P 500 only drops 1%. Why does oil move so much harder?',
+      options: [
+        'Oil traders panic more than stock traders',
+        "Oil demand is inelastic short-term, so supply shocks translate almost directly into price — there's no quick substitute for a barrel of crude",
+        "The S&P 500 doesn't include any energy companies",
+      ],
+      answerIndex: 1,
+      explanation:
+        "Because people and industries can't quickly reduce how much oil they use, a supply disruption has to be absorbed almost entirely through price. The S&P 500 does include energy companies (and often rises on their behalf even as the broader market wobbles) — but oil itself is the more direct, more violent way to price the same shock.",
+    },
+    mythVsReality: {
+      statement: 'Oil going negative in 2020 proved oil was worthless and about to collapse permanently.',
+      isMyth: true,
+      explanation:
+        "It proved the opposite of permanence — it was a narrow, mechanical glitch in one expiring futures contract at one delivery point, driven by a temporary storage crunch. The very next month's contract traded positive, around $20, and oil recovered to pre-pandemic levels within about a year. A great story; a bad basis for a long-term call.",
+    },
+    connects: ['gold', 'vix', 'indices-vs-stocks'],
+    aiPrompt:
+      'Explain exactly how WTI crude oil futures went negative in April 2020 — the mechanics of contract expiration and storage constraints — and how OPEC+ production decisions influence the oil price in normal times.',
+    depth: 3,
+  },
+  {
+    id: 'tnx',
+    chapter: 1,
+    order: 12,
+    category: 'rates',
+    tag: 'Rates',
+    title: 'The 10-Year Treasury Yield',
+    tagline: 'The interest rate that quietly prices everything else in finance.',
+    marketId: 'tnx',
+    surface:
+      "When the U.S. government needs to borrow money for 10 years, it sells bonds — and the interest rate it has to offer to attract buyers is the 10-year Treasury yield. It's tracked here as a percentage (not a dollar price), and it's arguably the single most important number in all of finance: nearly every other interest rate in the economy — mortgages, car loans, corporate bonds — is priced as this yield plus some extra for additional risk.",
+    middle: [
+      "Here's the part that trips almost everyone up at first: bond PRICES and bond YIELDS move in opposite directions. When investors rush to buy Treasury bonds (demand goes up), the price rises — but because the bond's fixed interest payment is now split across a higher purchase price, the effective yield falls. When investors sell Treasuries, price falls and yield rises. 'Yields are up' and 'bond prices are down' are the same sentence in two different vocabularies.",
+      "Why does this one government interest rate move stock prices, especially growth and tech stocks? A stock's value is really a bet on all the cash it will earn for years into the future, converted into today's dollars. The 10-year yield is the ruler used for that conversion — a higher yield makes a dollar promised in 2035 worth less today, which hits companies whose profits are mostly years away (growth stocks) far harder than companies profitable right now. This is exactly the mechanism the Nasdaq lesson describes from the stock side; this lesson is the same idea from the interest-rate side.",
+      "Why care at 22? This yield sets your mortgage rate, your student loan refinancing rate, and the return your savings account competes against. When you hear 'the Fed cut rates,' the Fed only directly controls very short-term rates — the 10-year is set by the market's own guess about growth and inflation for the next decade, and it doesn't always follow the Fed's lead.",
+    ],
+    deep: [
+      "The yield curve — plotting yields across different bond maturities (3-month, 2-year, 10-year, 30-year) — is one of the most-watched shapes in finance. Normally, longer loans demand higher rates (more time, more risk). When short-term yields rise ABOVE long-term yields ('inversion'), it has historically preceded most U.S. recessions by 12-18 months, because it signals the market expects the Fed to eventually have to cut rates to fight a slowdown.",
+      "The Fed directly sets only the overnight federal funds rate; the 10-year yield is set by millions of daily trades reflecting collective bets on future growth, inflation, and Fed policy over the next decade. This is why the 10-year sometimes moves the OPPOSITE direction from a Fed rate decision — the market can decide the Fed's move changes its long-run outlook in a way that outweighs the immediate action.",
+      "What professionals actually watch: the '2s10s spread' (2-year yield minus 10-year yield) as the classic recession-warning gauge; TIPS breakeven rates (the gap between regular and inflation-protected Treasuries) as the market's real-time inflation forecast; and how the 10-year behaves during equity selloffs — falling yields alongside falling stocks usually means 'flight to safety' (investors buying bonds for protection), while RISING yields during a stock selloff is the more unusual, more concerning combination, suggesting inflation or credit fear rather than safety-seeking.",
+      "Edge case worth knowing: 'risk-free' is a convenient fiction, not a literal guarantee. U.S. Treasuries carry essentially zero default risk in practical terms, but they aren't free of price risk — a 10-year bond bought today can still lose significant market value if yields rise before it matures. 2022 delivered the worst year for long-term Treasury bond prices in modern history, a reminder that 'safe' and 'won't lose money' are not the same claim.",
+    ],
+    scenario:
+      "Terry Timing sold his S&P 500 index fund in 2022 the moment the 10-year yield crossed 4%, convinced rising rates meant an imminent crash, and sat in cash waiting for a bottom that arrived, then left without him. Priya Patient kept contributing to her index fund on the same schedule through the entire rate-hiking cycle, treating the yield chart as interesting background noise rather than a trading signal. Rates matter enormously to markets in the aggregate; they're a famously unreliable clock for any one person's decisions.",
+    gutCheck: {
+      prompt: 'When the 10-year Treasury yield rises, bond prices…',
+      options: [
+        'Also rise, since higher yields mean bonds are more valuable',
+        'Fall — yield and price move in opposite directions for a fixed-payment bond',
+        'Are unaffected, since yield and price are unrelated',
+      ],
+      answerIndex: 1,
+      explanation:
+        'A bond promises fixed future payments. If its price falls, those same fixed payments represent a bigger percentage return relative to what you paid — a higher yield. Price down, yield up, always, by definition.',
+    },
+    realScenario: {
+      prompt:
+        'The Fed cuts its short-term interest rate, but the next day the 10-year Treasury yield actually rises. What\'s the most likely explanation?',
+      options: [
+        'A market error that will correct itself',
+        "The market interpreted the cut as a sign the Fed is more worried about inflation risk ahead than expected, raising its own long-run rate expectations",
+        'The Fed and the 10-year yield always move in opposite directions',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The Fed only sets the overnight rate directly; the 10-year reflects the market's own forecast for growth and inflation over the next decade. A rate cut can sometimes read as 'the Fed sees trouble ahead' or 'inflation risk is being under-addressed,' pushing long-term yields up even as short-term rates fall.",
+    },
+    mythVsReality: {
+      statement: "U.S. Treasury bonds are risk-free — you can't lose money owning them.",
+      isMyth: true,
+      explanation:
+        "Default risk is essentially zero, but PRICE risk is real: if you need to sell a 10-year bond before maturity and yields have risen since you bought it, you sell at a loss. 2022 was the worst year for long-term Treasury prices in decades — a very expensive reminder that 'safe' means 'won't default,' not 'can't lose value.'",
+    },
+    connects: ['nasdaq', 'gold', 'sp500'],
+    aiPrompt:
+      'Explain the inverse relationship between bond prices and yields with a concrete numerical example, what yield curve inversion is and why it\'s watched as a recession signal, and why rising rates hit growth stocks harder than value stocks.',
+    depth: 3,
+  },
 ]
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]))
@@ -609,4 +785,6 @@ export const CATEGORY_META: Record<LessonCategory, { label: string; color: strin
   crypto: { label: 'Crypto', color: '#a78bfa' },
   'chart-literacy': { label: 'Chart Literacy', color: '#2dd4a7' },
   foundations: { label: 'Foundations', color: '#f472b6' },
+  commodity: { label: 'Commodities', color: '#fb923c' },
+  rates: { label: 'Bonds & Rates', color: '#22d3ee' },
 }

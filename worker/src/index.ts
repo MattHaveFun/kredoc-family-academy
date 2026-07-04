@@ -67,6 +67,9 @@ const MARKETS: Record<string, { yahoo: string; name: string }> = {
   russell2000: { yahoo: '^RUT', name: 'Russell 2000' },
   vix: { yahoo: '^VIX', name: 'CBOE Volatility Index' },
   bitcoin: { yahoo: 'BTC-USD', name: 'Bitcoin' },
+  gold: { yahoo: 'GC=F', name: 'Gold' },
+  oil: { yahoo: 'CL=F', name: 'WTI Crude Oil' },
+  tnx: { yahoo: '^TNX', name: '10-Year Treasury Yield' },
 }
 
 // Mirrors src/data/sectors.ts + src/data/companies.ts. BRK.B is Twelve-Data
@@ -157,7 +160,11 @@ function quoteFromChart(symbol: string, name: string, result: YahooChartResult, 
   const meta = result.meta
   const last = candles[candles.length - 1]
   const price = meta.regularMarketPrice ?? last?.close ?? 0
-  const previousClose = meta.previousClose ?? meta.chartPreviousClose ?? candles[candles.length - 2]?.close ?? price
+  // candles[-2] is the true prior trading day's close. Yahoo's chartPreviousClose
+  // is the close before the requested chart RANGE started (e.g. 5 years ago for a
+  // 5y/1d fetch) — not yesterday's close — so it must rank below the series itself,
+  // only used as a fallback when there's just one candle to work with.
+  const previousClose = candles[candles.length - 2]?.close ?? meta.previousClose ?? meta.chartPreviousClose ?? price
   return {
     symbol,
     name,

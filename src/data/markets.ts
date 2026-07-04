@@ -22,7 +22,7 @@ export interface MarketSymbol {
   id: string
   symbol: string
   name: string
-  assetClass: 'Index' | 'Volatility' | 'Crypto'
+  assetClass: 'Index' | 'Volatility' | 'Crypto' | 'Commodity' | 'Rate'
   what: string
   why: string
   academyAnchor: string // Academy lesson id
@@ -83,11 +83,44 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     why: 'It behaves nothing like a stock index — no closing bell, no earnings reports — making it a useful contrast for how differently assets can move.',
     academyAnchor: 'bitcoin',
   },
+  {
+    id: 'gold',
+    symbol: 'GOLD',
+    name: 'Gold',
+    assetClass: 'Commodity',
+    what: 'The price of one troy ounce of gold, tracked here through the front-month COMEX futures contract.',
+    why: 'Gold has served as a store of value for millennia and a "flight to safety" trade during crises — it tends to hold up, or even rise, when stocks and confidence in paper money wobble.',
+    academyAnchor: 'gold',
+  },
+  {
+    id: 'oil',
+    symbol: 'WTI',
+    name: 'WTI Crude Oil',
+    assetClass: 'Commodity',
+    what: 'The price of one barrel of West Texas Intermediate crude, tracked through the front-month NYMEX futures contract.',
+    why: 'Oil powers the physical economy — transportation, manufacturing, shipping — so its price ripples into gas prices, inflation reports, and corporate earnings faster than almost anything else in markets.',
+    academyAnchor: 'oil',
+  },
+  {
+    id: 'tnx',
+    symbol: 'US10Y',
+    name: '10-Year Treasury Yield',
+    assetClass: 'Rate',
+    what: 'The annualized interest rate the U.S. government pays to borrow money for 10 years — the benchmark "risk-free" yield the entire financial system prices against.',
+    why: 'Mortgage rates, corporate borrowing costs, and stock valuations all take their cue from this one number — when it rises, money gets more expensive everywhere at once.',
+    academyAnchor: 'tnx',
+  },
 ]
 
 export function formatPrice(value: number, assetClass: MarketSymbol['assetClass']): string {
   if (assetClass === 'Crypto') {
     return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+  }
+  if (assetClass === 'Commodity') {
+    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  if (assetClass === 'Rate') {
+    return `${value.toFixed(2)}%`
   }
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }

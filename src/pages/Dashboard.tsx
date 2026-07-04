@@ -21,6 +21,10 @@ function SectionRule({ title }: { title: string }) {
   )
 }
 
+const INDEX_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Index' || m.assetClass === 'Volatility' || m.assetClass === 'Crypto')
+const COMMODITY_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Commodity')
+const RATE_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Rate')
+
 function Dashboard() {
   const [selectedId, setSelectedId] = useState(MARKET_SYMBOLS[0].id)
   const { status, fetchedAt } = useFeedStatus()
@@ -81,7 +85,39 @@ function Dashboard() {
         <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
           <SectionRule title="All indices at a glance" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {MARKET_SYMBOLS.map((market, i) => (
+            {INDEX_SYMBOLS.map((market, i) => (
+              <MarketCard
+                key={market.id}
+                market={market}
+                index={i}
+                selected={market.id === selectedId}
+                onSelect={() => setSelectedId(market.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Zone 2b: commodities */}
+        <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
+          <SectionRule title="Commodities" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {COMMODITY_SYMBOLS.map((market, i) => (
+              <MarketCard
+                key={market.id}
+                market={market}
+                index={i}
+                selected={market.id === selectedId}
+                onSelect={() => setSelectedId(market.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Zone 2c: bonds & rates */}
+        <div className="mt-10 animate-fade-up" style={{ animationDelay: '140ms' }}>
+          <SectionRule title="Bonds & rates" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {RATE_SYMBOLS.map((market, i) => (
               <MarketCard
                 key={market.id}
                 market={market}
