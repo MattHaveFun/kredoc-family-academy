@@ -3,6 +3,7 @@ import { getNewsSnippets, type NewsResult } from '../data/newsFeed'
 import { getDailyNarrative, hasNarrativeKey, type NarrativeResult } from '../data/aiNarrative'
 import { SECTORS } from '../data/sectors'
 import { useQuotes } from '../hooks/useQuotes'
+import { useMarketQuote } from '../hooks/useMarketQuote'
 
 const SECTOR_ETFS = SECTORS.map((s) => s.etf)
 
@@ -13,7 +14,9 @@ function TodayInMarkets() {
   // Reuses the heat map's quotes (deduped + cached) to describe the day to
   // the narrative model — no extra API credits.
   const { results: sectorResults } = useQuotes(SECTOR_ETFS, 6)
-  const { results: vixResults } = useQuotes(useMemo(() => ['VIX'], []), 6)
+  // marketId-based (not a raw ticker): resolves to the true ^VIX index via
+  // Yahoo first, same as the mood gauge and daily brief.
+  const vixQuote = useMarketQuote('vix', 6)
 
   useEffect(() => {
     let cancelled = false
@@ -30,10 +33,11 @@ function TodayInMarkets() {
       const q = sectorResults[s.etf]?.quote
       return q ? [{ label: s.name, changePct: q.changePct }] : []
     })
-    const vix = vixResults['VIX']?.quote
+    // Only the genuine VIX level (not an ETF proxy) fits the "fear index" framing.
+    const vix = vixQuote.proxyNote === null ? vixQuote.quote : null
     if (vix) sectors.push({ label: 'VIX (fear index)', changePct: vix.changePct })
     return sectors
-  }, [sectorResults, vixResults])
+  }, [sectorResults, vixQuote])
 
   useEffect(() => {
     if (!hasNarrativeKey()) {

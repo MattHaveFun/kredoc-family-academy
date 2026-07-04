@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { DataStatus } from '../data/twelveDataService'
+import type { DataStatus } from '../data/marketFeed'
 
 interface FeedStatusValue {
   status: DataStatus

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useFeedStatus } from '../context/FeedStatusContext'
-import { describeStatus, type DataStatus } from '../data/twelveDataService'
+import { describeStatus, type DataStatus } from '../data/marketFeed'
 import ProfileChip from './ProfileChip'
 
 const LINKS = [

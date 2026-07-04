@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getQuotes, type DataStatus, type QuoteResult } from '../data/twelveDataService'
+import { getQuotes, peekQuote, type DataStatus, type QuoteResult } from '../data/marketFeed'
 
 export interface QuotesState {
   results: Record<string, QuoteResult>
@@ -9,20 +9,27 @@ export interface QuotesState {
   fetchedAt: number | null
 }
 
+function peekAll(symbols: string[]): Record<string, QuoteResult> {
+  const seeded: Record<string, QuoteResult> = {}
+  for (const symbol of symbols) seeded[symbol] = peekQuote(symbol)
+  return seeded
+}
+
 /**
- * Quotes for a list of symbols, updating progressively as rate-limited
- * batches land. Symbols array is compared by value so callers can pass
- * inline literals.
+ * Quotes for a list of symbols, updating progressively as each resolves
+ * (Yahoo first, Twelve Data fallback per symbol). Seeded synchronously from
+ * cache so a re-render never blanks symbols that have previously loaded —
+ * a failed refresh holds the last good quote instead of dropping it.
  */
 export function useQuotes(symbols: string[], priority = 5): QuotesState {
   const key = symbols.join(',')
-  const [results, setResults] = useState<Record<string, QuoteResult>>({})
+  const [results, setResults] = useState<Record<string, QuoteResult>>(() => peekAll(symbols))
   const generation = useRef(0)
 
   useEffect(() => {
     const gen = ++generation.current
-    setResults({})
     const list = key ? key.split(',') : []
+    setResults(peekAll(list))
     if (list.length === 0) return
 
     getQuotes(list, {
@@ -30,9 +37,7 @@ export function useQuotes(symbols: string[], priority = 5): QuotesState {
       onPartial: (partial) => {
         if (generation.current === gen) setResults((prev) => ({ ...prev, ...partial }))
       },
-    }).then((all) => {
-      if (generation.current === gen) setResults((prev) => ({ ...prev, ...all }))
-    })
+    }).catch(() => {}) // per-symbol resolution never rejects; guards against the unexpected
   }, [key, priority])
 
   return useMemo(() => {

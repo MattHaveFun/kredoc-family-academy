@@ -1,27 +1,20 @@
 import { useEffect, useState } from 'react'
 import type { MarketSymbol, RangeKey } from '../data/markets'
-import { getMarketSeries, type MarketSeriesResult } from '../data/twelveDataService'
-
-const EMPTY: MarketSeriesResult = {
-  candles: [],
-  status: 'loading',
-  fetchedAt: null,
-  sourceSymbol: null,
-  proxyNote: null,
-}
+import { getMarketSeries, peekMarketSeries, type MarketSeriesResult } from '../data/marketFeed'
 
 /**
- * OHLCV series for a dashboard market + range via Twelve Data, with automatic
- * index→ETF-proxy fallback. Resolves to live data, cached data, or an honest
- * 'unavailable' — never throws, never shows synthetic prices. When a proxy
- * served the data, `proxyNote` says so (e.g. "via SPY ETF").
+ * OHLCV series for a dashboard market + range. Yahoo Finance is tried first,
+ * Twelve Data as fallback. Initial state is seeded synchronously from
+ * whatever's already cached so switching tabs/ranges never blanks a chart
+ * that has previously loaded successfully — a failed refresh holds the last
+ * good series (however old) rather than dropping to empty.
  */
 export function useSeries(market: MarketSymbol, range: RangeKey, priority = 5): MarketSeriesResult {
-  const [result, setResult] = useState<MarketSeriesResult>(EMPTY)
+  const [result, setResult] = useState<MarketSeriesResult>(() => peekMarketSeries(market.id, range))
 
   useEffect(() => {
+    setResult(peekMarketSeries(market.id, range))
     let cancelled = false
-    setResult(EMPTY)
 
     getMarketSeries(market.id, range, priority).then((next) => {
       if (!cancelled) setResult(next)

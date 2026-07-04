@@ -1,4 +1,4 @@
-import { describeStatus, type DataStatus } from '../data/twelveDataService'
+import { describeStatus, type DataStatus } from '../data/marketFeed'
 
 interface DataBadgeProps {
   status: DataStatus
