@@ -1182,6 +1182,64 @@ export const LESSONS: Lesson[] = [
       "Explain what Ethereum is beyond 'a cryptocurrency' — smart contracts, gas fees, and its role as a platform — what The Merge to proof-of-stake changed, what 'staking' and 'ultrasound money' mean, and steelman both the strongest bull case and the strongest bear case for Ethereum.",
     depth: 3,
   },
+  {
+    id: 'world-markets',
+    chapter: 2,
+    order: 8,
+    category: 'index',
+    tag: 'World markets',
+    title: 'World Markets',
+    tagline: "The other 24 hours of trading — Tokyo, London, Frankfurt, Hong Kong, Shanghai.",
+    marketId: 'nikkei',
+    surface:
+      "The U.S. is the biggest stock market on Earth, but it's only about 60% of the world's total — the rest trades in Tokyo, London, Frankfurt, Hong Kong, Shanghai, and beyond. Indexes like Japan's Nikkei 225, the UK's FTSE 100, Germany's DAX, Hong Kong's Hang Seng, and the Shanghai Composite are those countries' versions of the S&P 500. Because they open while America sleeps, they're often the first markets to react to overnight news — a rolling, around-the-clock read on how the whole world feels about risk.",
+    middle: [
+      "The instinct to own only your home country's stocks has a name: 'home bias,' and almost every investor everywhere has it. It feels safer to own the companies you know, but it quietly concentrates your bet on one economy, one currency, and one government's decisions. Looking at world markets is the antidote — a reminder that prosperity and crisis aren't evenly distributed, and that the U.S. winning decade after decade is a historical fact, not a law of nature.",
+      "Here's the wrinkle that trips people up: when you own a foreign market, you're making TWO bets at once — on the stocks AND on the currency. A Japanese index can rise 10% in yen, but if the yen falls 10% against the dollar over the same stretch, an American owner ends up roughly flat. This is why the U.S. Dollar Index next door matters so much to global investing: currency moves can quietly give or take a huge chunk of your foreign returns.",
+      "Why care at 22? Because the companies and trends shaping your life are increasingly global, and because international diversification is one of the few genuinely free lunches in investing — spreading your bet across economies that don't all boom and bust in sync. The catch (see the deep dive) is that 'don't all move in sync' has been getting less true over time.",
+    ],
+    deep: [
+      "Each of these markets has its own personality. The Nikkei is a wealthy, developed market that spent 30+ years climbing back from a 1989 bubble peak — a living monument to how long 'the long run' can actually be. The FTSE 100 is stuffed with multinational banks, energy, and miners, so it's more a bet on the global economy than on Britain. The DAX tracks Europe's industrial export engine. The Hang Seng and Shanghai Composite are windows onto China — the Hang Seng more open to foreigners, the Shanghai market dominated by local retail investors and steered heavily by government policy, which makes it march to its own, often baffling, beat.",
+      "The diversification pitch has weakened in a specific, important way: in genuine global crises, correlations 'go to one.' When real panic hits — 2008, March 2020 — nearly every market on Earth falls together, because the same frightened global investors are selling everything at once. International diversification smooths the ordinary years and fails you in the worst weeks. That's not a reason to skip it; it's a reason to understand what it does and doesn't buy you.",
+      "Developed versus emerging is a distinction worth knowing. Japan, the UK, and Germany are 'developed' markets — mature, heavily regulated, relatively stable. China sits in the 'emerging' bucket: faster-growing on paper, but with more political risk, less predictable rules, and sharper swings. Emerging markets have tempted investors with growth stories for decades and delivered a genuinely bumpy, often disappointing ride — a clean lesson that 'the economy is growing fast' and 'the stocks will make you money' are two very different claims.",
+      "What professionals actually watch: the U.S. dollar (a strong dollar pressures foreign returns and emerging markets that borrowed in dollars), relative valuations (foreign markets have often been 'cheaper' than the U.S. for years — sometimes for good reasons), and the overnight action in Asia and Europe as a tell for how U.S. markets might open. The Nikkei and DAX closing sharply lower is a headline U.S. traders read with their morning coffee.",
+    ],
+    scenario:
+      "Homebound Hank kept 100% of his money in U.S. stocks because 'America always wins,' never once glancing at the rest of the world — which worked beautifully until it didn't, during a decade where foreign markets quietly outran his. Wanda Worldwise held a slice of international index funds she mostly ignored, understanding it wouldn't save her in a global crash but would keep her from betting everything on a single country's next ten years. Neither could predict which region would lead. That was exactly why Wanda refused to choose just one.",
+    gutCheck: {
+      prompt: 'When an American investor buys a foreign stock index, what are they actually betting on?',
+      options: [
+        'Only the performance of those foreign companies',
+        'Both the foreign companies AND the exchange rate between that currency and the dollar',
+        'Only the exchange rate; the stocks don\'t matter',
+      ],
+      answerIndex: 1,
+      explanation:
+        "It's a two-part bet. Your return in dollars depends on how the foreign stocks do in their local currency AND on how that currency moves against the dollar. A great year for the stocks can be erased by a falling local currency — which is why the dollar's strength matters so much to global investing.",
+    },
+    realScenario: {
+      prompt:
+        'A severe global financial crisis hits. You hold U.S., European, and Asian index funds for diversification. What most likely happens to them?',
+      options: [
+        'The foreign funds rise while U.S. stocks fall, protecting you',
+        'Nearly all of them fall together, because in true panics global markets become highly correlated as investors sell everything at once',
+        'Only the U.S. market is affected; foreign markets are insulated',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is diversification's most misunderstood limit: in genuine crises, correlations 'go to one' and markets worldwide drop together. International diversification smooths ordinary years and helps over the long run — but it does not rescue you in the worst weeks, when everything sells off at once.",
+    },
+    mythVsReality: {
+      statement: 'Since the U.S. market has beaten foreign markets for years, there\'s no reason to own international stocks.',
+      isMyth: true,
+      explanation:
+        "Tempting, and it looks obvious in the rear-view mirror — but leadership rotates. There have been long stretches (the 2000s, for one) when foreign markets beat the U.S. handily, and betting everything on one country's continued dominance is a concentration risk, not a strategy. Past outperformance is a description of history, never a guarantee of the next decade.",
+    },
+    connects: ['sp500', 'dxy', 'indices-vs-stocks'],
+    aiPrompt:
+      "Explain 'home bias' in investing and the case for international diversification, how currency moves affect an American's returns on foreign stocks, why global market correlations rise during crises, and the difference between developed and emerging markets using Japan, Germany, and China as examples.",
+    depth: 2,
+  },
 ]
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]))

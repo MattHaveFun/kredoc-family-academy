@@ -31,9 +31,9 @@ function pick(ids: string[]): MarketSymbol[] {
   })
 }
 
-const MARKETS_INDICES = pick(['sp500', 'nasdaq', 'dow', 'russell2000', 'vix'])
-const MARKETS_CRYPTO = pick(['bitcoin', 'ethereum'])
-const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO]
+const MARKETS_INDICES = pick(['sp500', 'nasdaq', 'dow', 'russell2000', 'vix', 'nikkei'])
+const MARKETS_CRYPTO_WORLD = pick(['bitcoin', 'ethereum', 'ftse', 'dax', 'hangseng', 'shanghai'])
+const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO_WORLD]
 
 const MACRO_COMMODITIES = pick(['gold', 'oil', 'silver', 'natgas', 'copper', 'dxy'])
 const MACRO_RATES = pick(['tnx', 'ust2y', 'ust30y'])
@@ -79,13 +79,13 @@ function MarketsTab() {
       />
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
-        <SectionRule title="All indices at a glance" />
+        <SectionRule title="Indices at a glance" />
         <CardGrid symbols={MARKETS_INDICES} selectedId={selectedId} onSelect={select} />
       </div>
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
-        <SectionRule title="Crypto" />
-        <CardGrid symbols={MARKETS_CRYPTO} selectedId={selectedId} onSelect={select} />
+        <SectionRule title="Crypto & world markets" />
+        <CardGrid symbols={MARKETS_CRYPTO_WORLD} selectedId={selectedId} onSelect={select} />
       </div>
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>

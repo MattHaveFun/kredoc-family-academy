@@ -79,6 +79,13 @@ const MARKETS: Record<string, { yahoo: string; name: string }> = {
   // DX=F 404s on the chart endpoint; DX-Y.NYB (ICE US Dollar Index) is the
   // stable, keyless series that resolves.
   dxy: { yahoo: 'DX-Y.NYB', name: 'U.S. Dollar Index' },
+  // World markets — quoted in their home currencies (JPY/GBP/EUR/HKD/CNY), so
+  // read them as percent moves, not dollar prices.
+  nikkei: { yahoo: '^N225', name: 'Nikkei 225' },
+  ftse: { yahoo: '^FTSE', name: 'FTSE 100' },
+  dax: { yahoo: '^GDAXI', name: 'DAX' },
+  hangseng: { yahoo: '^HSI', name: 'Hang Seng' },
+  shanghai: { yahoo: '000001.SS', name: 'Shanghai Composite' },
 }
 
 // U.S. Treasury par-yield curve rates (id -> CSV column header). One keyless
@@ -203,7 +210,10 @@ function quoteFromChart(symbol: string, name: string, result: YahooChartResult, 
 }
 
 async function buildMarkets(): Promise<Record<string, MarketEntry>> {
-  const entries = await Promise.all(
+  // Per-symbol resilience: one flaky Yahoo response must not sink the whole
+  // daily build (which would 502 and cache nothing). A failed symbol is simply
+  // absent from the payload and its card shows the "press update" empty state.
+  const settled = await Promise.allSettled(
     Object.entries(MARKETS).map(async ([id, { yahoo, name }]) => {
       const result = await fetchYahooChart(yahoo, '5y', '1d')
       const candles = toCandles(result)
@@ -211,6 +221,11 @@ async function buildMarkets(): Promise<Record<string, MarketEntry>> {
       return [id, { quote, series: sliceRanges(candles) }] as const
     }),
   )
+  const entries: Array<readonly [string, MarketEntry]> = []
+  for (const s of settled) {
+    if (s.status === 'fulfilled') entries.push(s.value)
+    else console.error('[buildMarkets] symbol failed:', s.reason instanceof Error ? s.reason.message : s.reason)
+  }
   return Object.fromEntries(entries)
 }
 
@@ -281,7 +296,14 @@ async function buildRates(): Promise<Record<string, MarketEntry>> {
   // Current year plus five prior calendar years guarantees a full 5Y window.
   const currentYear = new Date().getUTCFullYear()
   const years = [0, 1, 2, 3, 4, 5].map((n) => currentYear - n)
-  const yearData = await Promise.all(years.map(fetchTreasuryYear))
+  // Tolerate a missing/failed year (Treasury occasionally hiccups) rather than
+  // dropping every rate; only bail if the whole source is unreachable.
+  const settled = await Promise.allSettled(years.map(fetchTreasuryYear))
+  const yearData = settled.flatMap((s) => (s.status === 'fulfilled' ? [s.value] : []))
+  if (yearData.length === 0) {
+    console.error('[buildRates] all Treasury years failed')
+    return {}
+  }
 
   const result: Record<string, MarketEntry> = {}
   for (const [id, { column, name }] of Object.entries(RATES)) {
@@ -310,20 +332,58 @@ async function buildRates(): Promise<Record<string, MarketEntry>> {
   return result
 }
 
-async function buildTickerQuote(symbol: string, yahoo: string): Promise<Quote> {
-  const result = await fetchYahooChart(yahoo, '5d', '1d')
-  const candles = toCandles(result)
-  return quoteFromChart(symbol, symbol, result, candles)
+const YAHOO_SPARK_URL = 'https://query1.finance.yahoo.com/v8/finance/spark'
+
+interface SparkEntry {
+  close?: Array<number | null>
+  chartPreviousClose?: number
 }
 
+// The ticker strip and sector heat map only need price + daily change, not full
+// OHLCV — so one multi-symbol `spark` request replaces ~30 per-symbol chart
+// fetches. That single change is what pulls the whole daily build back under
+// the Worker subrequest ceiling (crossing it was 502-ing the entire build and
+// caching nothing, which is why new symbols weren't loading).
 async function buildTickers(): Promise<Record<string, Quote>> {
-  const sectorEntries = await Promise.all(
-    SECTOR_ETFS.map(async (symbol) => [symbol, await buildTickerQuote(symbol, symbol)] as const),
+  const list: Array<{ symbol: string; yahoo: string }> = [
+    ...SECTOR_ETFS.map((symbol) => ({ symbol, yahoo: symbol })),
+    ...WATCHLIST,
+  ]
+  // Yahoo's spark endpoint caps at 20 symbols per request, so chunk it — still
+  // just a couple of subrequests instead of one chart fetch per symbol.
+  const chunks: Array<typeof list> = []
+  for (let i = 0; i < list.length; i += 20) chunks.push(list.slice(i, i + 20))
+  const responses = await Promise.all(
+    chunks.map(async (chunk) => {
+      const symbols = chunk.map((l) => l.yahoo).join(',')
+      const url = `${YAHOO_SPARK_URL}?symbols=${encodeURIComponent(symbols)}&range=5d&interval=1d`
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (KredocDailyUpdateWorker)' } })
+      if (!res.ok) throw new Error(`Yahoo spark failed (${res.status})`)
+      return (await res.json()) as Record<string, SparkEntry>
+    }),
   )
-  const watchlistEntries = await Promise.all(
-    WATCHLIST.map(async ({ symbol, yahoo }) => [symbol, await buildTickerQuote(symbol, yahoo)] as const),
-  )
-  return Object.fromEntries([...sectorEntries, ...watchlistEntries])
+  const data: Record<string, SparkEntry> = Object.assign({}, ...responses)
+
+  const out: Record<string, Quote> = {}
+  for (const { symbol, yahoo } of list) {
+    const closes = (data[yahoo]?.close ?? []).filter((c): c is number => c != null)
+    if (closes.length === 0) continue
+    const price = closes[closes.length - 1]
+    const previousClose = closes[closes.length - 2] ?? data[yahoo]?.chartPreviousClose ?? price
+    out[symbol] = {
+      symbol,
+      name: symbol,
+      price,
+      previousClose,
+      change: price - previousClose,
+      changePct: previousClose !== 0 ? ((price - previousClose) / previousClose) * 100 : 0,
+      open: price,
+      high: price,
+      low: price,
+      volume: 0,
+    }
+  }
+  return out
 }
 
 const SYSTEM_PROMPT = `You write a short daily markets narrative for a family financial-literacy site read by smart, curious 20-year-olds. Voice: Morgan Housel meets Morning Brew — warm, plainspoken, lightly irreverent, stories over jargon. Rules: aim for about 220-250 words — stop with a complete, landed final sentence well before any length limit, never mid-thought. No financial advice, ever — educate about how to think, never what to buy. Be honest about uncertainty ("historically this has tended to…" not "this means…"). Always land on "so what does this mean for your life" for a young adult. No headers, no bullet lists, just 2-4 short paragraphs. This is describing the PREVIOUS trading day's close, not live/intraday action — write accordingly (e.g. "yesterday" / the given date, never "right now" or "today so far").`
@@ -434,13 +494,24 @@ export default {
     console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
 
     try {
-      const [yahooMarkets, rates] = await Promise.all([buildMarkets(), buildRates()])
+      // Build the three sections independently — a failure in one (e.g. a
+      // Treasury hiccup) must not blank out the others. As long as we get some
+      // markets, we cache a useful payload instead of 502-ing to nothing.
+      const [marketsRes, ratesRes, tickersRes] = await Promise.allSettled([
+        buildMarkets(),
+        buildRates(),
+        buildTickers(),
+      ])
+      const yahooMarkets = marketsRes.status === 'fulfilled' ? marketsRes.value : {}
+      const rates = ratesRes.status === 'fulfilled' ? ratesRes.value : {}
+      const tickers = tickersRes.status === 'fulfilled' ? tickersRes.value : {}
+      if (ratesRes.status === 'rejected') console.error('[buildRates] failed:', ratesRes.reason)
+      if (tickersRes.status === 'rejected') console.error('[buildTickers] failed:', tickersRes.reason)
       const markets = { ...yahooMarkets, ...rates }
       console.log(
-        `[daily-update] buildMarkets ok, ${Object.keys(yahooMarkets).length} yahoo + ${Object.keys(rates).length} rates`,
+        `[daily-update] built ${Object.keys(yahooMarkets).length} yahoo + ${Object.keys(rates).length} rates + ${Object.keys(tickers).length} tickers`,
       )
-      const tickers = await buildTickers()
-      console.log(`[daily-update] buildTickers ok, ${Object.keys(tickers).length} tickers`)
+      if (Object.keys(markets).length === 0) throw new Error('no market data could be built')
       const narrative = await generateNarrative(env, day, markets)
       console.log(`[daily-update] narrative state=${narrative.state}`)
 

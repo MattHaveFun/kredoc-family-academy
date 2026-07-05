@@ -59,8 +59,8 @@ export default {
       },
       animation: {
         ticker: 'ticker 55s linear infinite',
-        'ticker-fast': 'ticker 42s linear infinite',
-        'ticker-slow': 'ticker-reverse 78s linear infinite',
+        'ticker-fast': 'ticker 28s linear infinite',
+        'ticker-slow': 'ticker-reverse 42s linear infinite',
         'fade-up': 'fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
         'fade-in': 'fade-in 0.6s ease both',
         draw: 'draw 1.2s cubic-bezier(0.65, 0, 0.35, 1) both',
