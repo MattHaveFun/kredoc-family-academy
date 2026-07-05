@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CATEGORY_META, CHAPTERS, LESSON_BY_ID, lessonsInChapter } from '../data/lessons'
-import { MARKET_SYMBOLS, formatPrice } from '../data/markets'
+import { MARKET_SYMBOLS, formatChangeMagnitude, formatPrice } from '../data/markets'
 import { useProfiles } from '../context/ProfileContext'
 import { useSeries } from '../hooks/useSeries'
 import LearningModeCheck from '../components/LearningModeCheck'
@@ -45,7 +45,7 @@ function LessonMiniChart({ marketId }: { marketId: string }) {
             {formatPrice(last.close, market.assetClass)}
           </span>
           <span className={`font-mono text-xs font-semibold ${isUp ? 'text-up' : 'text-down'}`}>
-            {isUp ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+            {isUp ? '▲' : '▼'} {formatChangeMagnitude(first.open, last.close, market.assetClass)}
           </span>
         </div>
       </div>

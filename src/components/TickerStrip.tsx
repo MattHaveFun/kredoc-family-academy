@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { TOP_COMPANIES } from '../data/companies'
-import { MARKET_SYMBOLS, formatPrice } from '../data/markets'
+import { MARKET_SYMBOLS, formatChangeMagnitude, formatPrice } from '../data/markets'
 import { useQuotes } from '../hooks/useQuotes'
 import { useMarketQuote } from '../hooks/useMarketQuote'
 import { useMarketQuotes } from '../hooks/useMarketQuotes'
@@ -29,6 +29,7 @@ interface TickerItem {
   symbol: string
   name: string
   display: string
+  changeText: string
   changePct: number
 }
 
@@ -79,7 +80,7 @@ function TickerRow({
                   <span className="text-xs text-slate-600">{item.name}</span>
                   <span className="font-mono text-xs text-slate-300">{item.display}</span>
                   <span className={`font-mono text-xs font-semibold ${isUp ? 'text-up' : 'text-down'}`}>
-                    {isUp ? '▲' : '▼'} {Math.abs(item.changePct).toFixed(2)}%
+                    {isUp ? '▲' : '▼'} {item.changeText}
                   </span>
                 </div>
               )
@@ -114,6 +115,7 @@ function TickerStrip() {
         symbol: 'SPX',
         name: 'S&P 500',
         display: formatPrice(spx.quote.price, 'Index'),
+        changeText: `${Math.abs(spx.quote.changePct).toFixed(2)}%`,
         changePct: spx.quote.changePct,
       })
     }
@@ -125,6 +127,7 @@ function TickerStrip() {
         symbol: company.symbol,
         name: company.name,
         display: `$${quote.price.toFixed(2)}`,
+        changeText: `${Math.abs(quote.changePct).toFixed(2)}%`,
         changePct: quote.changePct,
       })
     }
@@ -144,6 +147,7 @@ function TickerStrip() {
             symbol: market.symbol,
             name: market.name,
             display: formatPrice(quote.price, market.assetClass),
+            changeText: formatChangeMagnitude(quote.previousClose, quote.price, market.assetClass),
             changePct: quote.changePct,
           },
         ]

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatPrice, type MarketSymbol, type RangeKey } from '../data/markets'
+import { formatChangeMagnitude, formatPrice, type MarketSymbol, type RangeKey } from '../data/markets'
 import { useSeries } from '../hooks/useSeries'
 import { useCountUp } from '../hooks/useCountUp'
 import { CHART_CONCEPTS } from '../data/concepts'
@@ -155,7 +155,7 @@ function MainChartPanel({ symbols, selectedId, onSelect, onInteract, isCycling }
                       : 'bg-down/10 text-down ring-1 ring-inset ring-down/20'
                   }`}
                 >
-                  {isUp ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                  {isUp ? '▲' : '▼'} {formatChangeMagnitude(first!.open, last.close, market.assetClass)}
                 </span>
                 <span className="font-mono text-[11px] uppercase tracking-wider text-slate-600">
                   {range} change

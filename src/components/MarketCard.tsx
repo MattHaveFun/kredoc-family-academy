@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { formatPrice, type MarketSymbol } from '../data/markets'
+import { formatChangeMagnitude, formatPrice, type MarketSymbol } from '../data/markets'
 import { useSeries } from '../hooks/useSeries'
 import { useCountUp } from '../hooks/useCountUp'
 import InfoDisclosure from './InfoDisclosure'
@@ -100,7 +100,7 @@ function MarketCard({ market, selected, onSelect, index }: MarketCardProps) {
                     : 'bg-down/10 text-down ring-1 ring-inset ring-down/20'
                 }`}
               >
-                {isUp ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
+                {isUp ? '▲' : '▼'} {formatChangeMagnitude(first!.open, last.close, market.assetClass)}
               </span>
             </div>
             <p className="mt-1 px-4 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600">

@@ -191,3 +191,21 @@ export function formatPrice(value: number, assetClass: MarketSymbol['assetClass'
   }
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
+/**
+ * Unsigned magnitude of a change, formatted for display. Rates move in basis
+ * points (a 0.01-percentage-point yield change = 1 bp), which is how anyone
+ * reading bonds thinks about them; everything else reads as a percent change.
+ * Pair the sign/arrow with `to >= from` (equivalently the percent's sign).
+ */
+export function formatChangeMagnitude(
+  from: number,
+  to: number,
+  assetClass: MarketSymbol['assetClass'],
+): string {
+  if (assetClass === 'Rate') {
+    return `${Math.abs(Math.round((to - from) * 100))} bps`
+  }
+  const pct = from !== 0 ? ((to - from) / from) * 100 : 0
+  return `${Math.abs(pct).toFixed(2)}%`
+}
