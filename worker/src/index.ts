@@ -86,6 +86,7 @@ const MARKETS: Record<string, { yahoo: string; name: string }> = {
   dax: { yahoo: '^GDAXI', name: 'DAX' },
   hangseng: { yahoo: '^HSI', name: 'Hang Seng' },
   shanghai: { yahoo: '000001.SS', name: 'Shanghai Composite' },
+  sensex: { yahoo: '^BSESN', name: 'Sensex' },
 }
 
 // U.S. Treasury par-yield curve rates (id -> CSV column header). One keyless

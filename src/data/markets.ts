@@ -120,6 +120,15 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     academyAnchor: 'world-markets',
   },
   {
+    id: 'sensex',
+    symbol: 'SENSEX',
+    name: 'Sensex',
+    assetClass: 'Index',
+    what: 'India\'s benchmark index — 30 of the largest companies listed on the Bombay Stock Exchange, quoted in rupees.',
+    why: 'India is now one of the world\'s largest equity markets by value, and its economy is growing faster than almost any other major one — the Sensex is the quickest read on how investors are pricing that growth.',
+    academyAnchor: 'world-markets',
+  },
+  {
     id: 'bitcoin',
     symbol: 'BTC',
     name: 'Bitcoin',

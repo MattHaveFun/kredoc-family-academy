@@ -8,6 +8,7 @@ import MarketMoodGauge from '../components/MarketMoodGauge'
 import EconomicCalendarPanel from '../components/EconomicCalendarPanel'
 import YieldCurvePanel from '../components/YieldCurvePanel'
 import TodayInMarkets from '../components/TodayInMarkets'
+import WorldTradingMap from '../components/WorldTradingMap'
 import DataBadge from '../components/DataBadge'
 import { useAutoCycle } from '../hooks/useAutoCycle'
 import { useFeedStatus } from '../context/FeedStatusContext'
@@ -31,13 +32,15 @@ function pick(ids: string[]): MarketSymbol[] {
   })
 }
 
-const MARKETS_INDICES = pick(['sp500', 'nasdaq', 'dow', 'russell2000', 'vix', 'nikkei'])
-const MARKETS_CRYPTO_WORLD = pick(['bitcoin', 'ethereum', 'ftse', 'dax', 'hangseng', 'shanghai'])
-const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO_WORLD]
+const MARKETS_INDICES = pick(['sp500', 'nasdaq', 'dow', 'russell2000', 'vix'])
+const MARKETS_CRYPTO = pick(['bitcoin', 'ethereum'])
+const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO]
 
 const MACRO_COMMODITIES = pick(['gold', 'oil', 'silver', 'natgas', 'copper', 'dxy'])
 const MACRO_RATES = pick(['ust2y', 'tnx', 'ust30y'])
 const MACRO_TAB_SYMBOLS = [...MACRO_COMMODITIES, ...MACRO_RATES]
+
+const GLOBAL_INDICES = pick(['nikkei', 'ftse', 'dax', 'hangseng', 'shanghai', 'sensex'])
 
 function CardGrid({
   symbols,
@@ -84,8 +87,8 @@ function MarketsTab() {
       </div>
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
-        <SectionRule title="Crypto & world markets" />
-        <CardGrid symbols={MARKETS_CRYPTO_WORLD} selectedId={selectedId} onSelect={select} />
+        <SectionRule title="Crypto" />
+        <CardGrid symbols={MARKETS_CRYPTO} selectedId={selectedId} onSelect={select} />
       </div>
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>
@@ -142,10 +145,39 @@ function MacroTab() {
   )
 }
 
-type TabKey = 'markets' | 'macro'
+function GlobalTab() {
+  const { selectedId, select, pause, isCycling } = useAutoCycle(
+    GLOBAL_INDICES.map((s) => s.id),
+  )
+
+  return (
+    <>
+      <MainChartPanel
+        symbols={GLOBAL_INDICES}
+        selectedId={selectedId}
+        onSelect={select}
+        onInteract={pause}
+        isCycling={isCycling}
+      />
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <SectionRule title="Foreign indices" />
+        <CardGrid symbols={GLOBAL_INDICES} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>
+        <SectionRule title="The trading day" />
+        <WorldTradingMap markets={GLOBAL_INDICES} selectedId={selectedId} onSelect={select} />
+      </div>
+    </>
+  )
+}
+
+type TabKey = 'markets' | 'global' | 'macro'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'markets', label: 'Markets' },
+  { key: 'global', label: 'Global' },
   { key: 'macro', label: 'Macro' },
 ]
 
@@ -221,7 +253,7 @@ function Dashboard() {
         </div>
 
         {/* Each tab is its own subtree so switching fully resets chart + cycle state. */}
-        {tab === 'markets' ? <MarketsTab /> : <MacroTab />}
+        {tab === 'markets' ? <MarketsTab /> : tab === 'global' ? <GlobalTab /> : <MacroTab />}
       </div>
     </div>
   )
