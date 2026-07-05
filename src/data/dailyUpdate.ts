@@ -48,20 +48,29 @@ function notify(): void {
   listeners.forEach((l) => l())
 }
 
+// In-memory fallback for devices where localStorage writes silently fail
+// (mobile Safari private mode, storage-locked in-app browsers, etc). Without
+// this, a successful fetch would immediately be wiped out: the write to
+// localStorage fails silently, then the very next read-back (triggered by
+// notify()) hits the same broken storage and returns null.
+let memoryPayload: DailyPayload | null = null
+
 export function getCachedPayload(): DailyPayload | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY)
-    return raw ? (JSON.parse(raw) as DailyPayload) : null
+    if (raw) return JSON.parse(raw) as DailyPayload
   } catch {
-    return null
+    // fall through to in-memory copy
   }
+  return memoryPayload
 }
 
 function setCachedPayload(payload: DailyPayload): void {
+  memoryPayload = payload
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload))
   } catch {
-    // storage unavailable — payload still notified for this session
+    // storage unavailable — payload still served from memory for this session
   }
   notify()
 }
