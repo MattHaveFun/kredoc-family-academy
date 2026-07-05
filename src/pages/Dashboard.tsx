@@ -36,7 +36,7 @@ const MARKETS_CRYPTO_WORLD = pick(['bitcoin', 'ethereum', 'ftse', 'dax', 'hangse
 const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO_WORLD]
 
 const MACRO_COMMODITIES = pick(['gold', 'oil', 'silver', 'natgas', 'copper', 'dxy'])
-const MACRO_RATES = pick(['tnx', 'ust2y', 'ust30y'])
+const MACRO_RATES = pick(['ust2y', 'tnx', 'ust30y'])
 const MACRO_TAB_SYMBOLS = [...MACRO_COMMODITIES, ...MACRO_RATES]
 
 function CardGrid({
