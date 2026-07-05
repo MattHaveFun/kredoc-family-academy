@@ -1251,7 +1251,6 @@ export function lessonsInChapter(chapter: number): Lesson[] {
 // "What should we build next?" poll options shown on the Academy home page.
 export const POLL_OPTIONS: { id: string; label: string }[] = [
   { id: 'personal-finance', label: 'Personal Finance 101' },
-  { id: 'fed-rates', label: 'The Federal Reserve & Interest Rates' },
   { id: 'biases', label: 'Cognitive Biases & Decision Making' },
   { id: 'economy', label: 'How the Economy Actually Works' },
   { id: 'entrepreneurship', label: 'Entrepreneurship Fundamentals' },
