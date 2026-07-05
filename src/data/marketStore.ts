@@ -40,17 +40,16 @@ export function subscribe(listener: Listener): () => void {
   return () => listeners.delete(listener)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so hook call sites (useMarketQuote.ts etc.) don't need to change; see file header
+// Args are underscore-prefixed (ignored by lint) and kept so hook call sites
+// (useMarketQuote.ts etc.) don't need to change; see file header.
 export function wantMarketQuote(_marketId: string) {
   // no-op: fetching is button-driven now, not mount-driven
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- see wantMarketQuote
 export function wantMarketSeries(_marketId: string, _range: RangeKey) {
   // no-op: see wantMarketQuote
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- see wantMarketQuote
 export function wantTickerQuote(_symbol: string) {
   // no-op: see wantMarketQuote
 }
@@ -64,6 +63,7 @@ const quoteCache = new Map<string, Cached<MarketQuoteResult>>()
 const seriesCache = new Map<string, Cached<MarketSeriesResult>>()
 const tickerCache = new Map<string, Cached<QuoteResult>>()
 const quotesListCache = new Map<string, Cached<Record<string, QuoteResult>>>()
+const marketQuotesListCache = new Map<string, Cached<Record<string, MarketQuoteResult>>>()
 
 export function getMarketQuoteSnapshot(marketId: string): MarketQuoteResult {
   const cached = quoteCache.get(marketId)
@@ -97,5 +97,19 @@ export function getQuotesListSnapshot(symbols: string[]): Record<string, QuoteRe
   const value: Record<string, QuoteResult> = {}
   for (const symbol of symbols) value[symbol] = getTickerQuoteSnapshot(symbol)
   quotesListCache.set(key, { version, value })
+  return value
+}
+
+// Batched dashboard-market quotes (by MARKET_SYMBOLS id), mirroring
+// getQuotesListSnapshot — lets the ticker strip read many market quotes in one
+// referentially-stable snapshot (the crypto/commodity/rate row lives in
+// payload.markets, not payload.tickers).
+export function getMarketQuotesListSnapshot(ids: string[]): Record<string, MarketQuoteResult> {
+  const key = ids.join(',')
+  const cached = marketQuotesListCache.get(key)
+  if (cached && cached.version === version) return cached.value
+  const value: Record<string, MarketQuoteResult> = {}
+  for (const id of ids) value[id] = getMarketQuoteSnapshot(id)
+  marketQuotesListCache.set(key, { version, value })
   return value
 }

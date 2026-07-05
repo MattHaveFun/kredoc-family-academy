@@ -22,7 +22,7 @@ export interface MarketSymbol {
   id: string
   symbol: string
   name: string
-  assetClass: 'Index' | 'Volatility' | 'Crypto' | 'Commodity' | 'Rate'
+  assetClass: 'Index' | 'Volatility' | 'Crypto' | 'Commodity' | 'Currency' | 'Rate'
   what: string
   why: string
   academyAnchor: string // Academy lesson id
@@ -84,6 +84,15 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     academyAnchor: 'bitcoin',
   },
   {
+    id: 'ethereum',
+    symbol: 'ETH',
+    name: 'Ethereum',
+    assetClass: 'Crypto',
+    what: 'The second-largest cryptocurrency — a decentralized network that is less "digital money" and more a global, always-on computer that anyone can build financial apps on top of.',
+    why: 'Where Bitcoin is a bet on digital scarcity, Ethereum is a bet on a platform — so watching the two move differently is a live lesson in how even assets in the same "crypto" bucket answer to very different stories.',
+    academyAnchor: 'ethereum',
+  },
+  {
     id: 'gold',
     symbol: 'GOLD',
     name: 'Gold',
@@ -102,6 +111,42 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     academyAnchor: 'oil',
   },
   {
+    id: 'silver',
+    symbol: 'SILVER',
+    name: 'Silver',
+    assetClass: 'Commodity',
+    what: 'The price of one troy ounce of silver, tracked through the front-month COMEX futures contract — part precious metal, part industrial raw material.',
+    why: 'Silver behaves like gold\'s wilder younger sibling: it gets the same "store of value" bid in a crisis, but because half of it is consumed by industry (solar panels, electronics), it swings harder in both directions — a clean lesson in how one metal can wear two hats.',
+    academyAnchor: 'silver',
+  },
+  {
+    id: 'natgas',
+    symbol: 'NATGAS',
+    name: 'Natural Gas',
+    assetClass: 'Commodity',
+    what: 'The U.S. benchmark price for natural gas (Henry Hub), tracked through the front-month NYMEX futures contract — the fuel that heats homes and increasingly generates electricity.',
+    why: 'Natural gas is the most weather-driven, most violently volatile commodity on this board — a cold snap or a heat wave can move it double digits in a day, making it the purest example of a price ruled by physical supply, demand, and storage rather than sentiment.',
+    academyAnchor: 'natgas',
+  },
+  {
+    id: 'copper',
+    symbol: 'COPPER',
+    name: 'Copper',
+    assetClass: 'Commodity',
+    what: 'The price of a pound of copper, tracked through the front-month COMEX futures contract — the metal wired into almost everything that carries electricity.',
+    why: 'Copper is nicknamed "Dr. Copper" for its uncanny knack of forecasting the economy: because it goes into construction, cars, and grids everywhere, its price is a real-time vote on whether the world thinks it\'s about to build more or less.',
+    academyAnchor: 'copper',
+  },
+  {
+    id: 'dxy',
+    symbol: 'DXY',
+    name: 'U.S. Dollar Index',
+    assetClass: 'Currency',
+    what: 'A single number tracking the U.S. dollar\'s strength against a basket of major currencies — mostly the euro, plus the yen, pound, and a few others.',
+    why: 'The dollar is the water the whole financial system swims in: a strong dollar quietly pressures commodities, emerging markets, and U.S. company profits earned abroad, so this one index ripples into almost everything else on this dashboard.',
+    academyAnchor: 'dxy',
+  },
+  {
     id: 'tnx',
     symbol: 'US10Y',
     name: '10-Year Treasury Yield',
@@ -109,6 +154,24 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     what: 'The annualized interest rate the U.S. government pays to borrow money for 10 years — the benchmark "risk-free" yield the entire financial system prices against.',
     why: 'Mortgage rates, corporate borrowing costs, and stock valuations all take their cue from this one number — when it rises, money gets more expensive everywhere at once.',
     academyAnchor: 'tnx',
+  },
+  {
+    id: 'ust2y',
+    symbol: 'US2Y',
+    name: '2-Year Treasury Yield',
+    assetClass: 'Rate',
+    what: 'The annualized interest rate on a two-year U.S. government bond — the maturity that tracks the market\'s best guess at where the Federal Reserve will set short-term rates over the next couple of years.',
+    why: 'If the 10-year is the market\'s view of the long run, the 2-year is its read on the Fed right now — and comparing the two (the "yield curve") is the single most-watched recession warning in all of finance.',
+    academyAnchor: 'ust2y',
+  },
+  {
+    id: 'ust30y',
+    symbol: 'US30Y',
+    name: '30-Year Treasury Yield',
+    assetClass: 'Rate',
+    what: 'The interest rate on a 30-year U.S. government bond — the longest, slowest-moving yield the Treasury issues, reflecting decades of expected growth and inflation.',
+    why: 'The "long bond" is where the market prices its deepest, farthest-out convictions about inflation and government debt — and it anchors the far end of the yield curve, the shape that tells you whether investors expect the economy to expand or stall.',
+    academyAnchor: 'yieldcurve',
   },
 ]
 
@@ -121,6 +184,10 @@ export function formatPrice(value: number, assetClass: MarketSymbol['assetClass'
   }
   if (assetClass === 'Rate') {
     return `${value.toFixed(2)}%`
+  }
+  if (assetClass === 'Currency') {
+    // A dollar-index-style level (~100), not a price in dollars — no $ prefix.
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { CATEGORY_META, LESSON_BY_ID, lessonsInChapter } from '../data/lessons'
+import { CATEGORY_META, CHAPTERS, LESSON_BY_ID, lessonsInChapter } from '../data/lessons'
 import { MARKET_SYMBOLS, formatPrice } from '../data/markets'
 import { useProfiles } from '../context/ProfileContext'
 import { useSeries } from '../hooks/useSeries'
@@ -138,6 +138,7 @@ function Lesson() {
   const index = chapterLessons.findIndex((l) => l.id === lesson.id)
   const prev = index > 0 ? chapterLessons[index - 1] : null
   const next = index < chapterLessons.length - 1 ? chapterLessons[index + 1] : null
+  const chapterTitle = CHAPTERS.find((c) => c.number === lesson.chapter)?.title ?? ''
   const completed = activeProfile?.completedLessons.includes(lesson.id) ?? false
   const completedCount = chapterLessons.filter((l) =>
     activeProfile?.completedLessons.includes(l.id),
@@ -186,7 +187,7 @@ function Lesson() {
         {/* sidebar TOC */}
         <nav className="sticky top-24 hidden w-56 shrink-0 self-start lg:block" aria-label="Chapter contents">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-600">
-            Chapter {lesson.chapter} · Reading the Market
+            Chapter {lesson.chapter} · {chapterTitle}
           </p>
           <ul className="mt-4 space-y-0.5 border-l border-slate-400/10">
             {chapterLessons.map((l, i) => {

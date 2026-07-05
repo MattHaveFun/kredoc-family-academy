@@ -20,4 +20,8 @@ export const TOP_COMPANIES: WatchlistEntry[] = [
   { symbol: 'V', name: 'Visa' },
   { symbol: 'UNH', name: 'UnitedHealth' },
   { symbol: 'XOM', name: 'Exxon Mobil' },
+  { symbol: 'WMT', name: 'Walmart' },
+  { symbol: 'KO', name: 'Coca-Cola' },
+  { symbol: 'DIS', name: 'Disney' },
+  { symbol: 'NFLX', name: 'Netflix' },
 ]

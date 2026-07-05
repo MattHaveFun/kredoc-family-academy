@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MARKET_SYMBOLS, formatPrice, type RangeKey } from '../data/markets'
+import { formatPrice, type MarketSymbol, type RangeKey } from '../data/markets'
 import { useSeries } from '../hooks/useSeries'
 import { useCountUp } from '../hooks/useCountUp'
 import { CHART_CONCEPTS } from '../data/concepts'
@@ -12,8 +12,14 @@ import DataBadge from './DataBadge'
 import ConceptDrawer from './ConceptDrawer'
 
 interface MainChartPanelProps {
+  /** The tab's asset scope — the symbol tabs and auto-cycle stay within this set. */
+  symbols: MarketSymbol[]
   selectedId: string
   onSelect: (id: string) => void
+  /** Called on any in-panel interaction (range / chart type) so the parent can freeze auto-cycling. */
+  onInteract?: () => void
+  /** Whether the featured chart is currently auto-cycling (drives the subtle AUTO indicator). */
+  isCycling?: boolean
 }
 
 function formatVolume(v: number): string {
@@ -33,15 +39,25 @@ const STAT_CONCEPT: Record<string, string | undefined> = {
   Range: undefined,
 }
 
-function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
+function MainChartPanel({ symbols, selectedId, onSelect, onInteract, isCycling }: MainChartPanelProps) {
   const [range, setRange] = useState<RangeKey>('3M')
   const [chartType, setChartType] = useState<ChartType>('line')
   const [conceptId, setConceptId] = useState<string | null>(null)
 
   const market = useMemo(
-    () => MARKET_SYMBOLS.find((m) => m.id === selectedId) ?? MARKET_SYMBOLS[0],
-    [selectedId],
+    () => symbols.find((m) => m.id === selectedId) ?? symbols[0],
+    [symbols, selectedId],
   )
+
+  // Range / chart-type changes are user intent — freeze the auto-cycle too.
+  const handleRangeChange = (next: RangeKey) => {
+    onInteract?.()
+    setRange(next)
+  }
+  const handleChartTypeChange = (next: ChartType) => {
+    onInteract?.()
+    setChartType(next)
+  }
   const { candles, status, fetchedAt, proxyNote } = useSeries(market, range, 0)
   const hasData = candles.length >= 2
   const first = hasData ? candles[0] : null
@@ -72,8 +88,8 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
     <section className="panel animate-fade-up overflow-hidden">
       {/* console toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-400/10 bg-ink-950/50 px-4 py-3 sm:px-5">
-        <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
-          {MARKET_SYMBOLS.map((m) => (
+        <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
+          {symbols.map((m) => (
             <button
               key={m.id}
               type="button"
@@ -87,10 +103,19 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
               {m.symbol}
             </button>
           ))}
+          {isCycling && (
+            <span
+              className="ml-1 hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-400/15 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500 sm:inline-flex"
+              title="Auto-cycling through this tab's charts — click any symbol to take over"
+            >
+              <span className="h-1 w-1 animate-blink rounded-full bg-sky-400" />
+              Auto
+            </span>
+          )}
         </div>
         <ChartTypeToggle
           value={chartType}
-          onChange={setChartType}
+          onChange={handleChartTypeChange}
           onLearnMore={() => setConceptId('chart-type')}
         />
       </div>
@@ -140,7 +165,7 @@ function MainChartPanel({ selectedId, onSelect }: MainChartPanelProps) {
               <div className="mt-2 h-12 sm:h-[60px]" />
             )}
           </div>
-          <TimeRangeSelector value={range} onChange={setRange} />
+          <TimeRangeSelector value={range} onChange={handleRangeChange} />
         </div>
 
         {hasData ? (

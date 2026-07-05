@@ -14,6 +14,13 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    // Honor the codebase's leading-underscore convention for intentionally
+    // unused vars/args (e.g. the hooks' _priority and marketStore's want*
+    // compatibility parameters).
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+    ],
   },
   overrides: [
     {

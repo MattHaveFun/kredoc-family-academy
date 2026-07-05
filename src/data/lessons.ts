@@ -5,7 +5,7 @@
 // Writing rules (see project voice guidelines): stories first, plain English
 // always, honest about uncertainty, never financial advice, never preachy.
 
-export type LessonCategory = 'index' | 'volatility' | 'crypto' | 'chart-literacy' | 'foundations' | 'commodity' | 'rates'
+export type LessonCategory = 'index' | 'volatility' | 'crypto' | 'chart-literacy' | 'foundations' | 'commodity' | 'currency' | 'rates'
 
 export type LearningMode = 'gut-check' | 'real-scenario' | 'myth-vs-reality'
 
@@ -57,6 +57,11 @@ export const CHAPTERS: Chapter[] = [
     number: 1,
     title: 'Reading the Market',
     subtitle: 'The ideas that turn a wall of numbers into a story you can follow.',
+  },
+  {
+    number: 2,
+    title: 'Beneath the Surface',
+    subtitle: 'The metals, money, and interest rates that move quietly under the stock market — and often move it.',
   },
 ]
 
@@ -761,6 +766,422 @@ export const LESSONS: Lesson[] = [
       'Explain the inverse relationship between bond prices and yields with a concrete numerical example, what yield curve inversion is and why it\'s watched as a recession signal, and why rising rates hit growth stocks harder than value stocks.',
     depth: 3,
   },
+
+  // ===========================================================================
+  // Chapter 2 — Beneath the Surface
+  // ===========================================================================
+  {
+    id: 'silver',
+    chapter: 2,
+    order: 1,
+    category: 'commodity',
+    tag: 'Commodity',
+    title: 'Silver',
+    tagline: "Half safe-haven metal, half industrial workhorse — and twice as jumpy as gold.",
+    marketId: 'silver',
+    riskNote:
+      "Silver routinely swings two to three times harder than gold — 5%+ days are common, and it can drop 30% in a matter of weeks. Its market is far smaller than gold's, so it takes less money to shove the price around. Treat a silver position as a spicier, more speculative cousin of a gold position, not a like-for-like swap.",
+    surface:
+      "Silver lives a double life. Half of it is bought for the same reason as gold — a shiny, trustless store of value people run to when they're nervous about paper money. The other half gets melted into solar panels, phones, and electric-car wiring, because silver is the best electrical conductor on Earth. That split personality is the whole story: silver gets pulled by fear AND by factory demand at the same time, which makes it one of the most restless prices on this board.",
+    middle: [
+      "Because it wears two hats, silver tends to exaggerate whatever gold is doing. In a precious-metals rally it usually climbs faster than gold; in a selloff it falls harder. Traders track this with the 'gold-to-silver ratio' — how many ounces of silver it takes to buy one ounce of gold. When that ratio is historically high, silver is considered 'cheap' relative to gold; when it's low, silver has run hot. It's a rough gauge, not a crystal ball, but it's the first thing metals people check.",
+      "The industrial half is where silver's future gets interesting for a 22-year-old. Every solar panel and EV needs silver, and there's no cheap substitute for its conductivity — so the green-energy build-out is a genuine, growing source of demand that gold simply doesn't have. That's a real tailwind, but it also ties silver's fate to the economy: in a recession, factories buy less of everything, silver included.",
+      "The honest catch is volatility. Silver's market is a fraction of gold's size, so the same dollar of buying or selling moves the price much more. That's why silver can feel thrilling on the way up and stomach-churning on the way down. The metal that makes gold look exciting is not the place to learn the difference between 'store of value' and 'get rich quick.'",
+    ],
+    deep: [
+      "Mechanics: like gold, the quoted price here is a COMEX futures contract, not a bar in your hand. Silver's futures market is notorious for being 'thinner' — fewer big players, less liquidity — which amplifies moves and occasionally invites drama (see the scenario). Serious long-term holders who want the metal itself usually buy a physically-backed fund or coins rather than roll futures.",
+      "The most famous silver story is the Hunt brothers. In 1979–80, two Texas oil heirs tried to corner the entire silver market, buying so much that the price rocketed from around $6 to nearly $50 an ounce. Regulators changed the rules, the scheme collapsed, and silver crashed ~80% — a permanent monument to how a small market can be inflated and detonated. It took 26 years for silver to revisit that 1980 peak.",
+      "The gold-silver ratio has a long history worth knowing: for centuries it hovered near 15:1 (loosely tied to how the metals occur in the ground), but since silver was demonetized it has ranged wildly — from the 30s in manias to over 100 in the 2020 panic. There's no 'correct' level; it's a sentiment and relative-value tool, and people who treat it as a law of physics get humbled.",
+      "What professionals actually watch: industrial demand data (especially solar installations and electronics orders), the same real-interest-rate signal that drives gold, and inventory levels in COMEX and London vaults. When vault stocks draw down while prices rise, it hints real physical demand — not just paper speculation — is behind the move. That distinction separates a durable trend from a squeeze that will reverse.",
+    ],
+    scenario:
+      "During a metals frenzy, Rally Randy remortgaged conviction into silver at the top because 'it's about to catch up to gold any day now,' having read exactly one thread about the gold-silver ratio. It caught down instead, and 40% of his money evaporated in three weeks. Nora Nestegg, who already held a slim precious-metals sliver sized so she'd never need to check it, did nothing at all — which, during a silver spike, is very often the single hardest and smartest trade available.",
+    gutCheck: {
+      prompt: 'What makes silver behave differently from gold?',
+      options: [
+        'Silver is rarer than gold, so it holds value better',
+        'Silver is both a safe-haven metal AND a heavily-used industrial material, so it responds to fear and factory demand at once — and swings harder',
+        'Silver is controlled by a single government that sets its price',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Gold is almost purely a monetary/store-of-value asset; silver is roughly half industrial. That dual demand, plus a much smaller market, is exactly why silver amplifies gold's moves in both directions.",
+    },
+    realScenario: {
+      prompt:
+        'Gold rises 4% during a scare, but silver jumps 9% the same week. What\'s the most reasonable read?',
+      options: [
+        "Silver is a better investment than gold — the numbers prove it",
+        "Silver's smaller, thinner market and its safe-haven-plus-industrial demand make it amplify gold's moves in both directions — a bigger up week here also implies bigger down weeks",
+        'The silver data is glitched — metals move together, one-to-one',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is silver being silver: it tends to outrun gold in rallies and fall harder in selloffs because its market is smaller and part of its demand is industrial. A bigger up move isn't proof of superiority — it's the same volatility that will bite on the way down.",
+    },
+    mythVsReality: {
+      statement: 'Silver is just cheaper gold — same thing, smaller price tag.',
+      isMyth: true,
+      explanation:
+        "Half wrong in an important way. They share a safe-haven role, but silver is also an industrial metal tied to the economy, and its far smaller, more volatile market means it does not behave like a discount version of gold. It moves more, for more reasons — treating it as 'gold-lite' is how people get blindsided by a 30% drawdown.",
+    },
+    connects: ['gold', 'copper', 'dxy'],
+    aiPrompt:
+      "Explain the gold-to-silver ratio — its history, what levels have meant, and its limits as a signal — and tell the story of the Hunt brothers' attempt to corner the silver market in 1980 and what it teaches about thin markets.",
+    depth: 2,
+  },
+  {
+    id: 'natgas',
+    chapter: 2,
+    order: 2,
+    category: 'commodity',
+    tag: 'Commodity',
+    title: 'Natural Gas',
+    tagline: "The weather-obsessed, widow-making commodity that heats your home and your electric bill.",
+    marketId: 'natgas',
+    riskNote:
+      "Natural gas is the single most volatile commodity on this dashboard — double-digit moves in one day are ordinary, and it has been known to double or halve within a season. Traders literally nickname the front-month contract 'the widow-maker' for how ruthlessly it has wiped out people who bet on it. Watch it to learn; do not confuse watching with trading it.",
+    surface:
+      "Natural gas is the fuel piped into homes for heating and cooking, and increasingly what power plants burn to make electricity. The U.S. benchmark price (Henry Hub) is one of the most violent numbers in all of markets — not because of Wall Street drama, but because of weather. A colder-than-expected winter or a brutal heat wave can send it soaring or crashing double digits in a single day, because unlike a stock, natural gas answers to thermometers, not earnings calls.",
+    middle: [
+      "The reason gas is so jumpy comes down to storage and geography. It's hard and expensive to store (it's a gas, not a stack of barrels), and historically hard to ship across oceans, so the U.S. price was long set by domestic supply and demand alone. When a cold snap spikes heating demand faster than producers can respond, there's no quick relief valve — so the price does the adjusting, violently. It's the clearest example on this board of a price ruled by raw physics.",
+      "Why care at 22? Because natural gas quietly sets a big chunk of your electricity bill and your winter heating cost, and it's central to the energy transition. It burns cleaner than coal, so it's often called a 'bridge fuel' toward renewables — but it's still a fossil fuel, which makes it a live battleground in the climate debate. Understanding it means understanding a real tension you'll be voting and paying bills around for decades.",
+      "There's also a global story now. The U.S. built export terminals that chill gas into liquid (LNG) and ship it worldwide, especially to Europe after it cut off Russian supply. That's slowly tying America's once-isolated gas price to the rest of the planet — meaning a cold winter in Germany can now nudge the price of heating a house in Ohio. Markets that used to be local are becoming global in real time, and gas is watching it happen.",
+    ],
+    deep: [
+      "Mechanics of the 'widow-maker': the front-month natural gas futures contract is famous for catastrophic, sudden moves. In 2006, a hedge fund called Amaranth lost roughly $6 billion — and collapsed — in weeks on wrong-way natural gas bets. The name stuck because the combination of weather uncertainty, thin storage buffers, and leverage has ruined more traders than almost any other single market.",
+      "Seasonality is the backbone: demand peaks in winter (heating) with a secondary summer peak (air conditioning driving power plants). Traders obsess over the weekly EIA storage report — how much gas is sitting in underground caverns versus the five-year average. A 'draw' bigger than expected (storage falling fast) is bullish; a 'build' signals oversupply. The whole market is a running argument about whether storage will make it to spring.",
+      "The LNG revolution changed the ceiling and the floor. Before large-scale U.S. exports, a glut had nowhere to go and prices could crater toward zero; a shortage couldn't be relieved by imports. Export capacity now links Henry Hub to Europe's TTF and Asia's JKM benchmarks — so a Freeport terminal outage or a European cold snap ripples straight into U.S. prices. The market is mid-transformation from island to network.",
+      "Edge case worth knowing: natural gas prices can and do go briefly negative in specific regions (like the Permian Basin) when it's produced as a byproduct of oil drilling and there aren't enough pipelines to carry it away — producers occasionally pay to offload it. Same lesson as oil's 2020 negative print: when a physical commodity has nowhere to go, price stops behaving like an 'investment' and starts behaving like a logistics problem.",
+    ],
+    scenario:
+      "Speculating Steve read that a cold winter was coming and put a chunk of his savings into a leveraged natural gas fund, certain he'd cracked the code. A mild January arrived instead, the price fell by half, and the fund's leverage turned that into a near-total loss. Prudence Longview, who wanted energy exposure, held a broad, unleveraged energy position sized to survive being wrong — got the same mild winter, shrugged, and kept her job at the same company. Same weather, two completely different Januaries.",
+    gutCheck: {
+      prompt: 'Why is natural gas one of the most volatile commodities?',
+      options: [
+        'Because it is traded by more people than any other commodity',
+        'Because demand is weather-driven and it is hard to store, so supply can\'t adjust quickly — leaving price to do the adjusting, violently',
+        'Because governments constantly change its official price',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Gas demand swings with temperature, and because it's costly to store and (historically) hard to ship, there's no quick way to add supply during a spike. With the physical adjustment blocked, the price is what moves — and it moves hard.",
+    },
+    realScenario: {
+      prompt:
+        'A brutal cold snap hits the U.S. Northeast and natural gas jumps 15% in a day, while the S&P 500 barely moves. What\'s going on?',
+      options: [
+        'A data error — nothing moves 15% in a day for a real reason',
+        'Heating demand spiked faster than supply or storage could respond, and with no quick relief valve, the price absorbed the entire shock',
+        'Stock traders simply haven\'t noticed the cold weather yet',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is gas's signature move: a weather shock hits demand instantly, supply can't ramp up fast, storage is finite, so price does all the adjusting in one violent jump. The stock market shrugs because a cold week barely dents corporate earnings — but it can dominate the gas market.",
+    },
+    mythVsReality: {
+      statement: 'Natural gas is a stable, boring utility input — it doesn\'t move much.',
+      isMyth: true,
+      explanation:
+        "The opposite of true. Because it's weather-driven, hard to store, and historically hard to transport, natural gas is the most volatile commodity most people ever encounter — routinely swinging double digits in a day. 'Boring utility' describes the bill it lands on you; the price behind that bill is anything but.",
+    },
+    connects: ['oil', 'silver', 'copper'],
+    aiPrompt:
+      'Explain why natural gas is so much more volatile than oil, how the weekly EIA storage report drives the market, the story of the Amaranth hedge fund collapse, and how U.S. LNG exports are linking the once-isolated American gas price to Europe and Asia.',
+    depth: 2,
+  },
+  {
+    id: 'copper',
+    chapter: 2,
+    order: 3,
+    category: 'commodity',
+    tag: 'Commodity',
+    title: 'Copper — "Dr. Copper"',
+    tagline: "The metal with a PhD in economics, wired into everything that carries electricity.",
+    marketId: 'copper',
+    surface:
+      "Copper earned the nickname 'Dr. Copper' because it seems to have a doctorate in forecasting the economy. It goes into homes, cars, power grids, and every electronic device — so when the world is building and buying, copper demand rises, and when the economy is slowing, copper demand falls first. Watching its price is like taking the global economy's temperature with a metal thermometer.",
+    middle: [
+      "The logic is simple and powerful: you can't build much of anything modern without copper wiring and plumbing, and there's no cheap substitute for how well it conducts electricity. So copper demand is a real-time vote on construction, manufacturing, and infrastructure — especially in China, which consumes roughly half the world's copper. A falling copper price often whispers 'the economy is cooling' months before the official data confirms it.",
+      "For a 22-year-old, copper is quietly one of the most important metals of your lifetime, because electrification runs on it. Electric cars use several times more copper than gas cars; wind farms, solar arrays, data centers, and upgraded power grids all need enormous amounts of it. Many analysts think the world is heading toward a structural copper shortage as green demand collides with the fact that new mines take 10–20 years to open. That's a genuine long-term supply-and-demand story, not hype.",
+      "The catch that keeps copper honest: it's cyclical. Because its demand is tied to building things, copper gets hit hard in recessions — the same sensitivity that makes it a great economic barometer makes it a rough ride. 'Dr. Copper' can diagnose a slowdown by falling 30% right along with it. It's a fantastic teacher of how the physical economy and financial markets are stitched together.",
+    ],
+    deep: [
+      "Mechanics: the quoted price is a COMEX futures contract for a pound of copper (London's LME quotes it per metric tonne — same metal, different unit, so headlines can look wildly different). Copper is a true global commodity: mined heavily in Chile and Peru, refined significantly in China, and priced continuously as the sum of every builder's and manufacturer's demand against a slow-moving supply.",
+      "Why supply can't just respond to demand: opening a new copper mine can take 10 to 20 years from discovery to production — permitting, financing, construction, and increasingly, resistance in the communities and ecosystems where copper is found. That long lead time means when demand surges, supply simply can't catch up for years, which is the core of the structural-shortage thesis and why copper can trend for a long time in one direction.",
+      "What professionals actually watch: Chinese economic data (since China is ~half of demand), global manufacturing surveys (PMIs), and inventory levels in LME and Shanghai warehouses. They also watch the copper-to-gold ratio as a macro signal — copper (growth-sensitive) rising versus gold (fear-sensitive) suggests optimism about the economy; the ratio falling suggests the opposite. It's a cleaner growth-versus-fear gauge than either metal alone.",
+      "Edge case worth knowing: because copper is so tradeable and valuable, it's a magnet for financing games and even theft. In China, copper has been used as loan collateral (sometimes the same pile pledged to multiple lenders — a scandal that surfaced in 2014), and physical copper theft from construction sites and rail lines spikes whenever the price does. When a metal is this liquid and this useful, its price reaches into places a stock chart never does.",
+    ],
+    scenario:
+      "Cyclical Cody noticed copper falling and, sure it was a fluke, bet big that it would snap back within the month. It kept falling for two quarters as a manufacturing slowdown he hadn't noticed played out — 'Dr. Copper' had made the diagnosis he ignored. Diane Diversified simply read copper's slide as one more data point that the economy was cooling, trimmed nothing dramatically, and braced for a slower year that arrived on schedule. Copper told them both the same thing; only one was listening.",
+    gutCheck: {
+      prompt: 'Why is copper nicknamed "Dr. Copper"?',
+      options: [
+        'Because it was discovered by a doctor',
+        'Because its price tends to reflect the health of the global economy, thanks to its use in construction, manufacturing, and electronics',
+        'Because it has medical uses that drive its price',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Copper is wired into almost everything that gets built, so its demand rises and falls with global construction and manufacturing. That makes its price an unusually good real-time read on economic health — hence the honorary 'PhD in economics.'",
+    },
+    realScenario: {
+      prompt:
+        "Copper has quietly fallen 20% over three months while stock indices are still near record highs. What's the most reasonable interpretation?",
+      options: [
+        "Nothing — copper and the economy are unrelated",
+        "Copper may be flagging an industrial or global slowdown that the stock market hasn't fully priced in yet — worth watching, not panicking over",
+        "Copper is guaranteed to keep falling forever",
+      ],
+      answerIndex: 1,
+      explanation:
+        "A sustained copper decline often signals cooling real-world demand — building and manufacturing slowing — sometimes before broad indices react. It's a yellow flag to investigate, not a crash alarm; 'Dr. Copper' diagnoses tendencies, not certainties.",
+    },
+    mythVsReality: {
+      statement: "Copper is a boring industrial metal with no real connection to the stock market or the broader economy.",
+      isMyth: true,
+      explanation:
+        "Backwards. Copper is one of the most economically revealing prices there is — its demand tracks global building and manufacturing so closely that traders treat it as a leading economic indicator. Far from disconnected, it's often ahead of the stock market in sensing where the real economy is going.",
+    },
+    connects: ['oil', 'russell2000', 'dxy'],
+    aiPrompt:
+      "Explain why copper is considered a leading indicator of the global economy, the case for a structural copper shortage driven by electrification versus slow mine supply, and what the copper-to-gold ratio tells investors about growth versus fear.",
+    depth: 2,
+  },
+  {
+    id: 'dxy',
+    chapter: 2,
+    order: 4,
+    category: 'currency',
+    tag: 'Currency',
+    title: 'The U.S. Dollar Index',
+    tagline: "The price of the dollar itself — the tide that quietly lifts or sinks everything else.",
+    marketId: 'dxy',
+    surface:
+      "Every price on this dashboard is measured in dollars — but the dollar itself has a price, measured against other currencies. The U.S. Dollar Index (DXY) tracks how strong the dollar is versus a basket of major currencies, mostly the euro plus the yen, pound, and a few others. It sounds abstract, but the dollar is the water the whole financial system swims in, so this one number ripples into stocks, commodities, and economies worldwide — usually without anyone at the dinner table noticing.",
+    middle: [
+      "Here's the key relationship to lock in: a stronger dollar generally pushes down commodity prices (oil, gold, copper), because those are priced in dollars — when each dollar buys more, it takes fewer dollars to buy the same barrel. A strong dollar also squeezes U.S. companies that earn money abroad (their foreign sales convert into fewer dollars) and pressures emerging-market countries that borrowed in dollars but earn in their own weakening currency. One index, and it's tugging on half the things you'd read about in the financial news.",
+      "Why care at 22? Because the dollar's strength touches you even if you never leave the country. It affects how far your money goes when you travel, the cost of imported goods and gadgets, the profits of the global companies in your index fund, and the stability of the world economy your career will unfold inside. The dollar is the closest thing markets have to a universal reference point, and learning to read it is like learning that the map you've been using has a scale.",
+      "One honest wrinkle: DXY is a bit of a fossil. It's dominated by the euro (well over half the basket) and was set decades ago, so it measures the dollar mostly against Europe, not against today's actual trading partners like China or Mexico. It's still the number everyone quotes and a perfectly good gauge of 'dollar mood' — just know that when someone says 'the dollar,' this particular index is a specific, slightly dated slice of a much bigger picture.",
+    ],
+    deep: [
+      "Mechanics: DXY is a weighted average of the dollar against six currencies — euro (~57%), yen, pound, Canadian dollar, Swedish krona, and Swiss franc — with weights fixed since 1973 (only adjusted once, when the euro replaced several European currencies). Because it's so euro-heavy, DXY is really 'the dollar versus Europe' wearing a global-sounding name. Economists prefer 'trade-weighted' dollar indices that include China and Mexico for a truer picture, but DXY is what trades and what headlines cite.",
+      "The 'dollar smile' theory explains the dollar's strange habit of rising in two opposite situations: when the U.S. economy is booming (high rates and growth attract money) AND when the world is terrified (a crisis sends everyone fleeing to the dollar as the ultimate safe haven). It tends to weaken in the boring middle, when the U.S. is muddling along and investors feel comfortable taking risks elsewhere. So a rising dollar can mean 'America is winning' or 'the world is scared' — context decides which.",
+      "The dollar's superpower is its role as the global reserve currency: most international trade, debt, and commodities are priced and settled in dollars, so the whole world needs them. This lets the U.S. borrow cheaply and gives its sanctions real teeth, but it also means U.S. monetary policy is effectively exported — when the Fed raises rates and the dollar strengthens, it can trigger debt crises in countries thousands of miles away that borrowed in dollars. That's real, recurring, and underappreciated.",
+      "What professionals actually watch: interest-rate differentials (money flows toward whichever major economy pays more, strengthening its currency), relative growth, and safe-haven flows during crises. They also watch the dollar as a 'risk-off' tell — a sharply rising dollar during a market selloff often signals genuine global stress, as investors dump everything and pile into the one asset everyone accepts. A calm, drifting dollar usually means calm markets.",
+    ],
+    scenario:
+      "FX Frankie was convinced a strong dollar was 'obviously good for America' and loaded up on multinational U.S. stocks to celebrate — then watched their overseas profits shrink in dollar terms and their shares lag for a year. Priya Patient just noticed the strong dollar as context: it explained why gold was heavy, why her trip abroad felt cheap, and why emerging-market headlines were nervous. She traded on none of it. Understanding the dollar made her a sharper reader of everything else, which was the entire point.",
+    gutCheck: {
+      prompt: 'A stronger U.S. dollar tends to…',
+      options: [
+        'Push commodity prices up, since everything becomes more valuable',
+        'Push dollar-priced commodities down and squeeze the foreign profits of U.S. multinationals, because each dollar now buys more',
+        'Have no effect on anything outside currency markets',
+      ],
+      answerIndex: 1,
+      explanation:
+        "When the dollar strengthens, it takes fewer dollars to buy the same dollar-priced barrel of oil or ounce of gold, so those prices tend to fall. And U.S. companies' foreign earnings convert into fewer dollars, pressuring their profits. The dollar's strength radiates outward into many other markets.",
+    },
+    realScenario: {
+      prompt:
+        'During a global market panic, stocks are falling worldwide — and the U.S. dollar is surging. Why would the dollar rise while almost everything else drops?',
+      options: [
+        'Investors made a mistake — the dollar should fall in a crisis',
+        "The dollar is the world's reserve currency and ultimate safe haven, so frightened investors sell risky assets everywhere and pile into dollars",
+        'The U.S. must be the only economy doing well',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is the right half of the 'dollar smile': in genuine crises, global investors flee to the dollar because it's the most trusted, most liquid asset on earth. A spiking dollar during a selloff is often a sign of real fear, not American strength.",
+    },
+    mythVsReality: {
+      statement: 'A strong dollar is simply good news for everyone in America.',
+      isMyth: true,
+      explanation:
+        "Too simple. A strong dollar helps if you're importing goods or traveling abroad, but it hurts U.S. exporters and multinationals (their foreign sales shrink in dollar terms), can pressure the stocks in your index fund, and can trigger crises in countries that borrowed in dollars. 'Strong' sounds like 'good,' but in currencies, strength always helps some and hurts others.",
+    },
+    connects: ['gold', 'oil', 'tnx'],
+    aiPrompt:
+      "Explain what the U.S. Dollar Index actually measures and why it's so euro-heavy, the 'dollar smile' theory of why the dollar rises in both booms and crises, and how a strong dollar and U.S. reserve-currency status can trigger debt problems in emerging-market countries.",
+    depth: 2,
+  },
+  {
+    id: 'ust2y',
+    chapter: 2,
+    order: 5,
+    category: 'rates',
+    tag: 'Rates',
+    title: 'The 2-Year Treasury Yield',
+    tagline: "The market's live bet on what the Federal Reserve does next.",
+    marketId: 'ust2y',
+    surface:
+      "If the 10-year Treasury yield is the market's view of the distant future, the 2-year is its opinion about right now — specifically, where it thinks the Federal Reserve will set short-term interest rates over the next couple of years. Because the Fed's decisions dominate the near term, the 2-year yield tracks Fed expectations more tightly than almost any other number. When traders think rate cuts are coming, the 2-year falls; when they smell rate hikes, it climbs — often well before the Fed actually moves.",
+    middle: [
+      "The mental model: the 2-year yield is a crowd-sourced forecast of the Fed. Thousands of traders are constantly betting on the average level of short-term rates over the next two years, and the 2-year yield is the price those bets settle at. This is why it can move sharply the instant an inflation report or a Fed official's speech shifts the odds — it's not reacting to today's economy so much as to everyone's revised guess about the Fed's next several meetings.",
+      "Why should a 22-year-old care about this particular maturity? Because the short end of the curve is where monetary policy actually bites — it shapes the rate on your savings account, your credit card, and short-term loans, and it's the market's clearest read on whether money is about to get cheaper or more expensive. When you hear 'the market expects three rate cuts next year,' the 2-year yield is where that expectation is written down in real time.",
+      "The 2-year is also half of the most famous recession signal in finance. Compare it to the 10-year yield and you get the 'yield curve': normally the 2-year sits below the 10-year (you demand more yield to lend for longer). When the 2-year rises ABOVE the 10-year — an inversion — it means the market expects the Fed to have to cut rates soon to rescue a slowing economy. That comparison is important enough that it gets its own lesson next door.",
+    ],
+    deep: [
+      "Mechanics: the 2-year yield is set by continuous trading in the enormous market for 2-year Treasury notes, not by the Fed directly. The Fed sets only the overnight rate; the 2-year is the market's projection of where that overnight rate will average over 24 months. This is why the 2-year often 'front-runs' the Fed — it can price in an entire hiking or cutting cycle before the first move, and the Fed sometimes ends up chasing where the 2-year already went.",
+      "The 2022 rate shock is the cleanest recent example: as inflation surged, the 2-year yield rocketed from under 1% to over 4% in a matter of months — one of the fastest moves in its history — as the market violently repriced how aggressively the Fed would have to hike. Anyone watching the 2-year saw the tightening storm forming in real time, months before its full effect hit growth stocks and the housing market.",
+      "What professionals actually watch: the gap between the 2-year yield and the current Fed funds rate (a big gap means the market expects big moves ahead), and how the 2-year reacts to inflation data versus growth data. They also watch it against Fed officials' own projections (the 'dot plot') — when the 2-year disagrees with the Fed's stated path, one of them is usually about to be proven wrong, and historically the market has a decent track record.",
+      "Edge case worth knowing: because the 2-year is so sensitive to Fed expectations, it can whip around violently on a single data point, sometimes overshooting. A hot inflation print can spike it in minutes; a banking scare can crater it just as fast (in March 2023, the 2-year had one of its largest single-day drops in decades as a bank failure suddenly made rate cuts look likely). It's a high-strung instrument — precise, but jumpy, and prone to the same crowd overreactions as any market.",
+    ],
+    scenario:
+      "Terry Timing watched the 2-year yield surge in early 2022, correctly read it as 'the Fed is about to hike hard,' and then — instead of just understanding it — sold all his stocks to 'get ahead of the crash.' He nailed the diagnosis and botched the treatment, sitting in cash through the eventual recovery. Priya Patient read the very same 2-year signal, understood that rougher markets were likely, and simply kept dollar-cost-averaging into her index fund on schedule. The signal was real for both; only one turned a correct read into a costly decision.",
+    gutCheck: {
+      prompt: 'The 2-year Treasury yield most closely reflects…',
+      options: [
+        "The market's expectation for where the Federal Reserve will set short-term interest rates over the next couple of years",
+        'The current rate of inflation, exactly',
+        'The profitability of the 2,000 companies in the Russell 2000',
+      ],
+      answerIndex: 0,
+      explanation:
+        "The 2-year is essentially a live, crowd-sourced forecast of Fed policy over the next two years. It's the most Fed-sensitive point on the yield curve, which is why it moves the instant expectations about rate hikes or cuts shift.",
+    },
+    realScenario: {
+      prompt:
+        "Inflation comes in much hotter than expected, and the 2-year Treasury yield immediately jumps while the 10-year barely moves. What does that tell you?",
+      options: [
+        'The bond market is broken — all yields should move together',
+        "The market suddenly expects the Fed to raise short-term rates more aggressively soon, which hits the Fed-sensitive 2-year far more than the long-run 10-year",
+        'Inflation only affects short-term bonds and never long-term ones',
+      ],
+      answerIndex: 1,
+      explanation:
+        "A hot inflation print shifts expectations for near-term Fed policy, and the 2-year is where those expectations live. The 10-year, which reflects longer-run growth and inflation, can shrug off a single report that the 2-year reacts to violently.",
+    },
+    mythVsReality: {
+      statement: 'The Federal Reserve sets the 2-year Treasury yield directly.',
+      isMyth: true,
+      explanation:
+        "The Fed sets only the overnight rate. The 2-year yield is set by the market's own forecast of where that overnight rate will average over two years — which is why the 2-year often moves before the Fed does, effectively pricing in hikes or cuts in advance. The Fed influences it powerfully, but it doesn't set it.",
+    },
+    connects: ['tnx', 'yieldcurve', 'nasdaq'],
+    aiPrompt:
+      "Explain why the 2-year Treasury yield is the most Fed-sensitive point on the yield curve, how it 'front-runs' Federal Reserve policy, what happened to it during the 2022 inflation shock and the March 2023 banking scare, and how it compares to the Fed's own 'dot plot' projections.",
+    depth: 3,
+  },
+  {
+    id: 'yieldcurve',
+    chapter: 2,
+    order: 6,
+    category: 'rates',
+    tag: 'Rates',
+    title: 'The Yield Curve & Inversion',
+    tagline: "The shape that has predicted nearly every recession — and the one chart the whole market watches.",
+    marketId: 'tnx',
+    surface:
+      "Line up Treasury yields from short maturities to long ones — 2-year, 10-year, 30-year — and connect the dots, and you get the 'yield curve.' Its SHAPE is one of the most closely watched signals in all of finance. Normally it slopes upward: lending money for longer earns more, because you're taking on more time and uncertainty. But every so often it flips — short-term yields rise above long-term ones — and that 'inversion' has preceded nearly every U.S. recession of the past 50 years. It's the closest thing markets have to a smoke alarm.",
+    middle: [
+      "Why would anyone accept a LOWER yield to lock their money up for longer? That's the strange logic an inversion reveals. It happens when the market expects the Fed to cut interest rates in the future — usually because it foresees an economic slowdown. Investors rush to lock in today's long-term yields before rates fall, driving long-term yields down, while the Fed is still holding short-term rates high to fight inflation. The result: short yields above long yields, and a market quietly betting the good times are ending.",
+      "The most-watched version is the '2s10s' — the 10-year yield minus the 2-year yield. When that number goes negative, the curve is inverted, and economists start using the R-word. It's earned its fame: an inverted 2s10s has front-run essentially every modern recession, often by 12 to 18 months. That lead time is the crucial, misunderstood part — inversion is a slow-burning warning, not a next-week crash signal.",
+      "For a 22-year-old, the yield curve is a beautiful example of how markets aggregate the guesses of millions of people into a single, readable shape. You don't need a economics degree to check it — you just look at whether the line slopes up (market expects growth) or bends down (market expects trouble). It won't tell you what to do, and it's been early and occasionally wrong, but knowing how to read it puts you ahead of most people watching the same headlines.",
+    ],
+    deep: [
+      "Mechanics of why inversion signals recession: the short end (2-year) is pinned to Fed policy expectations, while the long end (10-year, 30-year) reflects long-run growth and inflation expectations. When the Fed hikes hard to cool inflation, the short end rises; if the market believes those hikes will succeed by slowing the economy — forcing future cuts — the long end stays low or falls. The inversion is literally the market saying 'current rates are so high they'll break something, and the Fed will have to reverse.'",
+      "The lead-time trap ruins a lot of would-be market timers. Because inversion precedes recessions by a year or more, and stocks often keep rising during that gap, people who sell the instant the curve inverts frequently miss substantial gains and then buy back higher. The signal has been reliable about DIRECTION over long horizons and terrible about TIMING for short ones — a distinction that separates using it as context from using it as a trade.",
+      "Counterintuitively, the more dangerous moment is often the 'un-inversion' — when the curve flips back to normal after being inverted. That steepening typically happens because the Fed is finally cutting rates fast, which usually means the slowdown has arrived. Historically, several recessions began not while the curve was inverted, but shortly after it un-inverted. The alarm blaring is a warning; the alarm suddenly stopping can be the fire actually starting.",
+      "Edge cases and honest caveats: the curve has cried wolf (a brief 1998 inversion, and periods where central-bank bond buying distorted the long end), and there's real debate about which spread to watch (some economists prefer the 3-month/10-year over the 2s10s). No indicator is a law of nature — the curve reflects expectations, and expectations can be wrong. Treat it as the market's collective forecast, weighted by a strong track record but not a guarantee, and you'll read it the way professionals actually do.",
+    ],
+    scenario:
+      "When the 2s10s inverted, Doomscroll Doug sold everything the same afternoon, certain the crash was imminent — then watched stocks climb for another fourteen months while he sat in cash, un-inverting his own net worth. Grace Compoundsworth saw the identical inversion, understood it as a real caution flag about the year or two ahead, and responded by doing nothing dramatic beyond making sure her emergency fund was solid. The recession did eventually come. Only one of them had spent the intervening year losing money by being right too early.",
+    gutCheck: {
+      prompt: 'A "normal" (healthy) yield curve slopes which way, and what does an inversion mean?',
+      options: [
+        'It slopes down normally; an inversion (upward slope) signals a boom',
+        'It slopes up normally (longer = higher yield); an inversion (short-term yields above long-term) has historically warned of a coming recession',
+        'It is always flat; any slope at all signals a crash',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Normally longer bonds yield more, so the curve slopes upward. When short-term yields climb above long-term ones — an inversion — it reflects a market expecting the Fed to cut rates to fight a slowdown, and it has preceded nearly every modern U.S. recession.",
+    },
+    realScenario: {
+      prompt:
+        "The yield curve inverted eight months ago, yet stocks are still near record highs. A friend says 'the recession signal was obviously wrong.' What's the sharpest response?",
+      options: [
+        "He's right — if a recession hasn't hit yet, the signal failed",
+        "Inversion historically precedes recessions by 12–18 months, so eight months of rising stocks is completely consistent with the signal — it warns of direction over a long horizon, not next week's timing",
+        "Stocks and the yield curve have nothing to do with each other",
+      ],
+      answerIndex: 1,
+      explanation:
+        "The inversion signal's whole nature is its long, variable lead time — stocks often keep rising for a year or more after it triggers. Declaring it 'wrong' eight months in mistakes a slow-burning warning for a broken one; the classic error is acting on it as if it were a timing tool.",
+    },
+    mythVsReality: {
+      statement: 'When the yield curve inverts, you should sell your stocks immediately — a crash is right around the corner.',
+      isMyth: true,
+      explanation:
+        "Dangerously oversimplified. Inversion has been a reliable long-range warning, but it typically precedes recessions by a year or more, and markets often rise substantially in between. Selling the moment it inverts has historically cost people gains and led them to buy back higher. It's context about the years ahead, not a signal to act this afternoon.",
+    },
+    connects: ['ust2y', 'tnx', 'nasdaq'],
+    aiPrompt:
+      "Explain in plain English why an inverted yield curve (short-term yields above long-term) has predicted recessions, why the lead time is so long and variable, why the 'un-inversion' steepening can be the more dangerous signal, and the honest debate about how reliable the indicator really is.",
+    depth: 3,
+  },
+  {
+    id: 'ethereum',
+    chapter: 2,
+    order: 7,
+    category: 'crypto',
+    tag: 'Crypto',
+    title: 'Ethereum',
+    tagline: "Not just digital money — a global computer anyone can build on.",
+    marketId: 'ethereum',
+    riskNote:
+      "Ethereum is every bit as volatile as Bitcoin — 5–10% days are routine, and it has lost 80%+ of its value more than once. On top of price risk, it carries technology and 'smart contract' risk: bugs in the code that runs on it have vaporized billions of dollars in single incidents. Only expose money you could watch fall by most of its value without it changing your life.",
+    surface:
+      "If Bitcoin is digital gold — a scarce thing you hold — Ethereum is more like a global, always-on computer that anyone in the world can run programs on. Those programs, called 'smart contracts,' are agreements that execute themselves automatically without a bank or middleman: lending, trading, digital ownership, and more. The cryptocurrency called Ether (ETH) is the fuel that pays for running them. So Ethereum isn't really trying to be money — it's trying to be a platform, and Ether is a bet on that platform being used.",
+    middle: [
+      "This platform-versus-money distinction is the whole reason to study Ethereum next to Bitcoin. They're both 'crypto,' but they answer to different stories: Bitcoin's value rests on being scarce, simple, and trusted digital gold; Ethereum's rests on whether developers actually build useful things on it and people pay to use them. Watching the two move differently — sometimes together, sometimes apart — is a live lesson in how assets in the same bucket can have completely different engines underneath.",
+      "For a 22-year-old, Ethereum is worth understanding less as an investment and more as a window into where the internet might be going. The same technology powers stablecoins (digital dollars), decentralized finance ('DeFi' — banking-like services with no bank), and digital ownership of art and assets (NFTs, for better and worse). Some of this will turn out to be genuinely transformative; some is hype and outright scams. Being able to tell 'interesting technology' from 'get-rich-quick pitch' is a skill that will serve you for decades.",
+      "The honest reality check: Ethereum is bleeding-edge, experimental technology carrying real money, which is a combustible combination. It's every bit as volatile as Bitcoin, and it adds a whole new category of risk — the code itself can have bugs, and smart-contract exploits have drained billions of dollars in single afternoons. The upside story is real; so is the possibility that a given project on Ethereum is a beautifully-designed way to lose everything.",
+    ],
+    deep: [
+      "How it works, briefly: Ethereum is a shared, global ledger that doesn't just record who owns what (like Bitcoin) but also runs code. Every action — a trade, a loan, minting a token — costs a fee called 'gas,' paid in Ether, which compensates the network for the computation and prevents spam. When the network is busy, gas fees spike, which is both a feature (it prices scarce computing) and a persistent user-experience problem the ecosystem keeps trying to solve.",
+      "The Merge (2022) was one of the biggest events in crypto history: Ethereum switched from Bitcoin-style 'proof of work' (energy-hungry mining) to 'proof of stake,' where holders lock up Ether as collateral to secure the network and earn rewards for doing so honestly. This slashed Ethereum's energy use by ~99% and introduced a native yield — you can 'stake' Ether to earn more Ether — which makes ETH behave a little like a productive asset, unlike Bitcoin. It also introduced new centralization debates about who controls the staking.",
+      "'Ultrasound money' is the ambitious in-joke: after the Merge and a fee-burning upgrade, a portion of the gas fees paid on Ethereum are destroyed, permanently removing Ether from circulation. When network usage is high, more Ether is burned than created, making the supply shrink — the opposite of inflation. Whether this 'deflationary when busy' design actually supports the price long-term is genuinely debated, and it depends entirely on people continuing to use the network.",
+      "What professionals actually watch: network activity and fee revenue (is the 'computer' actually being used, or just speculated on?), the growth of 'Layer 2' networks built on top of Ethereum to make it faster and cheaper, the amount of Ether staked, and the correlation regime with Bitcoin and tech stocks. Like Bitcoin, Ethereum has traded like a high-beta version of the Nasdaq during rate shocks — falling hardest exactly when diversification would help most, which is why allocators size it as speculation, not ballast.",
+    ],
+    scenario:
+      "APY Andy chased a 200%-yield 'DeFi' project on Ethereum with money he needed for rent, dazzled by a number he didn't understand and a smart contract he never read — the contract had a flaw, the project drained, and the money was gone by Tuesday with no bank to call. Fiona Forward, curious about the technology, put in a small, pre-decided amount she could afford to lose entirely, used it to actually learn how staking and gas worked, and treated the whole thing as tuition with a lottery ticket attached. One of them learned about Ethereum. The other learned about Andy.",
+    gutCheck: {
+      prompt: 'The clearest difference between Bitcoin and Ethereum is…',
+      options: [
+        'Ethereum is just a faster version of Bitcoin with the same purpose',
+        'Bitcoin aims to be scarce digital money/store-of-value, while Ethereum aims to be a programmable platform that runs self-executing "smart contracts"',
+        'Ethereum is issued and controlled by a central bank',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Bitcoin's pitch is digital gold — scarce, simple, held. Ethereum's pitch is a global computer that runs programs, with Ether as the fuel to power them. Same 'crypto' label, fundamentally different purpose — which is exactly why their prices can tell different stories.",
+    },
+    realScenario: {
+      prompt:
+        "A friend says he's earning a 'safe, guaranteed 150% yield' on his Ether through a new app he found. What's the sharpest honest read?",
+      options: [
+        "Great — he found free money; you should put your savings in too",
+        "A yield that high is a giant red flag: it reflects enormous risk (smart-contract bugs, collapse, or outright fraud), and 'guaranteed' plus '150%' almost never coexist honestly",
+        "Yields on Ethereum are always guaranteed because of the code",
+      ],
+      answerIndex: 1,
+      explanation:
+        "In crypto, sky-high 'yields' are compensation for extreme, often hidden risk — or bait. Smart-contract exploits and collapsing projects have erased billions, and nothing paying 150% is 'safe' or 'guaranteed.' The number itself is the warning.",
+    },
+    mythVsReality: {
+      statement: 'Ethereum is basically the same thing as Bitcoin, just a bit newer.',
+      isMyth: true,
+      explanation:
+        "They share the 'cryptocurrency' label and plenty of volatility, but their purposes differ fundamentally: Bitcoin is designed as scarce digital money, while Ethereum is a programmable platform for running applications, with its own staking yield, fee-burning mechanics, and a whole extra layer of technology risk. Treating them as interchangeable misses what each one actually is.",
+    },
+    connects: ['bitcoin', 'nasdaq', 'vix'],
+    aiPrompt:
+      "Explain what Ethereum is beyond 'a cryptocurrency' — smart contracts, gas fees, and its role as a platform — what The Merge to proof-of-stake changed, what 'staking' and 'ultrasound money' mean, and steelman both the strongest bull case and the strongest bear case for Ethereum.",
+    depth: 3,
+  },
 ]
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]))
@@ -786,5 +1207,6 @@ export const CATEGORY_META: Record<LessonCategory, { label: string; color: strin
   'chart-literacy': { label: 'Chart Literacy', color: '#2dd4a7' },
   foundations: { label: 'Foundations', color: '#f472b6' },
   commodity: { label: 'Commodities', color: '#fb923c' },
+  currency: { label: 'Currencies', color: '#34d399' },
   rates: { label: 'Bonds & Rates', color: '#22d3ee' },
 }

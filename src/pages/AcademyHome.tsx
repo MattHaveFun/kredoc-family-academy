@@ -42,7 +42,7 @@ function PollPanel() {
         What should we build next?
       </h2>
       <p className="mt-2 text-sm text-slate-500">
-        Chapter 2 gets written where the votes point. One vote per profile — change it anytime.
+        The next chapter gets written where the votes point. One vote per profile — change it anytime.
       </p>
 
       <div className="mt-6 space-y-2.5">

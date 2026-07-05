@@ -27,7 +27,7 @@ function SessionClock() {
 
   return (
     <span className="tabular-nums text-slate-300">
-      {now.toLocaleTimeString('en-US', { hour12: false })}
+      {now.toLocaleTimeString('en-US', { hour12: false, timeZone: 'America/New_York' })} ET
     </span>
   )
 }

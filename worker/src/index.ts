@@ -59,7 +59,10 @@ interface DailyPayload {
   narrative: { text: string; state: 'ready' } | { text: null; state: 'error' }
 }
 
-// Mirrors src/data/markets.ts MARKET_SYMBOLS ids -> Yahoo ticker.
+// Mirrors src/data/markets.ts MARKET_SYMBOLS ids -> Yahoo ticker. Rate symbols
+// (2Y/10Y/30Y) are NOT here — they come from Treasury.gov instead, because
+// Yahoo's yield indices (^TNX/^TYX) only ever return a single candle from the
+// chart endpoint (verified), useless for a series. See buildRates() below.
 const MARKETS: Record<string, { yahoo: string; name: string }> = {
   sp500: { yahoo: '^GSPC', name: 'S&P 500' },
   nasdaq: { yahoo: '^IXIC', name: 'NASDAQ Composite' },
@@ -67,9 +70,25 @@ const MARKETS: Record<string, { yahoo: string; name: string }> = {
   russell2000: { yahoo: '^RUT', name: 'Russell 2000' },
   vix: { yahoo: '^VIX', name: 'CBOE Volatility Index' },
   bitcoin: { yahoo: 'BTC-USD', name: 'Bitcoin' },
+  ethereum: { yahoo: 'ETH-USD', name: 'Ethereum' },
   gold: { yahoo: 'GC=F', name: 'Gold' },
   oil: { yahoo: 'CL=F', name: 'WTI Crude Oil' },
-  tnx: { yahoo: '^TNX', name: '10-Year Treasury Yield' },
+  silver: { yahoo: 'SI=F', name: 'Silver' },
+  natgas: { yahoo: 'NG=F', name: 'Natural Gas' },
+  copper: { yahoo: 'HG=F', name: 'Copper' },
+  // DX=F 404s on the chart endpoint; DX-Y.NYB (ICE US Dollar Index) is the
+  // stable, keyless series that resolves.
+  dxy: { yahoo: 'DX-Y.NYB', name: 'U.S. Dollar Index' },
+}
+
+// U.S. Treasury par-yield curve rates (id -> CSV column header). One keyless
+// source gives the whole 2Y/10Y/30Y curve on the same daily rows — cleaner
+// than mixing Yahoo yield indices, and it's the only reliable series source
+// for the 2-year yield (Yahoo has no native constant-maturity 2Y ticker).
+const RATES: Record<string, { column: string; name: string }> = {
+  ust2y: { column: '2 Yr', name: '2-Year Treasury Yield' },
+  tnx: { column: '10 Yr', name: '10-Year Treasury Yield' },
+  ust30y: { column: '30 Yr', name: '30-Year Treasury Yield' },
 }
 
 // Mirrors src/data/sectors.ts + src/data/companies.ts. BRK.B is Twelve-Data
@@ -88,6 +107,10 @@ const WATCHLIST: Array<{ symbol: string; yahoo: string }> = [
   { symbol: 'V', yahoo: 'V' },
   { symbol: 'UNH', yahoo: 'UNH' },
   { symbol: 'XOM', yahoo: 'XOM' },
+  { symbol: 'WMT', yahoo: 'WMT' },
+  { symbol: 'KO', yahoo: 'KO' },
+  { symbol: 'DIS', yahoo: 'DIS' },
+  { symbol: 'NFLX', yahoo: 'NFLX' },
 ]
 
 const YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/'
@@ -189,6 +212,102 @@ async function buildMarkets(): Promise<Record<string, MarketEntry>> {
     }),
   )
   return Object.fromEntries(entries)
+}
+
+// --- U.S. Treasury par-yield rates (2Y/10Y/30Y) --------------------------------
+
+const TREASURY_CSV =
+  'https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/'
+
+// Minimal CSV line parser: Treasury quotes its header cells ("1.5 Month") but
+// never embeds commas in a field, so this only has to strip surrounding quotes.
+function parseCsvLine(line: string): string[] {
+  const out: string[] = []
+  let cur = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      inQuotes = !inQuotes
+    } else if (ch === ',' && !inQuotes) {
+      out.push(cur)
+      cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  out.push(cur)
+  return out.map((c) => c.trim())
+}
+
+// "07/02/2026" -> unix seconds (UTC noon, to dodge timezone-edge date shifts).
+function treasuryDateToUnix(s: string): number | null {
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (!m) return null
+  return Math.floor(Date.UTC(Number(m[3]), Number(m[1]) - 1, Number(m[2]), 12) / 1000)
+}
+
+async function fetchTreasuryYear(year: number): Promise<{ header: string[]; rows: string[][] }> {
+  const url = `${TREASURY_CSV}${year}/all?type=daily_treasury_yield_curve&field_tdr_date_value=${year}&page&_format=csv`
+  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (KredocDailyUpdateWorker)' } })
+  if (!res.ok) throw new Error(`Treasury ${year} failed (${res.status})`)
+  const lines = (await res.text()).trim().split(/\r?\n/)
+  if (lines.length < 2) throw new Error(`Treasury ${year}: empty CSV`)
+  return { header: parseCsvLine(lines[0]), rows: lines.slice(1).map(parseCsvLine) }
+}
+
+// A yield series has no OHLC — each daily par yield becomes a flat candle so it
+// flows through the exact same sliceRanges / chart pipeline as everything else.
+function quoteFromCandles(symbol: string, name: string, candles: Candle[]): Quote {
+  const last = candles[candles.length - 1]
+  const prev = candles[candles.length - 2]
+  const price = last?.close ?? 0
+  const previousClose = prev?.close ?? price
+  return {
+    symbol,
+    name,
+    price,
+    previousClose,
+    change: price - previousClose,
+    changePct: previousClose !== 0 ? ((price - previousClose) / previousClose) * 100 : 0,
+    open: last?.open ?? price,
+    high: last?.high ?? price,
+    low: last?.low ?? price,
+    volume: 0,
+  }
+}
+
+async function buildRates(): Promise<Record<string, MarketEntry>> {
+  // Current year plus five prior calendar years guarantees a full 5Y window.
+  const currentYear = new Date().getUTCFullYear()
+  const years = [0, 1, 2, 3, 4, 5].map((n) => currentYear - n)
+  const yearData = await Promise.all(years.map(fetchTreasuryYear))
+
+  const result: Record<string, MarketEntry> = {}
+  for (const [id, { column, name }] of Object.entries(RATES)) {
+    const points: Array<{ time: number; value: number }> = []
+    for (const { header, rows } of yearData) {
+      const colIdx = header.indexOf(column)
+      if (colIdx < 0) continue
+      for (const row of rows) {
+        const value = Number(row[colIdx])
+        const time = treasuryDateToUnix(row[0] ?? '')
+        if (time == null || !Number.isFinite(value) || row[colIdx] === '') continue
+        points.push({ time, value })
+      }
+    }
+    // Treasury CSVs are newest-first and per-year, so sort ascending and dedupe.
+    points.sort((a, b) => a.time - b.time)
+    const seen = new Set<number>()
+    const candles: Candle[] = []
+    for (const p of points) {
+      if (seen.has(p.time)) continue
+      seen.add(p.time)
+      candles.push({ time: p.time, open: p.value, high: p.value, low: p.value, close: p.value, volume: 0 })
+    }
+    result[id] = { quote: quoteFromCandles(id, name, candles), series: sliceRanges(candles) }
+  }
+  return result
 }
 
 async function buildTickerQuote(symbol: string, yahoo: string): Promise<Quote> {
@@ -315,8 +434,11 @@ export default {
     console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
 
     try {
-      const markets = await buildMarkets()
-      console.log(`[daily-update] buildMarkets ok, ${Object.keys(markets).length} markets`)
+      const [yahooMarkets, rates] = await Promise.all([buildMarkets(), buildRates()])
+      const markets = { ...yahooMarkets, ...rates }
+      console.log(
+        `[daily-update] buildMarkets ok, ${Object.keys(yahooMarkets).length} yahoo + ${Object.keys(rates).length} rates`,
+      )
       const tickers = await buildTickers()
       console.log(`[daily-update] buildTickers ok, ${Object.keys(tickers).length} tickers`)
       const narrative = await generateNarrative(env, day, markets)

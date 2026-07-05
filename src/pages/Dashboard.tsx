@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { MARKET_SYMBOLS } from '../data/markets'
+import { MARKET_SYMBOLS, type MarketSymbol } from '../data/markets'
 import TickerStrip from '../components/TickerStrip'
 import MainChartPanel from '../components/MainChartPanel'
 import MarketCard from '../components/MarketCard'
 import SectorHeatMap from '../components/SectorHeatMap'
 import MarketMoodGauge from '../components/MarketMoodGauge'
 import EconomicCalendarPanel from '../components/EconomicCalendarPanel'
+import YieldCurvePanel from '../components/YieldCurvePanel'
 import TodayInMarkets from '../components/TodayInMarkets'
 import DataBadge from '../components/DataBadge'
+import { useAutoCycle } from '../hooks/useAutoCycle'
 import { useFeedStatus } from '../context/FeedStatusContext'
 
 function SectionRule({ title }: { title: string }) {
@@ -21,12 +23,134 @@ function SectionRule({ title }: { title: string }) {
   )
 }
 
-const INDEX_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Index' || m.assetClass === 'Volatility' || m.assetClass === 'Crypto')
-const COMMODITY_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Commodity')
-const RATE_SYMBOLS = MARKET_SYMBOLS.filter((m) => m.assetClass === 'Rate')
+// Resolve a list of ids into MARKET_SYMBOLS, preserving the given order.
+function pick(ids: string[]): MarketSymbol[] {
+  return ids.flatMap((id) => {
+    const m = MARKET_SYMBOLS.find((s) => s.id === id)
+    return m ? [m] : []
+  })
+}
+
+const MARKETS_INDICES = pick(['sp500', 'nasdaq', 'dow', 'russell2000', 'vix'])
+const MARKETS_CRYPTO = pick(['bitcoin', 'ethereum'])
+const MARKETS_TAB_SYMBOLS = [...MARKETS_INDICES, ...MARKETS_CRYPTO]
+
+const MACRO_COMMODITIES = pick(['gold', 'oil', 'silver', 'natgas', 'copper', 'dxy'])
+const MACRO_RATES = pick(['tnx', 'ust2y', 'ust30y'])
+const MACRO_TAB_SYMBOLS = [...MACRO_COMMODITIES, ...MACRO_RATES]
+
+function CardGrid({
+  symbols,
+  selectedId,
+  onSelect,
+}: {
+  symbols: MarketSymbol[]
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {symbols.map((market, i) => (
+        <MarketCard
+          key={market.id}
+          market={market}
+          index={i}
+          selected={market.id === selectedId}
+          onSelect={() => onSelect(market.id)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function MarketsTab() {
+  const { selectedId, select, pause, isCycling } = useAutoCycle(
+    MARKETS_TAB_SYMBOLS.map((s) => s.id),
+  )
+
+  return (
+    <>
+      <MainChartPanel
+        symbols={MARKETS_TAB_SYMBOLS}
+        selectedId={selectedId}
+        onSelect={select}
+        onInteract={pause}
+        isCycling={isCycling}
+      />
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <SectionRule title="All indices at a glance" />
+        <CardGrid symbols={MARKETS_INDICES} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
+        <SectionRule title="Crypto" />
+        <CardGrid symbols={MARKETS_CRYPTO} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>
+        <SectionRule title="Command center" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SectorHeatMap />
+          <MarketMoodGauge />
+        </div>
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '300ms' }}>
+        <SectionRule title="The story of the day" />
+        <TodayInMarkets />
+      </div>
+    </>
+  )
+}
+
+function MacroTab() {
+  const { selectedId, select, pause, isCycling } = useAutoCycle(
+    MACRO_TAB_SYMBOLS.map((s) => s.id),
+  )
+
+  return (
+    <>
+      <MainChartPanel
+        symbols={MACRO_TAB_SYMBOLS}
+        selectedId={selectedId}
+        onSelect={select}
+        onInteract={pause}
+        isCycling={isCycling}
+      />
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <SectionRule title="Commodities & currencies" />
+        <CardGrid symbols={MACRO_COMMODITIES} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
+        <SectionRule title="Rates & the yield curve" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <CardGrid symbols={MACRO_RATES} selectedId={selectedId} onSelect={select} />
+          </div>
+          <YieldCurvePanel />
+        </div>
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>
+        <SectionRule title="On the calendar" />
+        <EconomicCalendarPanel />
+      </div>
+    </>
+  )
+}
+
+type TabKey = 'markets' | 'macro'
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'markets', label: 'Markets' },
+  { key: 'macro', label: 'Macro' },
+]
 
 function Dashboard() {
-  const [selectedId, setSelectedId] = useState(MARKET_SYMBOLS[0].id)
+  const [tab, setTab] = useState<TabKey>('markets')
   const { status, fetchedAt } = useFeedStatus()
 
   const sessionDate = new Date()
@@ -78,72 +202,26 @@ function Dashboard() {
           </dl>
         </div>
 
-        {/* Zone 1: main chart */}
-        <MainChartPanel selectedId={selectedId} onSelect={setSelectedId} />
-
-        {/* Zone 2: index mini-cards */}
-        <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
-          <SectionRule title="All indices at a glance" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {INDEX_SYMBOLS.map((market, i) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                index={i}
-                selected={market.id === selectedId}
-                onSelect={() => setSelectedId(market.id)}
-              />
-            ))}
-          </div>
+        {/* tab switcher — in-page, styled like the time-range pills */}
+        <div className="mb-8 inline-flex rounded-xl border border-slate-400/10 bg-ink-950/60 p-1 shadow-[inset_0_1px_0_rgba(148,163,184,0.05)]">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`rounded-lg px-5 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-all duration-200 ${
+                tab === t.key
+                  ? 'bg-sky-400/15 text-sky-300 shadow-[0_0_16px_-4px_rgba(56,189,248,0.6)]'
+                  : 'text-slate-500 hover:text-slate-200'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {/* Zone 2b: commodities */}
-        <div className="mt-10 animate-fade-up" style={{ animationDelay: '120ms' }}>
-          <SectionRule title="Commodities" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {COMMODITY_SYMBOLS.map((market, i) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                index={i}
-                selected={market.id === selectedId}
-                onSelect={() => setSelectedId(market.id)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Zone 2c: bonds & rates */}
-        <div className="mt-10 animate-fade-up" style={{ animationDelay: '140ms' }}>
-          <SectionRule title="Bonds & rates" />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {RATE_SYMBOLS.map((market, i) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                index={i}
-                selected={market.id === selectedId}
-                onSelect={() => setSelectedId(market.id)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Zone 3: command center row */}
-        <div className="mt-10 animate-fade-up" style={{ animationDelay: '200ms' }}>
-          <SectionRule title="Command center" />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <SectorHeatMap />
-            <MarketMoodGauge />
-            <EconomicCalendarPanel />
-          </div>
-        </div>
-
-        {/* Zone 4: today in markets */}
-        <div className="mt-10 animate-fade-up" style={{ animationDelay: '300ms' }}>
-          <SectionRule title="The story of the day" />
-          <TodayInMarkets />
-        </div>
+        {/* Each tab is its own subtree so switching fully resets chart + cycle state. */}
+        {tab === 'markets' ? <MarketsTab /> : <MacroTab />}
       </div>
     </div>
   )
