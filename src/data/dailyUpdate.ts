@@ -65,14 +65,18 @@ export function getCachedPayload(): DailyPayload | null {
   return memoryPayload
 }
 
-function setCachedPayload(payload: DailyPayload): void {
+function setCachedPayload(payload: DailyPayload): { storageOk: boolean; storageError: string | null } {
   memoryPayload = payload
+  let storageOk = true
+  let storageError: string | null = null
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload))
-  } catch {
-    // storage unavailable — payload still served from memory for this session
+  } catch (err) {
+    storageOk = false
+    storageError = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
   }
   notify()
+  return { storageOk, storageError }
 }
 
 /** Local calendar day (device timezone) — used only to badge freshness in the UI. */
@@ -81,19 +85,32 @@ export function todayStamp(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-let inFlight: Promise<{ ok: true } | { ok: false; error: string }> | null = null
+export interface RefreshResult {
+  ok: boolean
+  error?: string
+  /** One-line trace of what actually happened, always populated — shown in the UI so a
+   *  failure that isn't easily reproducible (mobile browsers we can't attach a debugger
+   *  to) is still diagnosable from a screenshot. */
+  debug: string
+}
+
+let inFlight: Promise<RefreshResult> | null = null
 
 /** Triggered only by the "Get today's update" button — never automatically. */
-export function refreshDailyUpdate(): Promise<{ ok: true } | { ok: false; error: string }> {
+export function refreshDailyUpdate(): Promise<RefreshResult> {
   if (inFlight) return inFlight
 
   const token = getFamilyToken()
   const workerUrl = import.meta.env.VITE_WORKER_URL
   if (!token) {
-    return Promise.resolve({ ok: false, error: 'No family passphrase on file — sign in again.' })
+    return Promise.resolve({ ok: false, error: 'No family passphrase on file — sign in again.', debug: 'no token' })
   }
   if (!workerUrl) {
-    return Promise.resolve({ ok: false, error: 'Site is not configured with a Worker URL yet.' })
+    return Promise.resolve({
+      ok: false,
+      error: 'Site is not configured with a Worker URL yet.',
+      debug: 'no VITE_WORKER_URL',
+    })
   }
 
   inFlight = (async () => {
@@ -103,16 +120,45 @@ export function refreshDailyUpdate(): Promise<{ ok: true } | { ok: false; error:
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.status === 401) {
-        return { ok: false as const, error: 'That family passphrase was rejected — try entering it again.' }
+        return {
+          ok: false as const,
+          error: 'That family passphrase was rejected — try entering it again.',
+          debug: 'HTTP 401',
+        }
       }
       if (!res.ok) {
-        return { ok: false as const, error: `Update failed (${res.status}). Try again in a moment.` }
+        return {
+          ok: false as const,
+          error: `Update failed (${res.status}). Try again in a moment.`,
+          debug: `HTTP ${res.status}`,
+        }
       }
-      const payload = (await res.json()) as DailyPayload
-      setCachedPayload(payload)
-      return { ok: true as const }
-    } catch {
-      return { ok: false as const, error: 'Could not reach the update service — check your connection.' }
+      const text = await res.text()
+      let payload: DailyPayload
+      try {
+        payload = JSON.parse(text) as DailyPayload
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        return {
+          ok: false as const,
+          error: 'Update service returned an unreadable response. Try again in a moment.',
+          debug: `HTTP ${res.status}, ${text.length}B, JSON parse failed: ${msg}`,
+        }
+      }
+      const { storageOk, storageError } = setCachedPayload(payload)
+      return {
+        ok: true as const,
+        debug: storageOk
+          ? `HTTP ${res.status}, ${text.length}B, day=${payload.day}, saved`
+          : `HTTP ${res.status}, ${text.length}B, day=${payload.day}, storage failed (${storageError}) — using session memory only`,
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      return {
+        ok: false as const,
+        error: 'Could not reach the update service — check your connection.',
+        debug: `fetch threw: ${msg}`,
+      }
     } finally {
       inFlight = null
     }

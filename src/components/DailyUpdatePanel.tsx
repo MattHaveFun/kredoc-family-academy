@@ -10,6 +10,7 @@ function DailyUpdatePanel() {
   const [payload, setPayload] = useState<DailyPayload | null>(() => getCachedPayload())
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [debug, setDebug] = useState<string | null>(null)
 
   useEffect(() => subscribe(() => setPayload(getCachedPayload())), [])
 
@@ -19,13 +20,14 @@ function DailyUpdatePanel() {
     setState('loading')
     setError(null)
     const result = await refreshDailyUpdate()
+    setDebug(`${new Date().toLocaleTimeString()} — ${result.debug}`)
     if (result.ok) {
       setState('idle')
       return
     }
     setState('error')
-    setError(result.error)
-    if (result.error.toLowerCase().includes('rejected')) {
+    setError(result.error ?? 'Unknown error')
+    if (result.error?.toLowerCase().includes('rejected')) {
       // Give the rejection message a moment on screen before bouncing back
       // to the passphrase gate — reloading immediately meant it never
       // actually painted, so a wrong passphrase looked like nothing happened.
@@ -57,6 +59,9 @@ function DailyUpdatePanel() {
         </button>
       </div>
       {error && <p className="mx-auto mt-1.5 max-w-7xl font-mono text-[10px] text-down">{error}</p>}
+      {debug && (
+        <p className="mx-auto mt-1 max-w-7xl select-text break-all font-mono text-[9px] text-slate-600">{debug}</p>
+      )}
     </div>
   )
 }
