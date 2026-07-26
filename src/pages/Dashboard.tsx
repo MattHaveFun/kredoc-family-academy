@@ -75,7 +75,7 @@ function CardGrid({
 }
 
 function MarketsTab() {
-  const { selectedId, select, pause, isCycling } = useAutoCycle(
+  const { selectedId, select, pause, isCycling, containerRef } = useAutoCycle(
     MARKETS_TAB_SYMBOLS.map((s) => s.id),
   )
 
@@ -87,6 +87,7 @@ function MarketsTab() {
         onSelect={select}
         onInteract={pause}
         isCycling={isCycling}
+        containerRef={containerRef}
       />
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
@@ -116,7 +117,7 @@ function MarketsTab() {
 }
 
 function MacroTab() {
-  const { selectedId, select, pause, isCycling } = useAutoCycle(
+  const { selectedId, select, pause, isCycling, containerRef } = useAutoCycle(
     MACRO_TAB_SYMBOLS.map((s) => s.id),
   )
 
@@ -128,6 +129,7 @@ function MacroTab() {
         onSelect={select}
         onInteract={pause}
         isCycling={isCycling}
+        containerRef={containerRef}
       />
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
@@ -154,7 +156,7 @@ function MacroTab() {
 }
 
 function GlobalTab() {
-  const { selectedId, select, pause, isCycling } = useAutoCycle(
+  const { selectedId, select, pause, isCycling, containerRef } = useAutoCycle(
     GLOBAL_INDICES.map((s) => s.id),
   )
 
@@ -166,6 +168,7 @@ function GlobalTab() {
         onSelect={select}
         onInteract={pause}
         isCycling={isCycling}
+        containerRef={containerRef}
       />
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
@@ -182,7 +185,7 @@ function GlobalTab() {
 }
 
 function MicroTab() {
-  const { selectedId, select, pause, isCycling } = useAutoCycle(MICRO_STOCKS.map((s) => s.id))
+  const { selectedId, select, pause, isCycling, containerRef } = useAutoCycle(MICRO_STOCKS.map((s) => s.id))
   const selected = MICRO_STOCKS.find((s) => s.id === selectedId) ?? MICRO_STOCKS[0]
 
   return (
@@ -193,6 +196,7 @@ function MicroTab() {
         onSelect={select}
         onInteract={pause}
         isCycling={isCycling}
+        containerRef={containerRef}
       />
 
       <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>

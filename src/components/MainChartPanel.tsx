@@ -20,6 +20,8 @@ interface MainChartPanelProps {
   onInteract?: () => void
   /** Whether the featured chart is currently auto-cycling (drives the subtle AUTO indicator). */
   isCycling?: boolean
+  /** From useAutoCycle — lets it gate cycling on this panel being on screen. */
+  containerRef?: (node: HTMLElement | null) => void
 }
 
 function formatVolume(v: number): string {
@@ -39,7 +41,14 @@ const STAT_CONCEPT: Record<string, string | undefined> = {
   Range: undefined,
 }
 
-function MainChartPanel({ symbols, selectedId, onSelect, onInteract, isCycling }: MainChartPanelProps) {
+function MainChartPanel({
+  symbols,
+  selectedId,
+  onSelect,
+  onInteract,
+  isCycling,
+  containerRef,
+}: MainChartPanelProps) {
   const [range, setRange] = useState<RangeKey>('3M')
   const [chartType, setChartType] = useState<ChartType>('line')
   const [conceptId, setConceptId] = useState<string | null>(null)
@@ -85,7 +94,11 @@ function MainChartPanel({ symbols, selectedId, onSelect, onInteract, isCycling }
   }, [candles, first, last, market, hasData])
 
   return (
-    <section className="panel animate-fade-up overflow-hidden">
+    <section
+      ref={containerRef}
+      onTouchStart={onInteract}
+      className="panel animate-fade-up overflow-hidden"
+    >
       {/* console toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-400/10 bg-ink-950/50 px-4 py-3 sm:px-5">
         <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto">
@@ -123,7 +136,14 @@ function MainChartPanel({ symbols, selectedId, onSelect, onInteract, isCycling }
       <div className="p-4 sm:p-6">
         {/* price readout */}
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
+          {/*
+            Fixed-height readout. Names and price widths differ enough between
+            symbols to wrap onto an extra line, and every pixel of that shoves
+            the whole page down mid-cycle. Reserve the tallest case and
+            bottom-align, so the price stays glued to the chart and any slack
+            opens up harmlessly under the toolbar.
+          */}
+          <div className="flex min-h-[148px] flex-col justify-end sm:min-h-[112px]">
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="font-display text-lg font-semibold text-slate-100">{market.name}</h2>
               <span className="chip">{market.assetClass}</span>
