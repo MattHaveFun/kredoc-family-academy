@@ -9,6 +9,10 @@ import EconomicCalendarPanel from '../components/EconomicCalendarPanel'
 import YieldCurvePanel from '../components/YieldCurvePanel'
 import TodayInMarkets from '../components/TodayInMarkets'
 import WorldTradingMap from '../components/WorldTradingMap'
+import OrderDeskSimulator from '../components/OrderDeskSimulator'
+import StockXRay from '../components/StockXRay'
+import FlagChecklist from '../components/FlagChecklist'
+import ResearchPromptBuilder from '../components/ResearchPromptBuilder'
 import DataBadge from '../components/DataBadge'
 import { useAutoCycle } from '../hooks/useAutoCycle'
 import { useFeedStatus } from '../context/FeedStatusContext'
@@ -41,6 +45,10 @@ const MACRO_RATES = pick(['ust2y', 'tnx', 'ust30y'])
 const MACRO_TAB_SYMBOLS = [...MACRO_COMMODITIES, ...MACRO_RATES]
 
 const GLOBAL_INDICES = pick(['nikkei', 'ftse', 'dax', 'hangseng', 'shanghai', 'sensex'])
+
+// The six largest S&P 500 companies — see src/data/stockPicking.ts for the
+// business profiles that pair with these.
+const MICRO_STOCKS = pick(['nvda', 'aapl', 'msft', 'amzn', 'googl', 'avgo'])
 
 function CardGrid({
   symbols,
@@ -173,12 +181,55 @@ function GlobalTab() {
   )
 }
 
-type TabKey = 'markets' | 'global' | 'macro'
+function MicroTab() {
+  const { selectedId, select, pause, isCycling } = useAutoCycle(MICRO_STOCKS.map((s) => s.id))
+  const selected = MICRO_STOCKS.find((s) => s.id === selectedId) ?? MICRO_STOCKS[0]
+
+  return (
+    <>
+      <MainChartPanel
+        symbols={MICRO_STOCKS}
+        selectedId={selectedId}
+        onSelect={select}
+        onInteract={pause}
+        isCycling={isCycling}
+      />
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        <SectionRule title="The six biggest companies in the index" />
+        <CardGrid symbols={MICRO_STOCKS} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '150ms' }}>
+        <SectionRule title="Anatomy of a giant" />
+        <StockXRay markets={MICRO_STOCKS} selectedId={selectedId} onSelect={select} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '180ms' }}>
+        <SectionRule title="Good business or good story?" />
+        <FlagChecklist />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '210ms' }}>
+        <SectionRule title="The order desk" />
+        <OrderDeskSimulator market={selected} />
+      </div>
+
+      <div className="mt-10 animate-fade-up" style={{ animationDelay: '240ms' }}>
+        <SectionRule title="Before you buy anything" />
+        <ResearchPromptBuilder selectedId={selectedId} onSelect={select} />
+      </div>
+    </>
+  )
+}
+
+type TabKey = 'markets' | 'global' | 'macro' | 'micro'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'markets', label: 'Markets' },
   { key: 'global', label: 'Global' },
   { key: 'macro', label: 'Macro' },
+  { key: 'micro', label: 'Micro' },
 ]
 
 function Dashboard() {
@@ -253,7 +304,15 @@ function Dashboard() {
         </div>
 
         {/* Each tab is its own subtree so switching fully resets chart + cycle state. */}
-        {tab === 'markets' ? <MarketsTab /> : tab === 'global' ? <GlobalTab /> : <MacroTab />}
+        {tab === 'markets' ? (
+          <MarketsTab />
+        ) : tab === 'global' ? (
+          <GlobalTab />
+        ) : tab === 'macro' ? (
+          <MacroTab />
+        ) : (
+          <MicroTab />
+        )}
       </div>
     </div>
   )

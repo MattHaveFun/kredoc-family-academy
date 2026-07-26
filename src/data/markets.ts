@@ -22,7 +22,7 @@ export interface MarketSymbol {
   id: string
   symbol: string
   name: string
-  assetClass: 'Index' | 'Volatility' | 'Crypto' | 'Commodity' | 'Currency' | 'Rate'
+  assetClass: 'Index' | 'Volatility' | 'Crypto' | 'Commodity' | 'Currency' | 'Rate' | 'Stock'
   what: string
   why: string
   academyAnchor: string // Academy lesson id
@@ -227,13 +227,71 @@ export const MARKET_SYMBOLS: MarketSymbol[] = [
     why: 'The "long bond" is where the market prices its deepest, farthest-out convictions about inflation and government debt — and it anchors the far end of the yield curve, the shape that tells you whether investors expect the economy to expand or stall.',
     academyAnchor: 'yieldcurve',
   },
+  // --- The six largest S&P 500 companies (the Micro tab) ---------------------
+  // Ordered by index weight as of mid-2026. That order genuinely shuffles —
+  // Nvidia and Apple have traded the top spot more than once — so nothing in
+  // the UI depends on the ranking, only on the set.
+  {
+    id: 'nvda',
+    symbol: 'NVDA',
+    name: 'NVIDIA',
+    assetClass: 'Stock',
+    what: 'The company that designs the chips nearly every serious AI system is trained and run on — now the single heaviest weight in the S&P 500.',
+    why: 'It is the cleanest example in the market of a "picks and shovels" business: it does not have to win the AI race, it sells the equipment to everyone running it. It is also a lesson in customer concentration, because a handful of giant buyers account for much of its revenue.',
+    academyAnchor: 'case-nvda',
+  },
+  {
+    id: 'aapl',
+    symbol: 'AAPL',
+    name: 'Apple',
+    assetClass: 'Stock',
+    what: 'The iPhone company — though the more interesting half is now Services: the App Store, iCloud, and subscriptions billed quietly to two billion devices.',
+    why: 'Apple is the textbook case of a brand and ecosystem moat: leaving costs you your photos, messages, and habits. Watching Services grow faster than hardware is watching a gadget maker turn into a toll road.',
+    academyAnchor: 'case-aapl',
+  },
+  {
+    id: 'msft',
+    symbol: 'MSFT',
+    name: 'Microsoft',
+    assetClass: 'Stock',
+    what: 'Windows and Office, yes — but the engine is Azure, the cloud platform that rents computing power to a large share of corporate IT, increasingly bundled with AI.',
+    why: 'Microsoft shows what a switching-cost moat looks like at scale: once a company runs its email, files, identity, and servers through you, leaving is a multi-year project. That is why its revenue is unusually predictable for a technology company.',
+    academyAnchor: 'case-msft',
+  },
+  {
+    id: 'amzn',
+    symbol: 'AMZN',
+    name: 'Amazon',
+    assetClass: 'Stock',
+    what: 'Two very different companies under one ticker: the enormous, thin-margin retail store, and AWS — the cloud business that supplies most of the profit.',
+    why: 'Amazon is the best reminder that a stock is not its logo. If you only look at the shopping app, you will misjudge where the money actually comes from — a mistake that shows up over and over in how people pick stocks.',
+    academyAnchor: 'case-amzn',
+  },
+  {
+    id: 'googl',
+    symbol: 'GOOGL',
+    name: 'Alphabet',
+    assetClass: 'Stock',
+    what: 'Google\'s parent company: search and YouTube advertising, the Android platform, Google Cloud, and a set of long-shot bets like Waymo.',
+    why: 'Alphabet is where two of the biggest questions in investing collide — can a business this dominant be broken up by regulators, and can AI chat replace the search box that pays for everything? A live case study in disruption risk.',
+    academyAnchor: 'case-googl',
+  },
+  {
+    id: 'avgo',
+    symbol: 'AVGO',
+    name: 'Broadcom',
+    assetClass: 'Stock',
+    what: 'The least famous member of the group: a chip-and-software conglomerate built by acquisition, designing custom AI accelerators for a few enormous cloud customers.',
+    why: 'Broadcom is proof that the biggest companies are not always the household names — and its debt-funded, acquire-and-optimize playbook is a different animal entirely from the others, worth understanding before you assume all "AI chip stocks" are the same bet.',
+    academyAnchor: 'case-avgo',
+  },
 ]
 
 export function formatPrice(value: number, assetClass: MarketSymbol['assetClass']): string {
   if (assetClass === 'Crypto') {
     return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
   }
-  if (assetClass === 'Commodity') {
+  if (assetClass === 'Commodity' || assetClass === 'Stock') {
     return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
   if (assetClass === 'Rate') {

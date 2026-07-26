@@ -5,7 +5,18 @@
 // Writing rules (see project voice guidelines): stories first, plain English
 // always, honest about uncertainty, never financial advice, never preachy.
 
-export type LessonCategory = 'index' | 'volatility' | 'crypto' | 'chart-literacy' | 'foundations' | 'commodity' | 'currency' | 'rates'
+export type LessonCategory =
+  | 'index'
+  | 'volatility'
+  | 'crypto'
+  | 'chart-literacy'
+  | 'foundations'
+  | 'commodity'
+  | 'currency'
+  | 'rates'
+  | 'stock-picking'
+  | 'execution'
+  | 'company'
 
 export type LearningMode = 'gut-check' | 'real-scenario' | 'myth-vs-reality'
 
@@ -62,6 +73,18 @@ export const CHAPTERS: Chapter[] = [
     number: 2,
     title: 'Beneath the Surface',
     subtitle: 'The metals, money, and interest rates that move quietly under the stock market — and often move it.',
+  },
+  {
+    number: 3,
+    title: 'Picking a Stock',
+    subtitle:
+      'How to judge a single company instead of a whole market — what to look for, what to run from, and how to actually place the order.',
+  },
+  {
+    number: 4,
+    title: 'Six Giants, Six Business Models',
+    subtitle:
+      'The largest companies in the S&P 500, each run through the method from Chapter 3 — because a checklist you have never used is just reading.',
   },
 ]
 
@@ -1240,6 +1263,955 @@ export const LESSONS: Lesson[] = [
       "Explain 'home bias' in investing and the case for international diversification, how currency moves affect an American's returns on foreign stocks, why global market correlations rise during crises, and the difference between developed and emerging markets using Japan, Germany, and China as examples.",
     depth: 2,
   },
+
+  // Chapter 3 — Picking a Stock
+  {
+    id: 'stock-vs-index',
+    chapter: 3,
+    order: 1,
+    category: 'stock-picking',
+    tag: 'Foundations',
+    title: 'Should You Pick Stocks At All?',
+    tagline: 'The honest answer before the fun part.',
+    marketId: 'sp500',
+    riskNote:
+      "Everything in this chapter is about how to think, never what to buy. Individual stocks can and do go to zero — companies that looked permanent have vanished inside a decade. Money you need for rent, tuition, or a car in the next few years does not belong in any single company, no matter how good the research.",
+    surface:
+      "Here is the fact that every honest book on stock picking opens with and most exciting videos leave out: over long stretches, the large majority of professional fund managers — people with research teams, terminals, and direct access to management — fail to beat a plain S&P 500 index fund after fees. If that is true of the professionals, the case for you picking stocks cannot rest on being better at it than they are. It has to rest on something else.",
+    middle: [
+      "So why learn this at all? Three genuinely good reasons. First, understanding how a business is valued makes you a far better reader of the world — of your employer, of the news, of the next company that tries to hire you with equity. Second, a small, deliberate slice of individual stocks is one of the best teachers money can buy: nothing focuses attention like owning something. Third, and least glamorous: you will be offered stock at some point in your life, probably by a job, and you should know how to think about it.",
+      "The structure most people land on after the excitement wears off is boring on purpose: the large majority in broad index funds, doing the actual compounding, plus a small deliberate slice for individual companies you have genuinely researched. The slice is sized so that being spectacularly wrong is educational rather than devastating. That is not timidity — it is the arrangement that lets you keep playing long enough to get good.",
+      "Why this matters more at 22 than at 52: your biggest financial asset right now is not money, it is time. Decades of compounding do the heavy lifting, and the single most damaging thing you can do is interrupt them — by panic-selling in a crash, or by taking a loss so large it makes you quit. Almost every rule in this chapter exists to keep you in the game, not to find you a winner.",
+    ],
+    deep: [
+      "Why beating the index is so hard, mechanically: the index is not an average opponent, it is the aggregate of every dollar invested, weighted toward the winners automatically. When a company grows, its weight rises without anyone deciding anything. You are competing against a strategy that never panics, never charges fees, never takes a vacation, and quietly lets its best positions get bigger.",
+      "There is also a brutal asymmetry in individual stocks that almost nobody internalizes. Research on long-run U.S. stock returns has repeatedly found that a small minority of companies generate the entire market's gain above Treasury bills, and the median stock underperforms. The index works precisely because it guarantees you own the handful of monsters. A concentrated portfolio of ten stocks has excellent odds of missing every one of them.",
+      "The professional counterargument worth knowing: fund managers face constraints you do not. They are judged quarterly, so they cannot hold through a three-year drawdown that would eventually be right. They cannot buy small companies without moving the price. They must stay invested. An individual with genuine patience and no career risk has real structural advantages — the catch being that 'genuine patience' is much rarer than people believe about themselves.",
+      "What the honest professionals actually say about this: your edge, if you have one, is behavioral and informational at the edges. You might understand an industry from working in it. You might be willing to hold something for ten years. What you almost certainly do not have is better information about a mega-cap company than the thousands of analysts covering it — which is why the six companies in this chapter are teaching material, not opportunities.",
+    ],
+    scenario:
+      "Indie Indexer put 90% of her savings into a total-market fund and 10% into four companies she could explain to her grandmother, then wrote down why she owned each one. Stock-Picking Steve went all-in on seven convictions, three of which were the same bet wearing different names. Five years later Indie had one spectacular winner, two duds, a boring fund quietly compounding underneath it all, and a notebook that had taught her more than any course. Steve had a great story about 2024 and a much smaller account.",
+    gutCheck: {
+      prompt: 'Over long periods, most professional fund managers…',
+      options: [
+        'Beat the S&P 500, which is why people pay them',
+        'Fail to beat a plain S&P 500 index fund after fees',
+        'Match the index almost exactly, year after year',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The large majority underperform over long stretches once fees are counted. That is not because they are foolish — it is because the index is a genuinely formidable opponent that automatically lets winners grow and charges almost nothing. It is the single most important fact to know before you start picking.",
+    },
+    realScenario: {
+      prompt:
+        'You have $6,000 saved and want to try picking individual stocks. Which structure best fits what this lesson argues?',
+      options: [
+        'Put all $6,000 into your three best ideas so the winners actually matter',
+        'Keep most of it in a broad index fund and use a small deliberate slice for individual companies',
+        'Wait until you have $50,000, since small amounts are not worth investing',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The slice exists so that being wrong teaches you something instead of setting you back years. And waiting is its own mistake — at 22 the compounding clock is the most valuable thing you own, and small amounts started early routinely beat large amounts started late.",
+    },
+    mythVsReality: {
+      statement: 'Index funds are for people who are not smart enough to pick stocks.',
+      isMyth: true,
+      explanation:
+        "It is closer to the reverse. Choosing to own everything is a conclusion people usually reach by understanding the math, not by avoiding it — and some of the sharpest investors alive recommend exactly that for most money. The genuinely humbling part is that this is a rare case where the easy answer and the correct answer are the same one.",
+    },
+    connects: ['sp500', 'indices-vs-stocks', 'what-you-own', 'when-to-sell'],
+    aiPrompt:
+      "Summarize the research on how many actively managed funds beat the S&P 500 over 10, 15, and 20 years, and explain the finding that a small minority of individual stocks account for the entire market's return above Treasury bills. Then give me the strongest honest case FOR an individual picking some stocks anyway.",
+    depth: 3,
+  },
+  {
+    id: 'what-you-own',
+    chapter: 3,
+    order: 2,
+    category: 'stock-picking',
+    tag: 'Foundations',
+    title: 'What a Share Actually Is',
+    tagline: 'Not a ticker. Not a bet. A fraction of a company.',
+    marketId: 'aapl',
+    surface:
+      "A share of stock is a real, legally enforceable slice of ownership in a business. Own one share of a company with two billion shares outstanding and you own one two-billionth of everything it has: its buildings, its patents, its cash, its brand, and its claim on every dollar of profit it will ever make. The flashing price is just the number someone else is willing to pay you for your slice right now. It is not what the slice is.",
+    middle: [
+      "That distinction is the whole game. If you think you own a ticker, a 20% drop is a catastrophe and you sell. If you think you own a fraction of a business, a 20% drop is a question: did the business get 20% worse, or did the mood change? Those have completely different answers, and only one of them is a reason to do anything.",
+      "Ownership comes with two ways of getting paid. A company can hand profits directly to you as a dividend, or it can keep the money and reinvest it — building factories, hiring engineers, buying back its own shares — in the hope that your slice becomes worth more. Young, fast-growing companies almost always do the second. Mature ones often do both. Neither is virtuous; what matters is whether the money reinvested earns a good return.",
+      "Why care at 22? Because this reframe is what makes the next forty years survivable. Markets will fall hard several times in your investing life — that is not pessimism, it is arithmetic from history. People who believe they own businesses tend to hold through it. People who believe they own tickers tend to sell at the bottom, which is the single most expensive habit in personal finance.",
+    ],
+    deep: [
+      "Where your claim sits in line: if a company is liquidated, shareholders are paid last — after lenders, bondholders, suppliers, and tax authorities. That is precisely why stocks return more than bonds over time. You are being compensated for standing at the back of the queue. It is also why heavy debt is so dangerous to a shareholder: creditors get paid first, and in a bad year 'first' can mean 'only.'",
+      "Share count is the detail beginners overlook and professionals check first. Your ownership is a fraction, and the denominator moves. If a company issues new shares every year to pay employees, your slice shrinks even as the business grows — this is dilution, and it is a real cost that never appears as an expense you can see. Buybacks reverse it, retiring shares so each remaining one owns more. Always read revenue growth next to share-count growth.",
+      "Share classes are worth knowing before you are surprised by them. Many companies have multiple classes with different voting power — founders often keep the votes while the public gets the economics. Alphabet's GOOGL and GOOG are the famous example: nearly the same economic claim, different voting rights. It rarely affects returns directly; it does mean 'shareholders can replace management' is sometimes untrue.",
+      "What professionals actually watch: earnings per share and free cash flow per share, not total profit. Total profit rising while the share count rises faster means the business grew and your slice did not. Per-share numbers are the only ones that describe what happened to you.",
+    ],
+    scenario:
+      "Priya Partowner read one annual report per company she owned and could explain each business in three sentences, so when the market fell 30% she checked whether her four companies were still selling more than last year — they were — and did nothing. Ticker Tommy owned the same companies as strings of letters he had seen trending, and could not say what two of them sold. He sold everything in the third week of the decline, at prices that turned out to be the lowest of the whole episode. Same holdings, same crash, opposite outcomes, and the only difference was what each of them believed they owned.",
+    gutCheck: {
+      prompt: 'Owning one share of a company means you own…',
+      options: [
+        'A promise from the company to pay you back with interest',
+        'A real fractional slice of the business and its future profits',
+        'A contract that tracks the stock price without any ownership',
+      ],
+      answerIndex: 1,
+      explanation:
+        "That first option describes a bond — you are a lender, paid back with interest, and paid before shareholders. A share makes you an owner: last in line if things collapse, but entitled to the upside without limit if things go well.",
+    },
+    realScenario: {
+      prompt:
+        "A company's total profit grew 8% this year, but its earnings per share only grew 1%. What most likely happened?",
+      options: [
+        'The company paid a large dividend, which reduced earnings per share',
+        'The share count rose substantially, so the bigger profit was split across more slices',
+        'The stock price fell, which lowered earnings per share',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Dilution. The business genuinely improved and your slice of it barely did, because the denominator grew almost as fast as the numerator. Dividends do not reduce earnings per share, and the stock price has no effect on it at all — which is exactly why per-share figures are the ones worth tracking.",
+    },
+    mythVsReality: {
+      statement: 'When a stock price drops 20%, you have lost 20% of your money.',
+      isMyth: true,
+      explanation:
+        "You have lost 20% of what the market would pay you today — which becomes an actual loss only if you sell, or if the business really did deteriorate. If the company is selling more, earning more, and holding the same competitive position, what changed was the price tag, not the asset. Sometimes the business truly did get worse, and telling those two situations apart is most of the skill in this chapter.",
+    },
+    connects: ['stock-vs-index', 'fundamentals', 'indices-vs-stocks', 'case-googl'],
+    aiPrompt:
+      "Explain what a share of stock legally entitles me to, where shareholders sit in line versus bondholders if a company fails, and how share dilution and buybacks change my ownership. Use a concrete example with real numbers where total profit grows but earnings per share does not.",
+    depth: 2,
+  },
+  {
+    id: 'fundamentals',
+    chapter: 3,
+    order: 3,
+    category: 'stock-picking',
+    tag: 'Fundamentals',
+    title: 'The Numbers That Actually Matter',
+    tagline: 'Five checks that separate a business from a story.',
+    marketId: 'msft',
+    surface:
+      "A company publishes hundreds of numbers every quarter, and you can safely ignore almost all of them. Five questions do most of the work: is revenue growing, does it keep a real slice of each dollar, does it generate actual cash, does it earn well on the money it invests, and can it survive a bad year? Everything else is detail hanging off those five.",
+    middle: [
+      "Start with revenue, the top line — the total money customers paid. Growing revenue means more people want what this company sells, and that is the only durable engine there is. A company can cut costs to lift profit for a while, but nobody has ever cut their way to greatness for long. Always compare to the same quarter a year ago, never to last quarter, because most businesses have seasons and retailers make a fortune every December.",
+      "Then margins, which tell you how much of that revenue survives. Gross margin — revenue minus what it costs to make the thing — measures how valuable the product itself is. Operating margin, after salaries, marketing, and research, measures whether the company is disciplined about everything else. Rising or steady beats high-and-falling, because a falling margin usually means competition arrived.",
+      "The one most beginners skip is cash flow, and it is the one professionals check first. Profit is assembled by accountants following rules with genuine judgment in them; cash is a fact you can count. Free cash flow — cash from operations minus what the company spends maintaining and building itself — is the money actually available to pay dividends, buy back shares, or reinvest. A company reporting cheerful profits while burning cash is telling you two different stories, and only one of them can be true.",
+    ],
+    deep: [
+      "Return on invested capital is the quiet king of these metrics. It asks: when this company puts a dollar to work, how much does it earn back every year? A business earning 25% on its capital compounds ferociously; one earning 6% is running hard to stand still. Consistently high ROIC is the numerical fingerprint of a moat, because in a competitive market high returns attract rivals until they fall. If they have not fallen in a decade, something is protecting them, and finding out what is your job.",
+      "Debt is not a villain, it is a magnifier. Cheap borrowing to build something that earns more than the interest is good business. The danger is fragility: debt payments are obligations, not preferences, so a leveraged company facing a bad year has no room to absorb it. Check net debt against EBITDA, or simply interest expense against operating income — if interest eats a large share of operating profit, the company works for its lenders first and you second.",
+      "Learn the difference between reported and 'adjusted' figures. Companies are allowed to present their own tidied-up numbers excluding items they consider one-off, and sometimes that genuinely clarifies things. But when adjusted profit is always large, actual profit is always negative, and the difference is always stock compensation, the exceptions have become the business model. Compare the press-release headline to the audited filing, and treat a persistent gap as information.",
+      "What professionals actually watch beyond the five: the direction of gross margin (competition's earliest tell), whether receivables are growing faster than revenue (are customers actually paying?), inventory build-up (is product not selling?), and the wording changes in the risk-factors section year over year. Companies rewrite that section when something has genuinely changed, and almost nobody reads it.",
+    ],
+    scenario:
+      "Cash-Flow Cassie ignored two exciting companies because both burned cash every year while reporting adjusted profits, and she could not make the two stories agree. Adjusted-Adam bought both, reasoning that the losses were temporary and the addressable market enormous. One of them eventually justified the story and made him a lot of money. The other diluted its shareholders for six straight years and never turned the corner. Adam's problem was not that he was wrong — he was half right. His problem was that he had no way of telling which half in advance, and Cassie's five questions were exactly that way.",
+    gutCheck: {
+      prompt: 'Why do professionals often trust free cash flow more than reported profit?',
+      options: [
+        'Free cash flow is always the larger number, so it is more encouraging',
+        'Profit involves accounting judgment, while cash movements are harder to shape',
+        'Free cash flow includes money raised from investors, giving a fuller picture',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Profit is an estimate produced under rules with real discretion inside them; cash either moved or it did not. Free cash flow is frequently the smaller and less flattering number, and it excludes money raised from investors on purpose — that is financing, not the business earning anything.",
+    },
+    realScenario: {
+      prompt:
+        'A company grew revenue 30% this year, but its gross margin fell from 45% to 34%. What is the most likely explanation worth investigating?',
+      options: [
+        'Growth is always good news — the margin change is noise',
+        'It may be buying growth by cutting prices, or facing new competition',
+        'Gross margin always falls as companies get larger',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Revenue bought with discounts is much lower quality than revenue won on merit, and a sharp gross-margin decline is the earliest signal that competition arrived or pricing power slipped. Scale usually improves gross margin rather than hurting it, which makes this pattern worth a real look rather than a shrug.",
+    },
+    mythVsReality: {
+      statement: 'A company that is not profitable yet is automatically a bad investment.',
+      isMyth: true,
+      explanation:
+        "Too blunt. Amazon lost money for years while deliberately reinvesting every dollar into warehouses that became an unassailable advantage — that was a choice, not a failure. The real question is whether the losses are buying something durable and whether the path to cash generation is visible and improving. Plenty of unprofitable companies are simply unprofitable, which is why the question is 'why' rather than 'whether.'",
+    },
+    connects: ['valuation', 'red-flags', 'what-you-own', 'moat'],
+    aiPrompt:
+      "Teach me to read a company's income statement, balance sheet, and cash flow statement using a real large company as the example. Show me where to find revenue growth, gross and operating margin, free cash flow, return on invested capital, and debt relative to earnings — and explain what a healthy versus concerning value looks like for each in that company's industry.",
+    depth: 3,
+  },
+  {
+    id: 'valuation',
+    chapter: 3,
+    order: 4,
+    category: 'stock-picking',
+    tag: 'Valuation',
+    title: 'What the Price Already Assumes',
+    tagline: 'A great company at a terrible price is a terrible investment.',
+    marketId: 'nvda',
+    surface:
+      "Every stock price is a compressed prediction. When a company trades at 40 times its annual earnings, the market is not saying 'this is a good business' — it is saying 'this business will grow enough to justify paying forty years of current profit for it.' Your job is not to decide whether the company is good. It is to decide whether the prediction baked into the price is reasonable.",
+    middle: [
+      "The price-to-earnings ratio is the standard shorthand: the share price divided by earnings per share. A P/E of 20 means you are paying $20 for each $1 of current annual profit. Low is not automatically cheap and high is not automatically expensive — a company growing 30% a year deserves a higher multiple than one shrinking, and paying 12 times earnings for a business in permanent decline is how value investors get hurt. The multiple is a question, not an answer.",
+      "This is where the most painful lesson in investing lives: you can be completely right about a company and still lose money, because you paid a price that already assumed everything going right. Buy a wonderful business at a multiple that requires flawless execution for a decade, and merely good execution becomes a loss. That is not bad luck — it is what you agreed to at purchase.",
+      "The reverse trap is just as real. 'Cheap' stocks are often cheap because the business is genuinely deteriorating, and the low multiple is the market being correct rather than wrong. Every era has a cluster of famous value traps: newspapers, mall retailers, video rental. The multiple was low the whole way down.",
+    ],
+    deep: [
+      "Better tools than trailing P/E, in rough order of usefulness. Forward P/E uses expected earnings, which is more relevant and less reliable, since forecasts are wrong in predictable directions. Free-cash-flow yield — free cash flow divided by market value — sidesteps accounting judgment and reads like an interest rate on your ownership. Enterprise value to EBITDA includes debt in the price, which matters enormously for leveraged companies where equity alone hides the real cost. Each one fails somewhere; use two or three and pay attention when they disagree.",
+      "The technique that changes how you think: reverse-engineer the assumptions. Rather than asking 'is this cheap,' ask 'what growth rate, sustained for how long, at what margin, would make today's price a fair deal?' Then ask whether that has ever happened to a company this size. Sometimes the answer is obviously yes. Sometimes the price requires a company to become larger than its entire industry, and that is far more useful to know than a ratio.",
+      "Interest rates set the gravity for every one of these numbers. A future dollar is worth less today when safe bonds yield 5% than when they yield 1% — so the same company deserves a lower multiple in a high-rate world, with no change in the business at all. This is the discounting math behind the Nasdaq lesson, and it is why 2022 crushed high-multiple growth companies while their revenue kept rising.",
+      "What professionals actually watch: a company's multiple against its own history (has the market's expectation shifted?), against its closest peers (is this specific to the company or the whole industry?), and how much of today's price depends on profits more than ten years out. The last one is a rough measure of how much faith is priced in — and faith is the part that reprices fastest when sentiment turns.",
+    ],
+    scenario:
+      "Multiple Mike bought a genuinely dominant company at 70 times earnings in a euphoric year, and he was right about everything: revenue tripled over the following five years, exactly as he had predicted. The stock still went nowhere, because the multiple compressed from 70 to 25 while the business grew into its old price. Patient Pat bought the same company two years later at 22 times earnings, held it for the same five years, and made a fortune on a business he understood no better than Mike did. Both were right about the company. Only one of them was right about the price.",
+    gutCheck: {
+      prompt: 'A stock trading at a high price-to-earnings ratio tells you…',
+      options: [
+        'The stock is overpriced and should be avoided',
+        'The market expects substantial future growth, and the price depends on getting it',
+        'The company is more profitable than a low-P/E company',
+      ],
+      answerIndex: 1,
+      explanation:
+        "A high multiple is an embedded expectation, not a verdict. Fast growers frequently deserve high multiples and go on to justify them. The risk is not that the number is high — it is that the growth required to justify it must actually arrive, and merely good results become a disappointment.",
+    },
+    realScenario: {
+      prompt:
+        'You buy a company at 60 times earnings. Over five years its profits double, exactly as you expected — but the stock is flat. What happened?',
+      options: [
+        'The company must have issued a lot of new shares',
+        'The multiple compressed: the market repriced it to roughly 30 times the now-larger earnings',
+        'Dividends absorbed all the gains',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Double the earnings, halve the multiple, and the price is unchanged. This is the most common way people lose money on companies they correctly identified as excellent, and it is why valuation is a separate question from quality rather than an extension of it.",
+    },
+    mythVsReality: {
+      statement: 'If you plan to hold for twenty years, the price you pay does not really matter.',
+      isMyth: true,
+      explanation:
+        "Time forgives a lot, and it does not forgive everything. Buy at a multiple that already assumes two decades of perfection and you have pre-spent the returns those decades were going to give you — investors who bought great companies at the 2000 peak waited more than ten years to break even on some of them. A long horizon makes the price matter less. It does not make it not matter.",
+    },
+    connects: ['fundamentals', 'moat', 'nasdaq', 'tnx'],
+    aiPrompt:
+      "Explain P/E, forward P/E, free-cash-flow yield, and EV/EBITDA — what each one is good for and where each one misleads. Then walk me through reverse-engineering a valuation: for a large company today, what growth rate and margin, sustained how long, would justify its current price? Tell me whether companies that size have historically achieved that.",
+    depth: 3,
+  },
+  {
+    id: 'moat',
+    chapter: 3,
+    order: 5,
+    category: 'stock-picking',
+    tag: 'Competitive advantage',
+    title: 'The Moat',
+    tagline: 'Why can nobody just copy this?',
+    marketId: 'aapl',
+    surface:
+      "In a normal market, high profits attract competitors until those profits are gone. That is not a flaw, it is how capitalism is supposed to work. So a company earning excellent returns for a decade or more is an anomaly demanding an explanation — something must be stopping rivals from copying it. That something is the moat, and if you cannot name it in one sentence, you have not found it. You have found a good few years.",
+    middle: [
+      "There are only a handful of real moats, and it is worth being able to list them. Switching costs: leaving is expensive, slow, or painful, so customers stay even when a rival is cheaper. Network effects: the product gets better as more people use it, so the leader's lead compounds. Brand: people will pay more for the same thing with your name on it. Scale: you are big enough to produce more cheaply than any new entrant could. Regulation and patents: the law itself restricts competitors. Everything else is usually one of these five in costume.",
+      "What is not a moat, no matter how it feels: being first, having the best product right now, having a beloved founder, or growing fast. Those are advantages, and they are all temporary. Better products get out-engineered, first movers get out-executed constantly, and growth attracts precisely the competition that ends it. A moat is structural — it makes copying you unattractive even to a competitor who understands exactly what you do.",
+      "Why care at 22? Because this is the single most transferable idea in this whole Academy. It explains why your employer can or cannot raise prices, why some industries pay better than others, why one coffee shop survives on a street where four have failed, and what makes a career defensible. Learning to spot moats will change how you read the world long after you have forgotten what a P/E ratio is.",
+    ],
+    deep: [
+      "Moats are verbs, not nouns — they widen and they erode, and the erosion is usually quiet. Kodak had a genuine moat in film chemistry, and digital photography did not attack it, it made it irrelevant. Newspapers had unassailable local advertising monopolies that the internet dissolved from outside the industry entirely. The dangerous question is never 'can a competitor beat them at this?' It is 'could this stop mattering?'",
+      "The moat shows up in the numbers, which is how you check the story instead of just believing it. Sustained high return on invested capital is the fingerprint. So is pricing power: a company that raises prices without losing customers has one, and a company that must discount to hold share does not, whatever its investor deck says. Stable or rising gross margins across a full economic cycle are the cleanest evidence available to an outsider.",
+      "Beware moats that are really just one customer, one platform, or one regulation. A business whose advantage is a favorable contract with a giant partner has an advantage that expires. Apps built entirely on someone else's platform can be squeezed by that platform at will. And an advantage granted by regulation can be repealed by regulation — which is the risk sitting under several of the largest companies in the S&P 500 right now.",
+      "What professionals actually watch: market share direction over five years, not the level; gross margin stability through a downturn; customer retention or churn where it is disclosed; and how the risk-factors section of the annual report changes wording year over year. Companies quietly rewrite that section when a moat starts leaking, long before it shows up in earnings.",
+    ],
+    scenario:
+      "Moat Maya bought a boring industrial company whose parts were embedded in machinery that ran for thirty years, meaning customers physically could not switch without replacing the machine. Momentum Marcus bought a beautiful consumer app growing 200% a year with no barrier to entry at all. Marcus's stock quadrupled first, and he was insufferable about it for eleven months. Then two well-funded competitors launched nearly identical apps, growth stalled, and the multiple collapsed. Maya's company grew 7% a year, forever, and outperformed his over the decade — which is the least exciting sentence in this Academy and one of the most important.",
+    gutCheck: {
+      prompt: 'Which of these is a genuine economic moat?',
+      options: [
+        'Being the first company to launch a new kind of product',
+        'Customers face real cost or disruption to switch to a competitor',
+        'Having the fastest revenue growth in the industry',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Switching costs are structural — they make leaving genuinely painful, so customers stay even when a rival looks better on paper. Being first and growing fast are advantages that competition erodes, and rapid growth is often what attracts the competition in the first place.",
+    },
+    realScenario: {
+      prompt:
+        "A software company's gross margin has slipped from 78% to 64% over three years while revenue kept growing. What does this most likely suggest about its moat?",
+      options: [
+        'Nothing — margin changes are normal noise in software',
+        'It may be discounting to keep customers, which suggests the moat is eroding',
+        'The moat is strengthening, since revenue is still growing',
+      ],
+      answerIndex: 1,
+      explanation:
+        "In software, where the cost of serving one more customer is close to nothing, a 14-point gross margin decline is a loud signal — usually price cuts to hold share against competitors. Revenue can keep rising for years while the pricing power that made the business valuable quietly drains away.",
+    },
+    mythVsReality: {
+      statement: 'A company with the best product in its category has a moat.',
+      isMyth: true,
+      explanation:
+        "Product quality is a lead, not a wall — and leads get closed. The graveyard of best-in-class products beaten by better-defended competitors is enormous: superior search engines, better phones, more elegant social networks. A moat is what makes it unattractive for a well-funded rival to compete at all, which is a different thing from being better today.",
+    },
+    connects: ['fundamentals', 'valuation', 'red-flags', 'case-aapl'],
+    aiPrompt:
+      "Explain the main types of economic moat — switching costs, network effects, brand, scale, and regulatory protection — with a real company as an example of each. Then give me two examples of companies whose moats eroded, what specifically caused it, and what early warning signs an outside investor could have noticed in the financials first.",
+    depth: 3,
+  },
+  {
+    id: 'red-flags',
+    chapter: 3,
+    order: 6,
+    category: 'stock-picking',
+    tag: 'Warning signs',
+    title: 'Signs of a Bad Stock',
+    tagline: 'Most losses are avoidable, and they announce themselves.',
+    surface:
+      "Spectacular investment losses are rarely mysterious in hindsight. They tend to share a small set of warning signs that were visible beforehand to anyone who looked: a story with no numbers behind it, a share count that climbs every year, debt growing faster than earnings, revenue concentrated in one customer, accounting nobody can follow, and an idea that arrived from someone who profits when you buy. None of these is fatal alone. Three together is a pattern.",
+    middle: [
+      "The most expensive red flag is not on any financial statement: where the idea came from. If you first heard about a company from a video, a group chat, or a post with rocket emojis, the person who told you already owns it and gains when you buy. That is not information about the company — it is information about your information, and it is the single most common reason young investors lose money. The company might even be good. You still do not know anything about it yet.",
+      "Then dilution, the quiet one. A company that funds itself by issuing new shares every year is paying its bills with pieces of your ownership. It is sometimes genuinely necessary and always a real cost, and it never appears as a line item called 'your slice got smaller.' Check shares outstanding over five years. A steady upward staircase while revenue grows more slowly means the business is expanding and your claim on it is not.",
+      "And the one that turns slow problems into sudden ones: debt growing faster than earnings. Borrowing to build something that earns more than the interest is good business. Borrowing to cover operations is a countdown. The cruel part is that rising interest rates can trigger the crisis without the business changing at all — the same company, the same customers, suddenly unable to refinance.",
+    ],
+    deep: [
+      "Customer and product concentration deserves more weight than it gets. If one buyer is a quarter of revenue, that buyer effectively sets your prices and can end your growth story in a single internal meeting. Companies disclose this — the risk-factors section is where they legally confess what worries them, and it is the most under-read document in finance. Concentration is not disqualifying; it is a risk you should be paid for taking, and usually you are not.",
+      "Accounting fog is subtler than fraud and far more common. Watch for revenue recognized long before cash arrives (receivables growing much faster than revenue), inventory building while sales flatten, frequent changes to how segments are reported, auditor turnover, and adjusted figures that are permanently and enormously better than audited ones. Any one has innocent explanations. Several at once is a company making itself hard to check, and companies that are hard to check are hard to value.",
+      "Two governance patterns worth noticing. First, incentives: read what management actually gets paid for. Executives rewarded for revenue growth will deliver revenue growth, profitably or not. Second, candor: read last year's shareholder letter against what happened. Leaders who name their own mistakes plainly are rarer and more reliable than leaders who explain every miss with weather, currency, and macro conditions.",
+      "What professionals actually watch, and what they deliberately ignore: they watch cash conversion, insider selling clusters with no scheduled plan behind them, and year-over-year wording changes in risk factors. They largely ignore short-term price momentum, message-board sentiment, and single analyst downgrades — all of which feel like information and mostly measure mood.",
+    ],
+    scenario:
+      "Red-Flag Rita kept one rule: before buying anything, she wrote down the three things most likely to go wrong, and if she could not find three she assumed she had not looked hard enough. It talked her out of four exciting companies, one of which went on to a spectacular run she watched from the sidelines and never quite got over. The other three collapsed — one to near zero. Rocket-Emoji Rex had no such rule, caught the winner Rita missed, and gave it all back on the other three plus two more. Rita's process cost her one great outcome. Rex's cost him the account.",
+    gutCheck: {
+      prompt: 'A company issues new shares every year to fund its operations. For an existing shareholder this means…',
+      options: [
+        'Nothing much, since the total value of the company is unchanged',
+        'Their ownership percentage shrinks each year — a real cost called dilution',
+        'The stock price must rise, since there are more shares in circulation',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Your share is a fraction, and persistent issuance grows the denominator. It is a genuine transfer of value away from existing owners that never shows up as an expense you can point at, which is exactly why you have to look for it deliberately in the share count.",
+    },
+    realScenario: {
+      prompt:
+        "A company you are researching reports large 'adjusted' profits every quarter but has never reported an actual profit, with the difference consistently being stock-based compensation. How should you read this?",
+      options: [
+        'Adjusted figures are the standard in tech, so use them and move on',
+        'Stock compensation is a real cost paid in your ownership — the adjusted number hides it',
+        'It is fine as long as revenue is growing quickly',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Paying employees in shares is a genuine expense; it just gets paid by shareholders through dilution rather than in cash. When the gap between adjusted and actual profit is permanent and always the same item, the exception has become the business model — and that is worth knowing before you buy it.",
+    },
+    mythVsReality: {
+      statement: 'A stock that has already fallen 80% is a bargain, because it cannot fall much further.',
+      isMyth: true,
+      explanation:
+        "It can fall another 80%, and then another. A stock down 80% needs a 400% gain just to get back to where it started, and price alone tells you nothing about whether the business is still viable — plenty of companies have fallen 80% on the way to zero. 'It has fallen a lot' is a fact about the chart. Whether it is cheap is a question about the business.",
+    },
+    connects: ['fundamentals', 'valuation', 'moat', 'research'],
+    aiPrompt:
+      "Walk me through the warning signs that preceded two or three well-known corporate collapses — what was visible in the public filings before the collapse, and how early. Then give me a short checklist of the specific line items and disclosures I should always check before buying any individual stock.",
+    depth: 3,
+  },
+  {
+    id: 'order-types',
+    chapter: 3,
+    order: 7,
+    category: 'execution',
+    tag: 'Placing orders',
+    title: 'The Five Order Types',
+    tagline: 'The form on the screen is not a formality.',
+    marketId: 'nvda',
+    surface:
+      "You have researched a company and decided to own it. Now there is a form with a dropdown on it, and the choice you make there decides what price you actually get. Five order types cover almost everything: market, limit, stop, stop-limit, and trailing stop. Each one guarantees something different — and each one gives up something in exchange. Nobody tells you what, so you find out with real money.",
+    middle: [
+      "A market order says 'I want this done now, at whatever the next price is.' On a large company during normal hours that is genuinely fine — the gap between the buying and selling price is pennies. On a small company, at the opening bell, or in the middle of news, 'whatever the next price is' can be meaningfully worse than the number you were looking at. That gap has a name, slippage, and it is a real cost that never appears on your statement as a fee.",
+      "A limit order says 'this price or better, and I will wait.' It is the default professional habit, because it removes the possibility of a surprise fill entirely. Its cost is the trade that never happens: set a buy limit a few percent below the market and you may spend a year watching a company you wanted to own get steadily more expensive because you were trying to save forty cents. A limit that never fills is not a free option — it is a decision not to own the thing.",
+      "A stop order is a sleeping market order. Nothing happens until the price crosses your level, and then it wakes up and sells at whatever is available. It sounds like insurance and it is not quite: because it becomes a market order, a fast drop can fill you well below your stop. And a stop set inside a stock's normal range of wobble is not protection at all — it is a scheduled exit at the worst available moment.",
+    ],
+    deep: [
+      "A stop-limit adds a second price: the stop wakes the order up, the limit refuses to trade worse than your floor. It fixes the slippage problem and introduces a nastier one. In a genuine collapse the price crashes straight through both numbers, your limit never gets hit, and you are left holding the entire decline with an unfilled order — the protection switches off in precisely the scenario you bought it for. Try that on the order desk on this site and watch it happen on real prices.",
+      "A trailing stop follows the price up and never moves back down. Set 10% and it sits 10% below the highest price reached since you placed it, ratcheting higher as the stock climbs and freezing when it falls. It is the most elegant of the five and the most quietly arbitrary, because the percentage is doing all the work and most people pick it out of thin air. Too tight and ordinary noise ejects you from a stock still trending up; too loose and it hands back most of the gain before firing.",
+      "Two settings underneath every order that nobody reads. Duration: 'day' orders die at the closing bell, which is why your limit from Monday is quietly gone on Tuesday; 'good till canceled' orders live for months, which is how a stale buy order you have entirely changed your mind about fires during a crash. And extended-hours trading: before the open and after the close there are far fewer buyers and sellers, spreads widen dramatically, and prices jump. Limit orders are effectively mandatory there.",
+      "The deeper truth all five point at: every order type trades certainty of price against certainty of execution, and you cannot have both. Market orders guarantee execution, limit orders guarantee price, and the stop family are triggers layered on top of one of those two. Once you see that trade-off, you never have to memorize the list again — you just ask which certainty you need today.",
+      "What professionals actually do, which is less exciting than it sounds: limit orders almost always, sized so a missed fill is survivable, and price triggers treated as risk tools rather than decisions. Most importantly, they do not use stops as a substitute for a thesis. A stop knows the price fell; it knows nothing about whether the business changed, and those are the only two things worth acting on.",
+    ],
+    scenario:
+      "Market-Order Marcus placed a market buy thirty seconds after the opening bell on a morning full of news, and was filled 4% above the price he had been staring at — a cost that quietly equaled a year of the dividend. Limit-Order Lena set a limit two percent below the market on the same stock and was filled that afternoon at her price. She also has a limit sitting unfilled on a different company from fourteen months ago, which has since doubled without her. Both learned the same lesson from opposite directions: the order type is not paperwork, it is part of the decision.",
+    gutCheck: {
+      prompt: 'What does a limit order guarantee?',
+      options: [
+        'That your order will execute before the market closes',
+        'That you will not pay worse than the price you named — but it might not execute at all',
+        'That you will get the best price available that day',
+      ],
+      answerIndex: 1,
+      explanation:
+        "A limit order guarantees price, never execution. That is the exact opposite of a market order, which guarantees execution and never price. Every order type on the list is a different position on that same trade-off.",
+    },
+    realScenario: {
+      prompt:
+        'You own a stock at $100 and set a stop-loss at $90 to protect yourself. Overnight the company reports terrible news and the stock opens at $71. What most likely happens?',
+      options: [
+        'You are sold at $90, since that was your stop price',
+        'Your stop triggers and becomes a market order, filling near $71',
+        'The order is canceled because the price fell below your stop',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is the gap risk that makes stops weaker than they feel. A triggered stop becomes a market order, and the market's next available price was $71 — no trading happened between $90 and there. Overnight news does not respect your levels, which is why a stop is a risk tool rather than a guarantee.",
+    },
+    mythVsReality: {
+      statement: 'A stop-loss order protects you from big losses.',
+      isMyth: true,
+      explanation:
+        "It reduces some losses and cannot prevent the worst ones. Gaps jump straight over your level, fast declines fill you below it, and normal volatility triggers it on stocks that then recover without you — a pattern that turns a temporary dip into a permanent loss you caused. Stops are a useful tool with real limitations, which is a much less comforting sentence than 'protected.'",
+    },
+    connects: ['dollars-and-recurring', 'when-to-sell', 'vix', 'volume'],
+    aiPrompt:
+      "Explain market, limit, stop, stop-limit, and trailing stop orders, including exactly what each guarantees and what it gives up. Then explain slippage, bid-ask spreads, gap risk on overnight news, and why extended-hours trading is riskier. Give me a concrete example of a situation where each order type is the right choice and one where it is the wrong choice.",
+    depth: 3,
+  },
+  {
+    id: 'dollars-and-recurring',
+    chapter: 3,
+    order: 8,
+    category: 'execution',
+    tag: 'Placing orders',
+    title: 'Dollars, Shares, and Automatic Buys',
+    tagline: 'The most powerful button in the app is the boring one.',
+    marketId: 'amzn',
+    surface:
+      "Modern brokerages let you buy in two units: dollars or shares. Naming the money — 'invest $25' — and letting the app work out the fraction of a share is a genuinely new capability, and it quietly changes what is possible for someone with a small amount to invest. Naming the quantity — 'buy 1 share' — means accepting whatever it costs that day. For repeat investing, dollars win almost every time, and the reason is arithmetic rather than preference.",
+    middle: [
+      "Here is why: a fixed $25 automatically buys more shares when the price is low and fewer when the price is high. You are not predicting anything, and you do not have to be clever — the fixed dollar amount does the leaning for you. Buying a fixed number of shares does the opposite, committing more money exactly when things are expensive. This is dollar-cost averaging, and its real advantage is that it requires no forecasting skill whatsoever.",
+      "Then automate it. A recurring buy — a set amount, on a set day, without a decision — is the single highest-leverage setting in a young investor's account, and it works for an unglamorous reason: it removes you from the process. The recurring buy does not check the news, does not feel anything in March, and does not decide to wait for a better entry. Over decades, not interrupting the plan matters more than the plan.",
+      "Why this hits hardest at 22: your contributions are the main event right now, not your returns. A 12% year on $600 is $72. Consistently adding $50 a week is $2,600. The habit is worth more than the insight for years — and the habit formed at 22 is the one still running at 45, when the balance is large enough for returns to take over. The order of operations is: build the habit, then get good at picking.",
+    ],
+    deep: [
+      "The honest math on lump sum versus dollar-cost averaging, because the internet gets this wrong in both directions. If you already have a large sum, investing it all at once has historically produced better outcomes more often than spreading it out — simply because markets rise more often than they fall, so money in earlier is money compounding longer. But spreading it out reduces the pain of terrible timing and, more importantly, gets some people to invest who would otherwise sit in cash for two years. The best plan you will actually follow beats the optimal plan you abandon.",
+      "For a recurring investor the debate is moot in a way that is worth understanding: if you are investing from each paycheck, you are dollar-cost averaging by construction. You do not have a lump sum to deploy. The relevant question is not 'DCA or lump sum' but 'what percentage of income, automatically, starting when' — and the answer to 'when' is essentially always 'now, at whatever amount you can sustain.'",
+      "Fractional shares come with a real catch nobody mentions upfront. They are typically held by the broker on your behalf rather than registered to you, which can make transferring them to another brokerage awkward — often they have to be sold first, which can trigger taxes in a regular account. Worth knowing before you build years of fractional positions somewhere you might eventually want to leave.",
+      "Two mechanics that quietly matter. Recurring buys usually execute as market orders at a set time, so you accept whatever the price is that moment — normally trivial, occasionally not, and a reason to prefer a mid-day schedule over the volatile first minutes after the open. And in a regular taxable account, every automatic purchase creates a new tax lot with its own cost basis and purchase date, which matters later for holding periods and for the wash-sale rule if you ever sell at a loss while a recurring buy is still running.",
+      "What professionals actually watch here: whether the contribution rate is rising with income, and whether the automation survived the last drawdown. Someone who kept buying through a 30% decline has demonstrated something no risk questionnaire can measure. Someone who paused the recurring buy in the worst month has learned something important about themselves, and should size their positions accordingly rather than pretend otherwise.",
+    ],
+    scenario:
+      "Recurring Rae set $40 a week into two funds and one company at 23, then deliberately forgot the login for long stretches. She bought through two frightening declines without noticing much, because the transfer was automatic and the news was not on her calendar. Timing Tim kept the same money in cash, waiting for a clearly better entry point, and he was right twice — he genuinely did buy near two local bottoms. He was also uninvested for most of eleven years while waiting for the third. Rae never once bought at a good price on purpose. She simply bought at every price, which turned out to be the trick.",
+    gutCheck: {
+      prompt: 'Why does investing a fixed dollar amount each week tend to work better than buying a fixed number of shares?',
+      options: [
+        'Because brokers charge lower fees on dollar-based orders',
+        'Because a fixed dollar amount automatically buys more shares when prices are lower',
+        'Because fractional shares grow faster than whole shares',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The fixed dollar amount does the leaning for you without any forecasting: cheap weeks buy more, expensive weeks buy less. Buying a fixed share count does the reverse, committing more money precisely when prices are high.",
+    },
+    realScenario: {
+      prompt:
+        'You just received a $10,000 bonus and plan to invest it for thirty years. What does the historical evidence actually suggest?',
+      options: [
+        'Investing it all at once has more often produced better outcomes, because money in earlier compounds longer',
+        'Spreading it over a year is reliably better, because it lowers your average price',
+        'It makes no measurable difference over thirty years',
+      ],
+      answerIndex: 0,
+      explanation:
+        "Because markets rise more often than they fall, lump sum has historically won more often than not. But 'more often' is not 'always,' and spreading it out is a perfectly rational way to buy peace of mind — especially if it is the difference between investing and leaving the money in cash for two years while you work up the nerve.",
+    },
+    mythVsReality: {
+      statement: 'You should wait for a dip before starting to invest.',
+      isMyth: true,
+      explanation:
+        "It sounds prudent and it has a poor track record, for a plain reason: the dip may arrive years later and from a higher level than today. Studies of investors who waited for better entry points consistently find the waiting cost more than the improved price saved. Time in the market has historically mattered more than timing it — which is a description of the past rather than a promise about the future, but it is the strongest pattern in the data.",
+    },
+    connects: ['order-types', 'when-to-sell', 'sp500', 'stock-vs-index'],
+    aiPrompt:
+      "Explain dollar-cost averaging versus lump-sum investing, including what the historical research actually found about which performs better and why. Then explain fractional shares — how brokers hold them, what happens if I transfer accounts, and how each recurring purchase creates a separate tax lot that matters for holding periods and the wash-sale rule.",
+    depth: 2,
+  },
+  {
+    id: 'when-to-sell',
+    chapter: 3,
+    order: 9,
+    category: 'stock-picking',
+    tag: 'Decisions',
+    title: 'When to Buy, When to Sell',
+    tagline: 'Decide in advance, because you will not think clearly later.',
+    marketId: 'googl',
+    surface:
+      "Buying is the easy half. Selling is where almost all the damage happens, because by the time you are deciding, you are no longer neutral — you are up and greedy, or down and frightened, or bored and looking for something to do. The professional answer is unromantic: write down why you own something and what would prove you wrong, before you buy. Then sell when that specific thing happens, not when your stomach says so.",
+    middle: [
+      "There are only a few genuinely good reasons to sell. The thesis broke: the specific reason you bought is no longer true — the moat leaked, the growth stopped, management started behaving badly. You found a materially better use for the money. The position grew so large that one company now decides your financial life. Or you need the cash for the thing you were saving for all along. Notice what is absent: 'it went down,' 'it went up a lot,' and 'I read something scary.'",
+      "The two most expensive reflexes both feel like discipline. Selling winners early to 'lock in gains' systematically removes your best businesses from the portfolio, and since a small number of enormous winners generate most of long-run returns, cutting them at +40% is how people end up with a collection of their worst ideas. And selling losers in a panic converts a temporary decline into a permanent loss — sometimes correctly, when the business really did deteriorate, and that is exactly why the written thesis matters. It is the only way to tell those apart while frightened.",
+      "On buying: the same principle in reverse. Decide what you want to own and roughly what you are willing to pay while you are calm, then let the order do the work. Almost every bad purchase in a young investor's history happened in a state of urgency — a stock running, a friend's story, a fear of missing out. Urgency is not information, and no genuinely good long-term investment requires you to act within the hour.",
+    ],
+    deep: [
+      "Taxes change the arithmetic of selling in a way people discover too late, and only in regular taxable accounts. In the U.S., gains on something held a year or less are taxed as ordinary income; hold longer than a year and they are taxed at lower long-term rates. That difference can be a large fraction of the gain, which means the same sale decision can be right in a retirement account and wrong in a taxable one. It also means 'I will hold eleven more days' is occasionally a genuinely rational sentence.",
+      "The wash-sale rule catches people who think they are being clever. Sell at a loss for the tax deduction and buy the same or a substantially identical security within 30 days before or after, and the loss is disallowed. It is easy to trigger accidentally — most commonly by having a recurring buy still running while you harvest a loss on the same stock.",
+      "Rebalancing is selling without prediction, which is why professionals like it. Set target weights, and when a position drifts far above its target you trim it back — mechanically, on a schedule, with no forecast involved. It is not about calling a top; it is about refusing to let one company quietly become your whole portfolio because it did well. The discipline is that you do it when it feels wrong, which is always.",
+      "Position sizing is the decision that makes all the others survivable, and it happens before you buy. If a company going to zero would genuinely damage your life, the position is too large regardless of how strong your conviction is — conviction is exactly what you have right before you find out you were wrong. Sizing so that being wrong is educational rather than devastating is what lets you keep learning long enough to get good.",
+      "What professionals actually do: they write the thesis down. Not as a ritual — as a defense against their own memory, which will quietly rewrite what they believed to match what happened. A four-sentence note with a date on it is the cheapest risk-management tool in existence, and reading it two years later is the fastest way to find out whether you are actually good at this.",
+    ],
+    scenario:
+      "Thesis Theo wrote four sentences about each company he bought, including the specific thing that would tell him he was wrong. When one of them lost its biggest customer — the exact scenario in his note — he sold in an afternoon without agonizing, because the decision had been made a year earlier by a calmer version of himself. Panic-Sell Paula owned the same company and several better ones, and sold all of them in one frightened week during an unrelated market decline, then spent two years waiting for a re-entry point that felt safe. The market recovered in five months. Theo's discipline looked like coldness. It was mostly just paperwork.",
+    gutCheck: {
+      prompt: 'According to this lesson, which is a genuinely good reason to sell a stock?',
+      options: [
+        'It has risen 40% and you want to lock in the gain',
+        'The specific reason you bought it is no longer true',
+        'The overall market is falling and you feel nervous',
+      ],
+      answerIndex: 1,
+      explanation:
+        "A broken thesis is information about the business. A 40% gain is information about the price — and systematically selling winners early is how people end up holding only their worst ideas, since a few large winners generate most of long-run returns.",
+    },
+    realScenario: {
+      prompt:
+        'In a taxable account you have a large gain on a stock you have held for 11 months, and your thesis is intact. What is worth considering before selling?',
+      options: [
+        'Nothing — a gain is a gain whenever you take it',
+        'Holding past the one-year mark would qualify the gain for lower long-term tax rates',
+        'You should sell immediately, since gains over 11 months usually reverse',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The short-term versus long-term capital gains distinction can consume a meaningful slice of the gain, and it only applies in taxable accounts — inside a retirement account the timing is irrelevant. It is a real consideration, though never a reason to hold something whose thesis has actually broken.",
+    },
+    mythVsReality: {
+      statement: 'You should always take profits when a stock has doubled — nobody ever went broke taking a gain.',
+      isMyth: true,
+      explanation:
+        "The saying is catchy and the math disagrees. Long-run returns are driven by a small number of positions that go up many times over, and a rule that automatically ejects you at +100% guarantees you never own one. People do not go broke taking gains; they do end up with mediocre results and a portfolio of their weakest ideas, which is its own kind of expensive.",
+    },
+    connects: ['order-types', 'red-flags', 'valuation', 'dollars-and-recurring'],
+    aiPrompt:
+      "Explain the legitimate reasons to sell a stock versus the emotional ones, and why selling winners early hurts long-run returns. Then cover the U.S. tax mechanics: short-term versus long-term capital gains, the wash-sale rule and how a recurring buy can trigger it accidentally, and how rebalancing works as a way to trim positions without predicting anything.",
+    depth: 3,
+  },
+  {
+    id: 'research',
+    chapter: 3,
+    order: 10,
+    category: 'stock-picking',
+    tag: 'Research',
+    title: 'How to Research a Company',
+    tagline: 'Including how to use AI without being flattered into a bad decision.',
+    surface:
+      "Researching a company is not about finding someone's opinion you agree with — it is about being able to answer four questions in your own words: how does this business make money, why does it keep winning, what would break it, and what does the current price already assume? An AI can help enormously with all four. It can also produce a fluent, confident, subtly wrong answer, and it will never tell you which one it just gave you.",
+    middle: [
+      "Start with primary sources, because they are better than anything written about them and almost nobody reads them. The annual report — the 10-K in the U.S. — contains the business description, the segment breakdown showing where money actually comes from, and the risk factors, which is the section where a company legally confesses what worries it. Read the shareholder letter for how management thinks. Skim an earnings-call transcript for what analysts keep pushing on, because their repeated questions are usually the real issue.",
+      "Then the discipline that separates research from browsing: write down the bear case in your own words, and make it good. Not a token paragraph — the strongest version, the one a smart person betting against you would make. If you cannot construct it, you do not understand the company well enough to own it. Most people skip this because it is uncomfortable, and being uncomfortable is precisely the point.",
+      "Where AI genuinely helps: explaining an industry you know nothing about, translating a filing into plain English, comparing three companies on the same metrics, and — best of all — arguing against you on command. Where it hurts: giving you a confident number that is wrong, and telling you what you want to hear, because it is built to produce satisfying answers and 'this looks like a great buy' is deeply satisfying. Ask for structure, evidence, and the argument against. Then verify.",
+    ],
+    deep: [
+      "How to aim the question, which matters more than which model you use. Bad prompt: 'Is NVDA a good buy?' — it invites a confident verdict nobody can honestly give, and you will get one. Good prompt: 'Explain how NVDA makes money by segment, name the moat and stress-test it, tell me what the current valuation assumes about future growth, and make the strongest bear case without softening it.' The second cannot be answered with a vibe. The order desk page on this site builds exactly that prompt for you, and it is worth reading to see the shape.",
+      "Verification is a skill, not a chore. Pick two numbers from any AI answer and check them against the company's own filing. If both hold, you have calibrated your trust for the rest. If either is off, you have learned that this answer needs checking line by line — which is enormously valuable to know before acting on it. Language models are notably weaker at precise financial figures than at explanation, so lean on them for the reasoning and check the arithmetic yourself.",
+      "Guard against the two ways research goes wrong even when done diligently. Confirmation bias: once you like a company you will read everything as supporting evidence, which is why writing the bear case first is a structural fix rather than a virtue. And narrative seduction: a beautiful story about the future is enormously persuasive and almost entirely unfalsifiable, which is exactly what makes it dangerous. The antidote to both is writing down, in advance, what would change your mind.",
+      "Free sources worth knowing: company investor-relations pages for filings and transcripts, the SEC's EDGAR database for anything U.S.-listed, and any screener for five-year trends in the metrics from the fundamentals lesson. Paid research is largely unnecessary at this stage. The gap between you and a professional is not access to data — it is the habit of checking the same boring things every time, including on the companies you are excited about.",
+      "What professionals actually do that looks like nothing: they keep a written file per company, dated, updated when something changes. It defends against the memory quietly rewriting what you believed to match what happened. Two years of those notes will tell you more about whether you should be picking stocks than any amount of reading.",
+    ],
+    scenario:
+      "Verify Vera asked an AI for a full breakdown of a company, then checked two figures against the annual report — one was off by enough to matter, which told her exactly how carefully to read the other twenty. She kept the bear case, deleted the rest, and went to the filing herself. Copy-Paste Colin asked whether the same stock was a good buy, received a fluent and encouraging answer, and bought it that evening. Six months later he still could not name the company's largest customer. He was not lazy — he had genuinely done research. He had just asked a question whose only possible answer was agreement.",
+    gutCheck: {
+      prompt: 'Which section of a company\'s annual report is where it explicitly discloses what could go wrong?',
+      options: [
+        'The letter to shareholders',
+        'The risk factors section',
+        'The management discussion of results',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Risk factors is where a company legally confesses its worries, and it is one of the most under-read documents in all of finance. Reading how the wording changes from year to year is even more useful — companies quietly rewrite it when something has genuinely shifted.",
+    },
+    realScenario: {
+      prompt:
+        'You ask an AI to analyze a stock and it gives a confident, well-written case for why it will do well. What is the most useful next step?',
+      options: [
+        'Ask it to make the strongest possible bear case, then verify two of its numbers against the filing',
+        'Ask a second AI and see whether the two agree',
+        'Buy a small position, since the analysis was thorough',
+      ],
+      answerIndex: 0,
+      explanation:
+        "Two models can be confidently wrong in the same direction, so agreement is weak evidence. Forcing the counter-argument and checking specific figures against primary sources are the two steps that actually raise the quality of the decision — and the second one calibrates how much to trust everything else in the answer.",
+    },
+    mythVsReality: {
+      statement: 'If an AI has read every filing and article about a company, its conclusion is more reliable than mine.',
+      isMyth: true,
+      explanation:
+        "It is genuinely better than you at reading quickly, explaining clearly, and summarizing an industry — use it for all three. It is also optimized to produce answers that feel satisfying, has no stake in your outcome, and is measurably unreliable on precise financial figures. Its explanations are often excellent and its verdicts are worth nothing, and the difference between those is the whole skill.",
+    },
+    connects: ['red-flags', 'fundamentals', 'moat', 'when-to-sell'],
+    aiPrompt:
+      "Teach me how to read a 10-K annual report efficiently: which sections matter most, in what order, and what to look for in each. Then explain how the wording changes in the risk factors section year over year can signal a change in the business, and how I should verify financial figures an AI gives me against primary sources.",
+    depth: 3,
+  },
+
+  // Chapter 4 — Six Giants, Six Business Models. Each of these is the academy
+  // anchor for one card on the dashboard's Micro tab.
+  {
+    id: 'case-nvda',
+    chapter: 4,
+    order: 1,
+    category: 'company',
+    tag: 'Case study',
+    title: 'NVIDIA',
+    tagline: 'Selling shovels in a gold rush — until everyone starts making shovels.',
+    marketId: 'nvda',
+    riskNote:
+      "NVIDIA is a case study, not a suggestion. It is a supplier to a capital-spending boom, which historically means violent swings in both directions — it has fallen more than 50% multiple times in its history, including during stretches when the business was fine. A single company at the center of one enormous narrative is among the least suitable places for money you cannot afford to watch drop by half.",
+    surface:
+      "NVIDIA designs the chips that AI models are trained and run on, and sells them to nearly everyone racing to build AI — plus the networking gear needed to wire thousands of those chips into a working system. It is the purest example in the market of a picks-and-shovels business: it does not have to win the AI race, it sells the equipment to everyone running it. That is a genuinely wonderful position, and it is not the same thing as a permanent one.",
+    middle: [
+      "The moat is not the silicon, and this is the detail most people get wrong. It is CUDA — the software layer developers have been writing AI code against for nearly two decades. A competitor can build a chip with comparable specifications and still lose, because the world's AI code assumes NVIDIA, and rewriting it is expensive, slow, and nobody's favorite project. AMD has shipped credible hardware for years and still trails badly, which tells you the contest was never only about the chip.",
+      "It also sells increasingly complete systems rather than components — chips, networking, and software as one package — which means it captures more of each data center's budget than a parts supplier could. That is a deliberate strategic choice and it explains a lot about the margins.",
+      "Now the honest part. NVIDIA's real competition is not AMD. It is its own biggest customers, every one of which is openly funding an in-house alternative precisely because depending this heavily on one supplier is intolerable to them. That is not a rumor; it is stated strategy at multiple companies, and Broadcom's business exists largely to serve it.",
+    ],
+    deep: [
+      "Customer concentration is the risk that deserves the most weight and gets the least. A handful of enormous buyers account for much of NVIDIA's revenue, which means a small number of internal decisions at other companies can change its growth story. Concentration is not disqualifying — it is a risk you should be paid for taking, and when a stock is priced for scarcity, you may be paying for it instead.",
+      "The cyclicality point matters more than the AI debate. Semiconductors have always been cyclical, because customers over-order during shortages and stop entirely once they have enough. NVIDIA is currently a supplier to the largest capital-spending build-out in corporate history, funded by companies that can slow it whenever the returns disappoint. Note what the risk is: not that AI fails, but that spending on AI infrastructure merely decelerates while the price assumes it will not.",
+      "Apply the valuation lesson here specifically. Reverse-engineer it: what growth rate, sustained for how many years, at what margin, would justify the current price — and has a company of this size ever done that? Sometimes the answer is a defensible yes. The exercise is valuable either way, because it converts a vague feeling about expensiveness into a specific claim you can check against reality later.",
+      "What to actually watch: data-center revenue growth rate rather than the total, any disclosure about how much comes from the top few customers, gross margin direction (the earliest signal that competition arrived), and progress reports on customers' in-house chips. What to ignore: whether it beat quarterly estimates, which is a story about analysts rather than about the business.",
+    ],
+    scenario:
+      "Shovel-Seller Sam noticed in 2015 that whoever won machine learning, they would all need the same chips, and he sized the position so that being early and wrong would not hurt him. It turned out to be the best decision of his financial life. What made it work was not the insight — plenty of people had it — but that he had written down the two things that would end the thesis: customers building their own chips, and gross margins slipping. He checks both every quarter, and he has never once had to guess whether it is time to leave.",
+    gutCheck: {
+      prompt: "What is generally considered NVIDIA's strongest competitive moat?",
+      options: [
+        'Its chips are physically impossible for competitors to replicate',
+        'CUDA — the software ecosystem AI developers have written against for nearly two decades',
+        'It owns the factories that manufacture all of its chips',
+      ],
+      answerIndex: 1,
+      explanation:
+        "The software lock-in is the moat. Rivals have shipped competitive hardware and still struggled, because the world's AI code assumes NVIDIA and porting it is expensive and unglamorous. NVIDIA also does not own its factories — it designs chips and has them manufactured by others.",
+    },
+    realScenario: {
+      prompt:
+        'Several of NVIDIA\'s largest customers announce major expansions of their in-house AI chip programs. Why does this matter more than a competitor launching a rival chip?',
+      options: [
+        'It does not — in-house chips are always worse than specialists\' chips',
+        'Those customers are a large share of revenue, so they can remove demand rather than just compete for it',
+        'It only matters if the in-house chips are cheaper',
+      ],
+      answerIndex: 1,
+      explanation:
+        "A competitor has to win business away from NVIDIA. A large customer can simply stop buying — which subtracts revenue directly rather than contesting it. That is the difference between competition and concentration risk, and it is why the customer list matters as much as the competitor list.",
+    },
+    mythVsReality: {
+      statement: 'NVIDIA has no real competition, so its dominance is safe for the foreseeable future.',
+      isMyth: true,
+      explanation:
+        "It has an enormous lead and genuine competition — just not from where people look. The threat is not a rival selling a better general-purpose chip; it is the handful of giant customers designing replacements for their own use, often with Broadcom's help, because relying this heavily on one supplier is strategically unacceptable to them. Dominance this large creates the incentive to end it.",
+    },
+    connects: ['moat', 'valuation', 'case-avgo', 'nasdaq'],
+    aiPrompt:
+      "Explain NVIDIA's business by segment and what CUDA actually is and why it functions as a moat. Then give me the strongest bear case: customer concentration, in-house chip programs at its largest customers, semiconductor cyclicality, and what growth the current valuation assumes. Tell me the three specific things that would signal the thesis is breaking.",
+    depth: 3,
+  },
+  {
+    id: 'case-aapl',
+    chapter: 4,
+    order: 2,
+    category: 'company',
+    tag: 'Case study',
+    title: 'Apple',
+    tagline: 'A hardware company that quietly became a toll road.',
+    marketId: 'aapl',
+    riskNote:
+      "A case study, not a recommendation. Apple is among the most stable large companies in existence and still fell over 40% in 2008 and again in 2012–13. Size and quality reduce the odds of disaster; they do not eliminate large declines, and no single company belongs in money you need soon.",
+    surface:
+      "Apple sells iPhones, Macs, and watches at margins hardware companies are not supposed to achieve. But the more interesting half is Services — the App Store, iCloud, subscriptions, and payment fees billed quietly to roughly two billion active devices. Watching Services grow faster than hardware is watching a gadget maker turn into a toll road, and it is the single most important thing to understand about the company.",
+    middle: [
+      "The moat is switching costs wearing the costume of good taste. Your photos, messages, purchases, passwords, and muscle memory all live inside the ecosystem, your watch only talks to your phone, and the family group chat visibly degrades if you leave. Apple can charge a premium because the exit is genuinely annoying, not because the aluminum is better. That is a far more durable advantage than design, because design can be copied and inconvenience cannot.",
+      "Here is the comparison that teaches the most: Android outsells iPhone worldwide by a wide margin and earns a fraction of the industry's profit. Market share and profit share are different games. Apple deliberately takes the premium end of the market plus the recurring revenue attached to it, converting far fewer units into far more money — a lesson that applies well beyond phones.",
+      "Apple is also the market's favorite example of relentless buybacks. It has retired an enormous quantity of its own shares over the past decade, which means earnings per share grew considerably faster than earnings. That is the dilution lesson running in reverse, and it is a real return to shareholders that never shows up as a dividend.",
+    ],
+    deep: [
+      "Two clocks are running against the thesis, and they are unrelated to each other. The first is regulatory: authorities in several jurisdictions are prying open the App Store — commission rates, alternative payment systems, sideloading. That is a direct attack on the highest-margin revenue Apple has, and unlike competition it cannot be out-engineered.",
+      "The second is quieter and possibly larger. Apple has been slower and more conservative on AI than its peers, and its whole business rests on the phone being the primary place people interact with computing. If that changes — if the interface migrates to something Apple does not control — the ecosystem's gravity weakens at the root. Nobody knows whether that happens in three years or thirty, and 'nobody knows' is precisely why it belongs in the bear case rather than being dismissed.",
+      "The China exposure is a genuine risk that gets discussed in geopolitical terms and should be read as a business one: it is both a large market and the place most of the manufacturing happens. That is concentration on two axes at once, and the risk-factors section says so plainly.",
+      "What to actually watch: Services revenue growth as the primary number, any regulatory ruling on App Store commissions, gross margin (which reveals whether the premium is holding), and the pace of buybacks. Unit sales of iPhones matter far less than any of these, which is the opposite of how the company is usually covered.",
+    ],
+    scenario:
+      "Ecosystem Ellie bought Apple in 2013 not because she thought the next phone would be great, but because she noticed her whole family had quietly become unable to leave — four people, one photo library, a watch that only worked with one phone. She was not predicting products. She was noticing a structure. Spec-Sheet Simon spent the same decade buying whichever manufacturer had the best camera that year, correctly identifying the superior hardware almost every time, and made a fraction of Ellie's return. The better product kept losing to the harder exit.",
+    gutCheck: {
+      prompt: 'Why is Apple\'s Services segment strategically more important than its headline iPhone sales?',
+      options: [
+        'Services is now larger than hardware in total revenue',
+        'It is recurring, high-margin revenue earned from devices already sold',
+        'Hardware sales have been declining every year for a decade',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Services monetizes the installed base repeatedly rather than one sale at a time, at much higher margins — the toll-road quality. It is not yet larger than hardware in revenue, and hardware has not been in continuous decline; the shift is about the *kind* of revenue, not the size.",
+    },
+    realScenario: {
+      prompt:
+        'Android holds a much larger share of global smartphone units than iPhone, yet Apple captures a large majority of the industry\'s profits. What does this illustrate?',
+      options: [
+        'The unit share data must be measured incorrectly',
+        'Market share and profit share are different things — Apple takes the premium segment and its recurring revenue',
+        'Apple must be selling its phones at higher volumes than reported',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Apple deliberately competes for the profitable end of the market rather than the largest one, then earns recurring Services revenue on top of each sale. Winning units and winning profits are separate contests, and it is entirely possible to lose the first while dominating the second.",
+    },
+    mythVsReality: {
+      statement: 'Apple is safe because everyone already owns an iPhone, so its revenue is guaranteed.',
+      isMyth: true,
+      explanation:
+        "A huge installed base is a genuine asset and not a guarantee. The App Store revenue that makes the base so valuable is under active regulatory attack in several countries, and the deeper assumption — that the phone remains the main way people interact with computing — is exactly what a shift in technology could undo. Large and entrenched is not the same as permanent, as several former giants could confirm.",
+    },
+    connects: ['moat', 'what-you-own', 'case-googl', 'fundamentals'],
+    aiPrompt:
+      "Break down Apple's revenue by segment and explain why Services matters more than iPhone unit sales. Then cover the bear case properly: the regulatory challenges to App Store commissions in various jurisdictions, Apple's position on AI relative to peers, and its dual concentration in China as both a market and a manufacturing base.",
+    depth: 3,
+  },
+  {
+    id: 'case-msft',
+    chapter: 4,
+    order: 3,
+    category: 'company',
+    tag: 'Case study',
+    title: 'Microsoft',
+    tagline: 'The most boring moat in the world, and one of the strongest.',
+    marketId: 'msft',
+    riskNote:
+      "A case study, not a recommendation. Microsoft spent more than a decade going essentially nowhere after 2000 despite remaining enormously profitable the entire time — a reminder that a great business bought at a great price are two separate achievements.",
+    surface:
+      "Microsoft rents software and computing power to businesses on multi-year contracts: Office and Windows, Azure cloud infrastructure, and AI features bolted onto both at an extra price per seat. It is the least glamorous story among the six giants and arguably the most defensible, because its advantage is not a product anyone loves — it is that leaving is a multi-year project nobody gets promoted for starting.",
+    middle: [
+      "The moat is switching costs at enterprise scale. Email, files, identity, security, and servers all run through Microsoft inside an enormous number of organizations, and untangling that means retraining staff, rewriting integrations, and accepting risk for a benefit your CFO will struggle to see. That is why Microsoft's revenue is unusually predictable for a technology company: it is contracted, renewed, and embedded rather than won fresh each year.",
+      "The strategic move worth studying is how Azure grew from a distant second place instead of stalling there. Amazon's AWS was bigger and earlier. Microsoft's advantage was that it was already inside the building — it could sell cloud infrastructure to a company that had run Office and Windows for twenty years, which is a far shorter conversation than a competitor's cold pitch. Bundling is not a glamorous strategy. It is a very effective one.",
+      "This is also the cleanest example of a business model shift done well. Microsoft moved from selling software in a box to renting it by subscription, trading a big one-time payment for a smaller recurring one. Revenue looked worse briefly and the business became far more valuable, because recurring revenue is worth more than the same amount arriving unpredictably.",
+    ],
+    deep: [
+      "The genuine open question is the AI capital spending. Microsoft is committing enormous sums to data centers on the belief that customers will pay for AI features at scale — and the payback is currently a promise supported by early evidence rather than an established pattern. This is where the fundamentals lesson earns its keep: watch capital expenditure against the revenue AI actually generates, because that gap is the entire debate and it is measurable each quarter.",
+      "Depth of embedding cuts both ways. Being wired into how the economy operates makes Microsoft a permanent antitrust target, and it has been broken open by regulators before — the late-1990s case is the most famous in tech history. Bundling advantages are precisely what regulators dislike, and the advantage that makes Azure work is the one most likely to be challenged.",
+      "There is a concentration exposure the coverage underplays: a meaningful share of the AI enthusiasm rests on partnerships and customers in the AI sector itself, some of which are funded by the same capital-spending boom. Circular arrangements in a boom are worth understanding rather than assuming away.",
+      "What to actually watch: Azure growth rate, capital expenditure, operating margin (does AI improve or dilute it?), and seat-based AI adoption where disclosed. What to ignore: Windows market share, which is a story about the last era rather than this one.",
+    ],
+    scenario:
+      "Enterprise Erin worked in corporate IT and noticed something no analyst report told her: her company had discussed migrating off Microsoft three times in six years and never once got past the planning stage, because the person who proposed it would own every problem for two years and receive no credit if it worked. That was not a technology fact, it was an organizational one, and it was worth more than any spec comparison. Consumer Carl evaluated Microsoft on whether he personally enjoyed using Windows, which was the wrong question about a company that mostly sells to procurement departments.",
+    gutCheck: {
+      prompt: 'What best explains how Azure grew rapidly despite AWS being larger and earlier to market?',
+      options: [
+        'Azure was significantly cheaper than AWS across the board',
+        'Microsoft was already embedded in enterprises, making cloud an easier extension of an existing relationship',
+        'AWS stopped investing in its platform',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Distribution and existing relationships did the work. Selling cloud to a company that has run your software for two decades is a much shorter conversation than a competitor's — that bundling advantage let Microsoft grow from second place instead of being stuck there.",
+    },
+    realScenario: {
+      prompt:
+        "Microsoft's capital expenditure rises sharply for several years while AI-related revenue grows more slowly than expected. What does the fundamentals lesson say to watch?",
+      options: [
+        'Nothing — spending on infrastructure is always a positive signal',
+        'Free cash flow and return on invested capital, since heavy spending with weak returns destroys value',
+        'Only revenue growth, since spending is an accounting matter',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is exactly the ROIC question. Capital spending that earns less than its cost destroys value even while revenue grows, and free cash flow is where it shows up first — because that spending comes straight out of it whatever the profit line says.",
+    },
+    mythVsReality: {
+      statement: 'Microsoft is a legacy company living off Windows and Office.',
+      isMyth: true,
+      explanation:
+        "That description was fair around 2012 and is badly out of date. The engine is now cloud infrastructure sold on subscription, and Windows is a comparatively minor part of the story — one of the more successful business-model transitions any large company has executed. The lesson generalizes: a company's identity in the public mind can lag its actual economics by a decade, which is where a lot of mispricing lives.",
+    },
+    connects: ['moat', 'fundamentals', 'case-amzn', 'valuation'],
+    aiPrompt:
+      "Explain Microsoft's revenue segments and how the shift from boxed software to subscriptions changed the economics of the business. Then assess the AI capital-spending question: how much is being spent, what AI revenue has actually materialized, and what the return on that invested capital looks like so far versus what the valuation assumes.",
+    depth: 2,
+  },
+  {
+    id: 'case-amzn',
+    chapter: 4,
+    order: 4,
+    category: 'company',
+    tag: 'Case study',
+    title: 'Amazon',
+    tagline: 'Two companies under one ticker, and the famous one is not the profitable one.',
+    marketId: 'amzn',
+    riskNote:
+      "A case study, not a recommendation. Amazon fell roughly 90% after the dot-com bubble and took years to recover, and has had several 30%-plus declines since while the business kept growing. It is the clearest illustration in this chapter that a correct long-term thesis can still involve losing most of your money temporarily.",
+    surface:
+      "Amazon is two very different companies wearing one ticker. There is the colossal retail operation, earning thin margins on enormous volume, plus fast-growing advertising sold against shopping searches. And there is AWS — the cloud business that quietly supplies most of the operating profit. If you only look at the shopping app, you will badly misjudge where the money comes from, and that mistake is the whole lesson.",
+    middle: [
+      "The retail moat is a logistics network nobody can rebuild from scratch: warehouses, trucks, and delivery routes dense enough to make same-day shipping economically viable at a scale a new entrant cannot match. Prime wraps a subscription around it so that leaving feels like a downgrade rather than a switch. That is scale economics plus switching costs stacked on each other.",
+      "Then the structural advantage that a pure retailer simply cannot answer: Amazon can price retail aggressively for years because a different division pays the bills. Walmart is a genuinely fierce competitor and has closed much of the online gap — but Walmart has no AWS. A cross-subsidy like that is not a temporary tactic, it is a permanent asymmetry in who can afford to lose money longer.",
+      "Amazon is also the best available answer to 'is an unprofitable company automatically bad?' It reported minimal profits for years while deliberately reinvesting every dollar into the network that became the moat. That was a choice by a management team that told shareholders exactly what it was doing, in writing, repeatedly. The lesson is not 'losses are fine' — it is that losses buying something durable are a completely different animal from losses covering weakness.",
+    ],
+    deep: [
+      "The concentration risk is inverted from what most people assume: the profit is concentrated in the division facing the fiercest competition. If AWS growth slows meaningfully while Microsoft and Google keep gaining, retail's thin margins cannot absorb the shortfall. Watching only the retail business would mean missing where the actual risk lives.",
+      "Amazon's advertising business deserves more attention than it gets. Selling ads against people who are already searching for something to buy is close to an ideal advertising product, and it has become a large, high-margin contributor that competes directly with Google's most valuable inventory. It is one of the more underappreciated segments among the six giants.",
+      "On free cash flow, apply the fundamentals lesson carefully here. Amazon spends colossally and continuously, which means free cash flow can be minimal or negative for stretches by deliberate choice rather than distress. This is the case where you must read the cash flow statement in context — the same pattern that would be a red flag at a weak company is the strategy at this one, and telling those apart requires knowing what the spending buys.",
+      "What to actually watch: AWS growth rate and AWS operating margin above all, then advertising revenue, then retail operating margin as a check on discipline. Total revenue is the headline and the least informative number in the release.",
+    ],
+    scenario:
+      "Segment-Reader Sofia read the segment breakdown in the annual report before ever looking at the stock, and discovered that the business she thought she was buying — the store — was contributing a small fraction of the profit, while a cloud division she had never used supplied most of it. That single hour changed which numbers she watched for the next decade. Logo-Reader Luis evaluated Amazon by whether he liked shopping there, monitored Prime membership news, and completely missed a slowdown in the division that actually mattered.",
+    gutCheck: {
+      prompt: 'Where does the majority of Amazon\'s operating profit come from?',
+      options: [
+        'The online retail store',
+        'AWS, its cloud computing division',
+        'Prime membership fees',
+      ],
+      answerIndex: 1,
+      explanation:
+        "AWS supplies most of the operating profit despite retail generating far more revenue. It is the standard illustration of why reading the segment breakdown matters — the famous half of the company is not the half that earns the money.",
+    },
+    realScenario: {
+      prompt:
+        'Amazon reports another year of minimal free cash flow because of very heavy capital spending. When is this a red flag versus a strategy?',
+      options: [
+        'It is always a red flag — negative free cash flow means the business is failing',
+        'It depends on whether the spending is building a durable advantage with a visible return',
+        'It is always fine, since growth companies are supposed to spend heavily',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Identical numbers, opposite meanings. Spending that builds a logistics or cloud advantage competitors cannot replicate is investment; spending that covers weakness is a countdown. You cannot tell which from the cash flow statement alone — you have to know what the money bought, which is why this is the hardest of the fundamental checks.",
+    },
+    mythVsReality: {
+      statement: 'Amazon is primarily a retailer, so it should be valued like other retail companies.',
+      isMyth: true,
+      explanation:
+        "Valuing it as a retailer misses where the profits actually come from. Most of the operating profit is cloud computing, with a large high-margin advertising business alongside it — three quite different economic engines that would each deserve a different multiple. This is the strongest argument in this chapter for always reading the segment breakdown before forming a view.",
+    },
+    connects: ['fundamentals', 'case-msft', 'valuation', 'what-you-own'],
+    aiPrompt:
+      "Break Amazon down by segment — retail, AWS, and advertising — with the revenue and operating income each contributes, and explain why the profit concentration is so different from the revenue concentration. Then explain how Amazon's years of deliberate reinvestment differ from a company losing money out of weakness, and what evidence distinguishes the two in the filings.",
+    depth: 3,
+  },
+  {
+    id: 'case-googl',
+    chapter: 4,
+    order: 5,
+    category: 'company',
+    tag: 'Case study',
+    title: 'Alphabet',
+    tagline: 'A near-perfect business facing the two scariest words in investing: what if.',
+    marketId: 'googl',
+    riskNote:
+      "A case study, not a recommendation. Alphabet faces genuine, active legal proceedings whose outcomes are unknowable, alongside a real technological question about the future of search. Uncertainty this specific is exactly why no individual company belongs in money you need soon.",
+    surface:
+      "Alphabet sells advertising against search results and YouTube videos, which is close to a perfect business: people arrive already telling Google what they want to buy, and Google charges advertisers to be there at that moment. Google Cloud and a portfolio of long-shot bets sit alongside it. It is simultaneously one of the best business models ever built and the most interesting risk case among the six giants.",
+    middle: [
+      "The moat has two layers. The first is a data network effect: two decades of information about what people click makes results and ad targeting better, which attracts more users, which produces more data. The second is distribution — Google is the default search on nearly every browser and phone, some of it paid for and some of it owned outright through Android and Chrome. Defaults are extraordinarily powerful, because most people never change them.",
+      "Against Meta, the comparison is instructive: Meta knows who you are, Google knows what you want right now, and the second is worth more at the moment of purchase. Alphabet also owns essentially the whole stack — the browser, the phone platform, the search index, the ad exchange, and increasingly its own AI chips — so it keeps margin that competitors have to pay away to someone else.",
+      "And here is where two of the biggest questions in investing collide in one company. Courts in multiple jurisdictions have ruled against parts of the search and advertising businesses, and remedies could reach the default-search arrangements and the ad exchange. At the same time, AI chat may replace the search box that funds everything. Alphabet has strong AI models — that was never the concern. The concern is whether the new interface monetizes like the old one, and nobody knows.",
+    ],
+    deep: [
+      "Take the regulatory risk seriously without catastrophizing it, which is genuinely hard. The distinction that matters is between a fine — painful, survivable, one-time — and a structural remedy that changes how the business operates, such as ending default-search payments or separating the advertising exchange. The first is an expense. The second changes the moat. Read what remedy is actually being imposed rather than the size of any headline number.",
+      "The AI disruption question is subtler than 'chatbots replace Google.' Search advertising works because a search reveals commercial intent at the exact moment someone is ready to buy. An AI assistant that answers the question directly may satisfy the user while removing the moment where the ad goes. Alphabet is integrating AI into search precisely to defend this, and the honest position is that the economics of the new format are not yet established.",
+      "The 'other bets' — Waymo most notably — are a genuine call option that valuation models handle badly. They consume cash today and could be enormously valuable or worth nothing. When something is that binary, the sensible approach is to value the core business on its own merits and treat the bets as upside you did not pay for, rather than building a thesis on them.",
+      "What to actually watch: search advertising revenue growth, which is the single number that reveals whether AI is eating the core business; the specific substance of any antitrust remedy; Google Cloud's growth and margin; and traffic-acquisition costs, which show what Alphabet pays for the defaults it depends on.",
+    ],
+    scenario:
+      "Two-Risk Rena wrote her thesis on Alphabet as a single sentence with two named threats attached — an adverse structural remedy, and search advertising growth turning negative — and set herself a reminder to check both every quarter. It meant she never had to decide anything in the middle of a frightening headline, because the headline either matched one of her two conditions or it did not. Headline Hal read every article about every ruling, felt something different each week, and traded four times in eighteen months on news that changed nothing about either question that actually mattered.",
+    gutCheck: {
+      prompt: 'Why is Google\'s search advertising business considered such a strong model?',
+      options: [
+        'Search ads are cheaper to produce than video ads',
+        'A search reveals commercial intent at the exact moment someone is ready to buy',
+        'Google has more users than any other website',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Intent at the moment of purchase is what makes the inventory so valuable. Advertisers pay a premium to reach someone actively searching for what they sell — far more than for the same person browsing idly, which is why search advertising commands better economics than most other formats.",
+    },
+    realScenario: {
+      prompt:
+        'A court imposes a remedy ending Alphabet\'s payments to be the default search engine on major browsers and phones. Why might this matter more than a large fine?',
+      options: [
+        'Fines are always larger than the value of default placements',
+        'A fine is a one-time expense, while losing default distribution attacks the moat itself',
+        'It would not matter, since users would search Google anyway',
+      ],
+      answerIndex: 1,
+      explanation:
+        "This is the fine-versus-structural-remedy distinction. A fine is a survivable expense. Losing default placement changes the mechanism by which users arrive — and since most people never change a default, that is an attack on the moat rather than on the bank balance.",
+    },
+    mythVsReality: {
+      statement: 'AI chatbots will obviously destroy Google Search, so Alphabet is finished.',
+      isMyth: true,
+      explanation:
+        "It is a real risk stated with false certainty. Alphabet has among the strongest AI capabilities anywhere and is integrating them directly into search; the genuine open question is whether the new format monetizes as well as the old one, not whether Alphabet can build the technology. Confident predictions of the collapse of dominant businesses have a long history of arriving years early or not at all — which is not a reason to dismiss the risk, only to hold it as a question rather than a conclusion.",
+    },
+    connects: ['moat', 'case-aapl', 'red-flags', 'when-to-sell'],
+    aiPrompt:
+      "Explain Alphabet's revenue segments and why search advertising is such a strong business model. Then give me the two bear cases separately and in detail: the specific antitrust rulings and what structural remedies are actually on the table, and the argument that AI assistants could erode search monetization. For each, tell me what observable evidence would show it is actually happening.",
+    depth: 3,
+  },
+  {
+    id: 'case-avgo',
+    chapter: 4,
+    order: 6,
+    category: 'company',
+    tag: 'Case study',
+    title: 'Broadcom',
+    tagline: 'The trillion-dollar company most people cannot name.',
+    marketId: 'avgo',
+    riskNote:
+      "A case study, not a recommendation. Broadcom carries substantial debt from acquisitions and has severe customer concentration even by semiconductor standards — a combination that magnifies both good and bad outcomes. Not a suitable place for money you cannot afford to see fall sharply.",
+    surface:
+      "Broadcom is the least famous member of this group and among the largest companies on Earth, which is itself worth sitting with. It runs two engines: it co-designs custom AI accelerators and networking chips for a small number of enormous cloud customers, and it owns a portfolio of unglamorous enterprise software bought outright, run for cash, and priced firmly. It is a different animal from the other five, and understanding how is the point of this lesson.",
+    middle: [
+      "The reason this lesson exists: it is the clearest available proof that the biggest companies are not always the household names. Broadcom is roughly as valuable as companies you could describe in your sleep, and most people have never knowingly used one of its products. If your process for finding investments is 'companies I have heard of,' this is the size of what that process misses.",
+      "It is also the cleanest example in this chapter of 'not the same bet.' NVIDIA sells everyone the same class of chip. Broadcom co-designs a specific chip for one customer trying to depend less on NVIDIA — which means it can win precisely when NVIDIA loses share. Two companies described identically in headlines as 'AI chip stocks' can have genuinely opposed exposures, and only reading the business model reveals it.",
+      "The software half deserves attention because the playbook is unusual and openly stated: acquire established enterprise software that large companies depend on, cut costs hard, raise prices firmly, and run it for cash. It is not beloved by customers. It is extremely effective, and it supplies steady cash that a pure chip designer riding a cycle does not have.",
+    ],
+    deep: [
+      "Customer concentration is the central risk and it is severe even by the standards of an industry known for it. A small number of buyers, each perfectly capable of changing design partners or slowing its build-out, drives much of the AI revenue. Concentration is a risk you should be paid for — the question is always whether the price reflects it, and in enthusiastic markets it frequently does not.",
+      "The debt is the second half of the risk and it is structural rather than incidental. The whole strategy runs on debt-funded acquisitions, which works beautifully while borrowing is manageable and cash flows are strong, and becomes fragile when either changes. This is the leverage lesson from Chapter 3 applied to a real balance sheet: check interest expense against operating income, and remember that debt makes good years better and bad years dangerous.",
+      "There is a genuine question about how long the acquisition playbook can continue. Each deal has to be larger than the last to move a company this size, the supply of suitable targets is finite, and aggressive post-acquisition price increases invite customer revolt and regulatory attention. A strategy that has worked for a decade is not the same as one that can run for another.",
+      "What to actually watch: AI revenue growth against the disclosed order backlog (the backlog is the tell, since it reflects commitments rather than hopes), the debt load after the most recent acquisition, software segment margins, and any disclosure about customer concentration. What to ignore: comparisons to NVIDIA that treat them as the same trade.",
+    ],
+    scenario:
+      "Backlog Bianca read Broadcom's annual report specifically to find out who the customers were and what they had actually committed to, and came away understanding that she was buying a small number of relationships rather than a broad market position — which was fine, as long as she sized it accordingly and watched the backlog every quarter. AI-Basket Andre bought Broadcom alongside NVIDIA and three others as 'AI exposure,' believing he was diversified. He was not: he owned one theme five times, and two of those positions were partly bets against each other.",
+    gutCheck: {
+      prompt: 'How does Broadcom\'s AI chip business differ fundamentally from NVIDIA\'s?',
+      options: [
+        'Broadcom sells the same general-purpose AI chips at lower prices',
+        'Broadcom co-designs custom chips for specific large customers, often those seeking alternatives to NVIDIA',
+        'Broadcom only makes networking equipment, not chips',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Custom co-design for individual customers is a different business from selling a standard product to everyone. It means Broadcom can gain exactly when NVIDIA loses share at a large customer — so despite the shared 'AI chip' label, their exposures are partly opposed.",
+    },
+    realScenario: {
+      prompt:
+        'You own NVIDIA, Broadcom, and three other AI-related companies, and consider yourself diversified. What is the flaw in that reasoning?',
+      options: [
+        'Nothing — five companies is reasonable diversification',
+        'They mostly depend on the same AI capital-spending cycle, so it is one bet held five ways',
+        'Owning five positions is too many to research properly',
+      ],
+      answerIndex: 1,
+      explanation:
+        "Diversification is about exposures, not the number of tickers. Five companies whose fortunes all depend on the same customers continuing to spend on the same build-out will fall together if that spending slows — which is the moment diversification was supposed to help.",
+    },
+    mythVsReality: {
+      statement: 'Broadcom and NVIDIA are basically the same investment — both are just AI chip companies.',
+      isMyth: true,
+      explanation:
+        "The label hides more than it reveals. NVIDIA sells a standard product broadly and depends on a software ecosystem; Broadcom co-designs bespoke chips for a handful of customers explicitly trying to reduce their NVIDIA dependence, and earns much of its cash from acquired enterprise software. They share exposure to the same spending cycle and are otherwise quite different businesses — one of the better arguments for reading the business model instead of the sector tag.",
+    },
+    connects: ['case-nvda', 'red-flags', 'fundamentals', 'moat'],
+    aiPrompt:
+      "Explain Broadcom's two business segments — custom AI silicon and infrastructure software — and how its acquisition-driven strategy actually works. Then assess the risks properly: customer concentration in the AI business, the debt taken on for acquisitions measured against operating income, and whether the acquire-and-optimize playbook can continue at this scale.",
+    depth: 3,
+  },
 ]
 
 export const LESSON_BY_ID: Record<string, Lesson> = Object.fromEntries(LESSONS.map((l) => [l.id, l]))
@@ -1259,6 +2231,9 @@ export const POLL_OPTIONS: { id: string; label: string }[] = [
 
 export const CATEGORY_META: Record<LessonCategory, { label: string; color: string }> = {
   index: { label: 'Indices', color: '#38bdf8' },
+  'stock-picking': { label: 'Stock Picking', color: '#e879f9' },
+  execution: { label: 'Placing Orders', color: '#94a3b8' },
+  company: { label: 'Case Studies', color: '#818cf8' },
   volatility: { label: 'Volatility', color: '#fbbf24' },
   crypto: { label: 'Crypto', color: '#a78bfa' },
   'chart-literacy': { label: 'Chart Literacy', color: '#2dd4a7' },

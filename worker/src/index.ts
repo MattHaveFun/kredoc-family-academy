@@ -87,6 +87,20 @@ const MARKETS: Record<string, { yahoo: string; name: string }> = {
   hangseng: { yahoo: '^HSI', name: 'Hang Seng' },
   shanghai: { yahoo: '000001.SS', name: 'Shanghai Composite' },
   sensex: { yahoo: '^BSESN', name: 'Sensex' },
+  // The six largest S&P 500 companies — the Micro tab. These also appear in
+  // WATCHLIST below, but that's the `spark` endpoint: price and daily change
+  // only. The Micro tab charts them and replays order fills against real
+  // highs/lows, which needs the full OHLCV series only a chart fetch returns.
+  // Budget note: this brings buildMarkets to 26 chart subrequests; plus ~6
+  // Treasury years, 2 spark chunks, and 1 Gemini call, the daily build sits
+  // near 35 — comfortably under the Workers subrequest ceiling, but that
+  // ceiling is the thing to check before adding another block of symbols.
+  nvda: { yahoo: 'NVDA', name: 'NVIDIA' },
+  aapl: { yahoo: 'AAPL', name: 'Apple' },
+  msft: { yahoo: 'MSFT', name: 'Microsoft' },
+  amzn: { yahoo: 'AMZN', name: 'Amazon' },
+  googl: { yahoo: 'GOOGL', name: 'Alphabet' },
+  avgo: { yahoo: 'AVGO', name: 'Broadcom' },
 }
 
 // U.S. Treasury par-yield curve rates (id -> CSV column header). One keyless
@@ -106,6 +120,7 @@ const WATCHLIST: Array<{ symbol: string; yahoo: string }> = [
   { symbol: 'AAPL', yahoo: 'AAPL' },
   { symbol: 'MSFT', yahoo: 'MSFT' },
   { symbol: 'NVDA', yahoo: 'NVDA' },
+  { symbol: 'AVGO', yahoo: 'AVGO' },
   { symbol: 'GOOGL', yahoo: 'GOOGL' },
   { symbol: 'AMZN', yahoo: 'AMZN' },
   { symbol: 'META', yahoo: 'META' },

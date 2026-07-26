@@ -11,6 +11,7 @@ export const TOP_COMPANIES: WatchlistEntry[] = [
   { symbol: 'AAPL', name: 'Apple' },
   { symbol: 'MSFT', name: 'Microsoft' },
   { symbol: 'NVDA', name: 'NVIDIA' },
+  { symbol: 'AVGO', name: 'Broadcom' },
   { symbol: 'GOOGL', name: 'Alphabet' },
   { symbol: 'AMZN', name: 'Amazon' },
   { symbol: 'META', name: 'Meta Platforms' },

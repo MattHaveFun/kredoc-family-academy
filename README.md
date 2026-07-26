@@ -6,15 +6,25 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
 
 ## What's here
 
-- **Markets Dashboard** — previous trading day's close (SPX, IXIC, DJI, RUT, VIX, BTC),
-  sector heat map, market mood gauge, economic calendar, and a "Today in Markets" panel,
-  all refreshed once per trading day by a family member pressing "Get today's update"
-  (see `worker/`). Every data point is labeled honestly with its age.
+- **Markets Dashboard** — previous trading day's close across four tabs, all refreshed once
+  per trading day by a family member pressing "Get today's update" (see `worker/`). Every
+  data point is labeled honestly with its age.
+  - **Markets** — indices and crypto, plus the sector heat map, market mood gauge, and a
+    "Today in Markets" panel.
+  - **Global** — foreign indices and a live world trading map that follows the sun.
+  - **Macro** — commodities, currencies, the yield curve, and the economic calendar.
+  - **Micro** — the six largest S&P 500 companies, an X-ray of each one's business model and
+    moat, a sixteen-point good-business/bad-business flag test, the **Order Desk** (place a
+    market/limit/stop/stop-limit/trailing-stop order against a real year of daily highs and
+    lows and watch when, whether, and at what price it fills — plus a recurring-buy and
+    dollar-cost-averaging simulator), and a research-prompt builder for any ticker.
 - **Teaching chart** — hover any candle body, wick, volume bar, or OHLC stat for a
   plain-English tooltip; click to open a full deep-dive drawer with a lesson.
-- **The Academy** — Chapter 1: Reading the Market. Nine lessons, each with three layers of
-  depth, a character scenario, and a question in your preferred learning mode
-  (Gut Check / Real Scenario / Myth vs. Reality).
+- **The Academy** — four chapters, 36 lessons: Reading the Market, Beneath the Surface,
+  Picking a Stock (fundamentals, valuation, moats, red flags, order types, when to sell),
+  and Six Giants, Six Business Models. Each lesson has three layers of depth, a character
+  scenario, and a question in your preferred learning mode (Gut Check / Real Scenario /
+  Myth vs. Reality).
 - **Knowledge Map** — a force-directed graph of every lesson and its conceptual links.
 - **Family profiles** — up to 6 local profiles (no accounts, localStorage only) tracking
   progress, quiz answers, and votes on what to build next.
