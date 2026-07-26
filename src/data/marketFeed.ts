@@ -69,11 +69,27 @@ export function peekMarketQuote(marketId: string): MarketQuoteResult {
   }
 }
 
+// Trading days per display range. The Worker ships one daily series per market
+// and every range is a suffix of it, so slicing happens here — shipping six
+// overlapping copies of the same candles is what pushed the payload past the
+// browser's storage quota.
+const RANGE_DAYS: Record<RangeKey, number> = {
+  '1D': 2,
+  '1W': 5,
+  '1M': 22,
+  '3M': 65,
+  '1Y': 252,
+  '5Y': Infinity,
+}
+
 export function peekMarketSeries(marketId: string, range: RangeKey): MarketSeriesResult {
   const payload = getCachedPayload()
   const entry = payload?.markets[marketId]
+  // A pre-v2 payload has no `candles`; treat it as absent rather than crashing.
+  const all = entry?.candles ?? []
+  const days = RANGE_DAYS[range]
   return {
-    candles: entry?.series[range] ?? [],
+    candles: days === Infinity ? all : all.slice(Math.max(0, all.length - days)),
     status: statusFor(payload),
     fetchedAt: payload?.generatedAt ?? null,
     proxyNote: null,

@@ -1,4 +1,4 @@
-import type { Candle, RangeKey } from './markets'
+import type { Candle } from './markets'
 import { getFamilyToken } from './familyAccess'
 
 // The single client-side entry point for the daily-update Worker. Nothing in
@@ -23,7 +23,8 @@ export interface Quote {
 
 export interface MarketEntry {
   quote: Quote
-  series: Record<RangeKey, Candle[]>
+  /** Full daily series, oldest first. marketFeed slices the display ranges. */
+  candles: Candle[]
 }
 
 export interface DailyPayload {
@@ -34,7 +35,11 @@ export interface DailyPayload {
   narrative: { text: string; state: 'ready' } | { text: null; state: 'error' }
 }
 
-const CACHE_KEY = 'kredoc.dailyUpdate.v1'
+// v2: entries carry a single `candles` array instead of a per-range record.
+// The bump matters — a v1 payload left in a browser would render every chart
+// empty, since `candles` simply wouldn't be there.
+const CACHE_KEY = 'kredoc.dailyUpdate.v2'
+const LEGACY_CACHE_KEYS = ['kredoc.dailyUpdate.v1']
 
 type Listener = () => void
 const listeners = new Set<Listener>()
@@ -48,21 +53,28 @@ function notify(): void {
   listeners.forEach((l) => l())
 }
 
-// In-memory fallback for devices where localStorage writes silently fail
-// (mobile Safari private mode, storage-locked in-app browsers, etc). Without
-// this, a successful fetch would immediately be wiped out: the write to
-// localStorage fails silently, then the very next read-back (triggered by
-// notify()) hits the same broken storage and returns null.
+// In-memory copy of whatever this session last fetched. It exists for devices
+// where localStorage writes fail (private mode, storage-locked in-app
+// browsers, or simply a payload over quota) — without it, a successful fetch
+// would be wiped out by the very next read-back.
 let memoryPayload: DailyPayload | null = null
 
+/**
+ * Whatever this session fetched is always at least as fresh as what's on disk,
+ * so it wins. Reading disk first was a subtle trap: when a write failed, the
+ * *previous* payload was still sitting in localStorage, so a successful fetch
+ * was silently ignored in favour of stale data — the app looked like it had
+ * simply failed to load the new symbols.
+ */
 export function getCachedPayload(): DailyPayload | null {
+  if (memoryPayload) return memoryPayload
   try {
     const raw = localStorage.getItem(CACHE_KEY)
     if (raw) return JSON.parse(raw) as DailyPayload
   } catch {
-    // fall through to in-memory copy
+    // unreadable storage — nothing cached as far as we're concerned
   }
-  return memoryPayload
+  return null
 }
 
 function setCachedPayload(payload: DailyPayload): { storageOk: boolean; storageError: string | null } {
@@ -70,6 +82,11 @@ function setCachedPayload(payload: DailyPayload): { storageOk: boolean; storageE
   let storageOk = true
   let storageError: string | null = null
   try {
+    // Clear the old value first: a failed setItem leaves the previous payload
+    // behind, and a stale payload on disk is worse than none — on the next
+    // page load it would be served as though it were current.
+    localStorage.removeItem(CACHE_KEY)
+    for (const key of LEGACY_CACHE_KEYS) localStorage.removeItem(key)
     localStorage.setItem(CACHE_KEY, JSON.stringify(payload))
   } catch (err) {
     storageOk = false

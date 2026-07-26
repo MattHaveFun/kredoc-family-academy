@@ -22,8 +22,6 @@ export interface Env {
   ALLOWED_ORIGIN: string
 }
 
-type RangeKey = '1D' | '1W' | '1M' | '3M' | '1Y' | '5Y'
-
 interface Candle {
   time: number
   open: number
@@ -48,7 +46,15 @@ interface Quote {
 
 interface MarketEntry {
   quote: Quote
-  series: Record<RangeKey, Candle[]>
+  /**
+   * The full daily series, oldest first. Clients slice their own ranges from
+   * this (see src/data/marketFeed.ts). It used to ship as a
+   * Record<RangeKey, Candle[]>, but every range except 5Y was a suffix of the
+   * same array — 21% of the payload was duplicate candles, and the whole thing
+   * grew past the ~5MB localStorage quota once the Micro tab's six stocks
+   * arrived, so the browser silently stopped persisting it.
+   */
+  candles: Candle[]
 }
 
 interface DailyPayload {
@@ -190,16 +196,24 @@ function toCandles(result: YahooChartResult): Candle[] {
 // One 5-year daily-candle fetch per market feeds every range tab — far
 // cheaper than a separate request per range, and keeps every tab's numbers
 // self-consistent (same source, same day) since it's all one response.
-function sliceRanges(candles: Candle[]): Record<RangeKey, Candle[]> {
-  const take = (n: number) => candles.slice(Math.max(0, candles.length - n))
-  return {
-    '1D': take(2),
-    '1W': take(5),
-    '1M': take(22),
-    '3M': take(65),
-    '1Y': take(252),
-    '5Y': candles,
-  }
+//
+// Yahoo returns full float precision (214.14999389648438), which is noise on a
+// price and roughly a quarter of the payload's size once multiplied across
+// ~29,000 candles. Two decimals is the precision every price on this dashboard
+// is actually displayed at.
+function round2(v: number): number {
+  return Math.round(v * 100) / 100
+}
+
+function compactCandles(candles: Candle[]): Candle[] {
+  return candles.map((c) => ({
+    time: c.time,
+    open: round2(c.open),
+    high: round2(c.high),
+    low: round2(c.low),
+    close: round2(c.close),
+    volume: Math.round(c.volume),
+  }))
 }
 
 function quoteFromChart(symbol: string, name: string, result: YahooChartResult, candles: Candle[]): Quote {
@@ -234,7 +248,7 @@ async function buildMarkets(): Promise<Record<string, MarketEntry>> {
       const result = await fetchYahooChart(yahoo, '5y', '1d')
       const candles = toCandles(result)
       const quote = quoteFromChart(id, name, result, candles)
-      return [id, { quote, series: sliceRanges(candles) }] as const
+      return [id, { quote, candles: compactCandles(candles) }] as const
     }),
   )
   const entries: Array<readonly [string, MarketEntry]> = []
@@ -288,7 +302,7 @@ async function fetchTreasuryYear(year: number): Promise<{ header: string[]; rows
 }
 
 // A yield series has no OHLC — each daily par yield becomes a flat candle so it
-// flows through the exact same sliceRanges / chart pipeline as everything else.
+// flows through the exact same candle / chart pipeline as everything else.
 function quoteFromCandles(symbol: string, name: string, candles: Candle[]): Quote {
   const last = candles[candles.length - 1]
   const prev = candles[candles.length - 2]
@@ -343,7 +357,7 @@ async function buildRates(): Promise<Record<string, MarketEntry>> {
       seen.add(p.time)
       candles.push({ time: p.time, open: p.value, high: p.value, low: p.value, close: p.value, volume: 0 })
     }
-    result[id] = { quote: quoteFromCandles(id, name, candles), series: sliceRanges(candles) }
+    result[id] = { quote: quoteFromCandles(id, name, candles), candles: compactCandles(candles) }
   }
   return result
 }
