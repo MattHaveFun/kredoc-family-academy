@@ -410,12 +410,17 @@ async function generateNarrative(env: Env, day: string, markets: Record<string, 
           ],
           // gemini-flash-latest thinks by default, and thinking tokens are
           // deducted from maxOutputTokens — that silent budget contention is
-          // what was truncating the narrative mid-sentence. Disable thinking
-          // (not needed for writing a short narrative) so the whole budget
-          // goes to visible text, with headroom above the ~250-word target.
+          // what truncated the narrative mid-sentence originally.
+          // thinkingConfig.thinkingBudget: 0 (the prior fix) used to disable
+          // thinking outright, but the "-latest" alias has since rolled
+          // forward to a newer model generation (gemini-3.6-flash, verified
+          // 2026-07-26 via a temporary debug probe) that rejects a zero
+          // thinking budget with 400 INVALID_ARGUMENT. So instead: leave
+          // thinking on (can't be disabled) and size maxOutputTokens well
+          // above observed thinking+answer totals (~1800-2200 tokens across
+          // repeated test runs) to leave headroom for both.
           generationConfig: {
-            maxOutputTokens: 700,
-            thinkingConfig: { thinkingBudget: 0 },
+            maxOutputTokens: 3000,
           },
         }),
       },
