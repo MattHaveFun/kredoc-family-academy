@@ -10,19 +10,15 @@ import {
 } from '../data/dailyUpdate'
 import { clearFamilyToken, getFamilyToken, setFamilyToken } from '../data/familyAccess'
 
-// Two different things happen here, and keeping them apart is the whole point:
+// Mostly a freshness label now.
 //
-//  1. Reading. On every load this pulls whatever the Worker already built —
-//     no passphrase, no cost, no button. A guest who has never heard of the
-//     passphrase gets the same charts, tickers and narrative the family gets.
-//  2. Refreshing. The button asks the Worker to build a day it hasn't built
-//     yet. That's the only operation that spends anything (market fetches +
-//     one Gemini call), so that's the only one behind the passphrase.
+// The Worker's cron builds each trading day on its own, and this pulls whatever
+// it built — no passphrase, no cost, no button. Everyone sees the same thing,
+// and nothing on the site waits for a person.
 //
-// A wrong passphrase therefore costs a guest nothing: it is declined once,
-// plainly, and they are left exactly where they were with all the data still
-// on screen. It must never re-prompt them into a loop — the passphrase is
-// optional, and the UI has to read that way.
+// The rebuild control stays for the day the cron misses. It's deliberately
+// quiet, and a wrong passphrase costs a visitor nothing: declined once,
+// plainly, leaving all the data on screen. It must never re-prompt into a loop.
 function DailyUpdatePanel() {
   const [payload, setPayload] = useState<DailyPayload | null>(() => getCachedPayload())
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -52,6 +48,7 @@ function DailyUpdatePanel() {
   }, [])
 
   const isFresh = payload?.day === todayStamp()
+  const buttonLabel = state === 'loading' ? 'Fetching…' : isFresh ? 'Refresh' : "Rebuild today's data"
 
   const handleClick = async () => {
     setState('loading')
@@ -138,7 +135,7 @@ function DailyUpdatePanel() {
               disabled={state === 'loading'}
               className="rounded-lg bg-up/15 px-4 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-up ring-1 ring-inset ring-up/40 transition-colors hover:bg-up/25 disabled:cursor-wait disabled:opacity-60"
             >
-              {state === 'loading' ? 'Fetching…' : isFresh ? 'Refresh' : "Get today's update"}
+              {buttonLabel}
             </button>
             <button
               type="button"
@@ -162,8 +159,8 @@ function DailyUpdatePanel() {
       </div>
       {signingIn && (
         <p className="mx-auto mt-1.5 max-w-7xl text-[10px] leading-relaxed text-slate-500">
-          Optional — only a family member needs this. Everything you can see already works without it; the
-          passphrase just lets us pull a brand-new update, which is the one thing that costs money.
+          Optional, and almost never needed — the day's numbers publish automatically after the market
+          closes. This is only here to rebuild by hand if that ever misses.
         </p>
       )}
       {error && <p className="mx-auto mt-1.5 max-w-7xl font-mono text-[10px] text-amber-400/80">{error}</p>}

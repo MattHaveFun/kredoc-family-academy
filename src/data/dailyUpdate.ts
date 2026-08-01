@@ -2,20 +2,17 @@ import type { Candle } from './markets'
 import { getFamilyToken } from './familyAccess'
 
 // The single client-side entry point for the daily-update Worker. Nothing in
-// this app calls Yahoo, Twelve Data, or Gemini directly anymore — everything
-// market-related comes from one cached payload, refreshed at most once per
-// trading day. marketFeed.ts reads through this module; nothing else should
-// import it directly.
+// this app calls a market or AI API directly — everything market-related comes
+// from one cached payload the Worker's cron builds once per trading day.
+// marketFeed.ts reads through this module; nothing else should import it
+// directly.
 //
-// Two ways in, and the difference matters:
+// Two ways in:
 //   loadPublicDailyUpdate() — GET, no passphrase, runs automatically on load
-//     for everyone. It can only ever read a payload the Worker already built,
-//     so it costs nothing and is safe to hand to guests.
-//   refreshDailyUpdate()    — POST, from the button. Only this one can cause a
-//     new build, and only a new build needs the passphrase.
-//
-// Which is why a guest with no passphrase still gets a full dashboard: the
-// passphrase was never protecting the data, only the bill.
+//     for everyone. Reads a payload the cron already built, so it costs
+//     nothing and is safe to hand to guests. This is the normal path.
+//   refreshDailyUpdate()    — POST, from the button. A manual rebuild for the
+//     day the cron missed; ~35 outbound fetches, so it keeps the passphrase.
 
 export interface Quote {
   symbol: string
@@ -41,7 +38,10 @@ export interface DailyPayload {
   generatedAt: number
   markets: Record<string, MarketEntry>
   tickers: Record<string, Quote>
-  narrative: { text: string; state: 'ready' } | { text: null; state: 'error' }
+  // No `narrative`. The day's written read is composed from `markets` and
+  // `tickers` in dailyRead.ts — free, instant, and needing nobody to trigger
+  // it. Payloads cached before that change still carry the old field; it's
+  // simply ignored.
 }
 
 // v2: entries carry a single `candles` array instead of a per-range record.
@@ -154,9 +154,9 @@ export function loadPublicDailyUpdate(): Promise<RefreshResult> {
 
       const text = await res.text()
       const payload = JSON.parse(text) as DailyPayload
-      // Never trade down: a device that already has a newer day (because a
-      // family member just refreshed on it) must not be rolled back by the
-      // edge's slightly stale copy. Day strings are YYYY-MM-DD, so they sort.
+      // Never trade down: a device that already holds a newer day (because a
+      // family member rebuilt here first) must not be rolled back by the edge's
+      // slightly stale copy. Day strings are YYYY-MM-DD, so they sort.
       const existing = getCachedPayload()
       if (existing && existing.day > payload.day) {
         return { ok: true as const, debug: `HTTP 200, kept newer local day=${existing.day}` }
@@ -195,9 +195,9 @@ export function isDailyUpdateLoading(): boolean {
 }
 
 /**
- * Triggered only by the refresh button — never automatically. This is the one
- * call that can spend money (a cache miss makes the Worker rebuild the day and
- * call Gemini), and therefore the one call the passphrase gates.
+ * Triggered only by the rebuild button — never automatically. Nothing here
+ * costs money; a cache miss just makes the Worker refetch ~35 endpoints, which
+ * is why it keeps the passphrase.
  */
 export function refreshDailyUpdate(): Promise<RefreshResult> {
   if (inFlight) return inFlight
@@ -207,7 +207,7 @@ export function refreshDailyUpdate(): Promise<RefreshResult> {
   if (!token) {
     return Promise.resolve({
       ok: false,
-      error: 'Add the family passphrase first to pull a brand-new update.',
+      error: 'Add the family passphrase first to rebuild by hand.',
       debug: 'no token',
     })
   }
@@ -227,11 +227,11 @@ export function refreshDailyUpdate(): Promise<RefreshResult> {
       })
       if (res.status === 401) {
         // Deliberately not alarming, and deliberately not a dead end: the
-        // passphrase only buys a brand-new build, and everything already on
+        // passphrase only triggers a manual rebuild, and everything already on
         // screen stays exactly where it is.
         return {
           ok: false as const,
-          error: "That passphrase didn't match. Everything below still works — the passphrase only pulls a brand-new update.",
+          error: "That passphrase didn't match. Nothing's lost — everything below still works, and the day's numbers publish on their own after the close.",
           debug: 'HTTP 401 (refresh-locked)',
         }
       }

@@ -1,15 +1,14 @@
 // Kredoc Family Academy — daily-update Worker.
 //
-// The whole point of this Worker: do the expensive stuff (market data +
-// Gemini narrative) server-side, at most once per trading day — so no client
-// ever holds an API key, and no amount of outside traffic can run up a bill
-// beyond one generation per day.
+// Fetches the market close once per trading day and caches it, so no client
+// ever holds a key and the site has a single source of truth.
 //
-// The passphrase guards the *bill*, not the *data*. Once a day's payload
-// exists in KV, handing it to whoever asks costs nothing, so it is public:
-// a guest who has never seen the passphrase still gets the same charts and
-// the same narrative as the family. Only the one operation that spends money
-// — building a day that isn't cached yet — asks for the passphrase.
+// Nothing here costs money any more. Every source is keyless and public —
+// Yahoo's chart and spark endpoints, Treasury.gov's yield CSVs — and the daily
+// written read that used to come from Gemini is now composed in the browser
+// from these same numbers (see src/data/dailyRead.ts). What's left to protect
+// is not a bill but a workload: a rebuild is ~35 outbound fetches, so the
+// manual trigger still asks for the passphrase. Reading never does.
 //
 // GET /api/daily-update
 //   No auth. Returns the most recent cached payload (today's if it exists,
@@ -17,20 +16,17 @@
 //   Edge-cached briefly so repeat visitors don't even reach KV.
 //
 // POST /api/daily-update
-//   Authorization: Bearer <FAMILY_ACCESS_TOKEN> (only checked on a cache miss)
-//   -> { day, generatedAt, markets, tickers, narrative }
+//   Manual rebuild, for when the cron missed a day. Returns a cached day to
+//   anyone; a genuine rebuild wants Authorization: Bearer <FAMILY_ACCESS_TOKEN>.
+//   -> { day, generatedAt, markets, tickers }
 //
-// Flow: check KV for today's (market-calendar) entry -> if present, return it
-// untouched, to anyone (zero external calls) -> if absent, require the
-// passphrase, then pull Yahoo's chart endpoint directly (server-side, so no
-// CORS relay needed — that relay was the actual source of the flakiness this
-// replaces), build the payload, ask Gemini for the narrative, cache it,
-// return it.
+// scheduled()
+//   The normal path. Runs on the crons in wrangler.toml shortly after the US
+//   close and builds the day unattended. Nobody has to press anything.
 
 export interface Env {
   DAILY_KV: KVNamespace
   FAMILY_ACCESS_TOKEN: string
-  GEMINI_API_KEY: string
   ALLOWED_ORIGIN: string
 }
 
@@ -74,7 +70,10 @@ interface DailyPayload {
   generatedAt: number
   markets: Record<string, MarketEntry>
   tickers: Record<string, Quote>
-  narrative: { text: string; state: 'ready' } | { text: null; state: 'error' }
+  // No `narrative` field. It used to hold Gemini's prose; the site now composes
+  // the day's read client-side from `markets` and `tickers`, which costs
+  // nothing and needs nobody to trigger it. Payloads written before that change
+  // still carry the old field — harmless, and simply ignored.
 }
 
 // Mirrors src/data/markets.ts MARKET_SYMBOLS ids -> Yahoo ticker. Rate symbols
@@ -428,55 +427,69 @@ async function buildTickers(): Promise<Record<string, Quote>> {
   return out
 }
 
-const SYSTEM_PROMPT = `You write a short daily markets narrative for a family financial-literacy site read by smart, curious 20-year-olds. Voice: Morgan Housel meets Morning Brew — warm, plainspoken, lightly irreverent, stories over jargon. Rules: aim for about 220-250 words — stop with a complete, landed final sentence well before any length limit, never mid-thought. No financial advice, ever — educate about how to think, never what to buy. Be honest about uncertainty ("historically this has tended to…" not "this means…"). Always land on "so what does this mean for your life" for a young adult. No headers, no bullet lists, just 2-4 short paragraphs. This is describing the PREVIOUS trading day's close, not live/intraday action — write accordingly (e.g. "yesterday" / the given date, never "right now" or "today so far").`
+// --- The free half of the build -----------------------------------------------
 
-async function generateNarrative(env: Env, day: string, markets: Record<string, MarketEntry>): Promise<DailyPayload['narrative']> {
-  const snapshot = Object.values(markets)
-    .map((m) => `${m.quote.name}: ${m.quote.changePct >= 0 ? '+' : ''}${m.quote.changePct.toFixed(2)}%`)
-    .join(', ')
+interface FreeData {
+  markets: Record<string, MarketEntry>
+  tickers: Record<string, Quote>
+}
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: `Market close for ${day}: ${snapshot}. Write today's "what it actually means" narrative.` }],
-            },
-          ],
-          // gemini-flash-latest thinks by default, and thinking tokens are
-          // deducted from maxOutputTokens — that silent budget contention is
-          // what truncated the narrative mid-sentence originally.
-          // thinkingConfig.thinkingBudget: 0 (the prior fix) used to disable
-          // thinking outright, but the "-latest" alias has since rolled
-          // forward to a newer model generation (gemini-3.6-flash, verified
-          // 2026-07-26 via a temporary debug probe) that rejects a zero
-          // thinking budget with 400 INVALID_ARGUMENT. So instead: leave
-          // thinking on (can't be disabled) and size maxOutputTokens well
-          // above observed thinking+answer totals (~1800-2200 tokens across
-          // repeated test runs) to leave headroom for both.
-          generationConfig: {
-            maxOutputTokens: 3000,
-          },
-        }),
-      },
-    )
-    if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`)
-    const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
-    }
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-    if (!text) throw new Error('Gemini returned no text')
-    return { text, state: 'ready' }
-  } catch (err) {
-    console.error('[narrative] generation failed:', err instanceof Error ? err.message : err)
-    return { text: null, state: 'error' }
-  }
+/**
+ * Everything sourced from keyless public endpoints: Yahoo charts, Treasury.gov
+ * yields, Yahoo spark. No API key, no account, no bill — which is precisely
+ * why the scheduled build is allowed to do this much on its own.
+ *
+ * Each section is settled independently so one flaky source (Treasury has
+ * hiccups) can't blank out the others.
+ */
+async function buildFreeData(): Promise<FreeData> {
+  const [marketsRes, ratesRes, tickersRes] = await Promise.allSettled([
+    buildMarkets(),
+    buildRates(),
+    buildTickers(),
+  ])
+  const yahooMarkets = marketsRes.status === 'fulfilled' ? marketsRes.value : {}
+  const rates = ratesRes.status === 'fulfilled' ? ratesRes.value : {}
+  const tickers = tickersRes.status === 'fulfilled' ? tickersRes.value : {}
+  if (marketsRes.status === 'rejected') console.error('[buildMarkets] failed:', marketsRes.reason)
+  if (ratesRes.status === 'rejected') console.error('[buildRates] failed:', ratesRes.reason)
+  if (tickersRes.status === 'rejected') console.error('[buildTickers] failed:', tickersRes.reason)
+  const markets = { ...yahooMarkets, ...rates }
+  console.log(
+    `[build] ${Object.keys(yahooMarkets).length} yahoo + ${Object.keys(rates).length} rates + ${Object.keys(tickers).length} tickers`,
+  )
+  if (Object.keys(markets).length === 0) throw new Error('no market data could be built')
+  return { markets, tickers }
+}
+
+/** Unix seconds -> YYYY-MM-DD in US market time. */
+function etDateOf(unixSeconds: number): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(unixSeconds * 1000))
+  const get = (type: string) => parts.find((p) => p.type === type)?.value
+  return `${get('year')}-${get('month')}-${get('day')}`
+}
+
+/**
+ * Did a US session actually close on `day`?
+ *
+ * The cron fires every weekday, but Thanksgiving is a weekday. On a market
+ * holiday Yahoo happily returns the *previous* session's candles, which would
+ * get filed under today's date and badged "TODAY'S CLOSE" — stale data wearing
+ * a fresh label. Yahoo's own newest daily candle is the honest answer: if it
+ * isn't stamped `day`, no session closed and there is nothing new to cache.
+ */
+function hasSessionFor(day: string, markets: Record<string, MarketEntry>): boolean {
+  // The S&P is the reference — it's the one symbol that is never absent from a
+  // successful build, and every US equity venue keeps the same holiday calendar.
+  const candles = markets.sp500?.candles
+  const last = candles?.[candles.length - 1]
+  if (!last) return false
+  return etDateOf(last.time) === day
 }
 
 // Trading-day key in US market time — so a run just after midnight ET still
@@ -505,6 +518,10 @@ function previousDay(day: string): string {
 // plus a holiday, so a guest arriving on a Monday morning — before anyone has
 // pressed refresh — still sees Friday's close instead of an empty dashboard.
 const MAX_LOOKBACK_DAYS = 6
+
+// 7 days. Long enough that a guest still sees something through a holiday week
+// when the cron finds no session to cache; short enough that KV stays small.
+const PAYLOAD_TTL_SECONDS = 60 * 60 * 24 * 7
 
 /**
  * Newest payload KV still holds, at or before `day`. Reads are the cheap half
@@ -585,68 +602,45 @@ export default {
       return res
     }
 
-    // --- POST: the refresh path ----------------------------------------------
+    // --- POST: the manual rebuild --------------------------------------------
+    // Normally nothing reaches this: the cron builds the day and the site only
+    // ever reads. It exists for the case where the cron missed — a bad Yahoo
+    // afternoon, or a day added between scheduled runs.
     const cached = await env.DAILY_KV.get(kvKey, 'json')
     if (cached) {
-      // Today is already built, so this costs nothing — hand it over without
-      // asking who's calling. The passphrase exists to cap spending, and there
-      // is no spending on this branch.
       console.log(`[daily-update] cache hit for ${kvKey}`)
       return new Response(JSON.stringify(cached), { headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
-    // Cache miss — from here on the request costs real money (26 Yahoo chart
-    // fetches, ~6 Treasury years, 2 spark chunks, 1 Gemini call). This is the
-    // only place the passphrase is checked.
+    // A rebuild is ~35 outbound fetches. No invoice attached any more, but it's
+    // not something to leave open to the whole internet either, so the manual
+    // trigger keeps the passphrase.
     const auth = request.headers.get('Authorization') ?? ''
     // .trim() guards against a stray trailing newline/space baked into the
     // secret when it was set (e.g. via `echo "x" | wrangler secret put`) —
     // an invisible mismatch that would otherwise 401 every request forever.
     const expectedAuth = `Bearer ${(env.FAMILY_ACCESS_TOKEN ?? '').trim()}`
-    console.log(`[daily-update] refresh requested, origin=${origin}, authMatches=${auth === expectedAuth}`)
+    console.log(`[daily-update] rebuild requested, origin=${origin}, authMatches=${auth === expectedAuth}`)
     if (auth !== expectedAuth) {
-      console.log('[daily-update] rejecting refresh: passphrase mismatch')
+      console.log('[daily-update] rejecting rebuild: passphrase mismatch')
       return new Response(
         JSON.stringify({
-          error: "Today's update hasn't been built yet, and that takes the family passphrase.",
+          error: "Today's numbers aren't cached yet. They publish automatically after the close — rebuilding by hand takes the family passphrase.",
           code: 'refresh-locked',
         }),
         { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
       )
     }
 
-    console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
-
     try {
-      // Build the three sections independently — a failure in one (e.g. a
-      // Treasury hiccup) must not blank out the others. As long as we get some
-      // markets, we cache a useful payload instead of 502-ing to nothing.
-      const [marketsRes, ratesRes, tickersRes] = await Promise.allSettled([
-        buildMarkets(),
-        buildRates(),
-        buildTickers(),
-      ])
-      const yahooMarkets = marketsRes.status === 'fulfilled' ? marketsRes.value : {}
-      const rates = ratesRes.status === 'fulfilled' ? ratesRes.value : {}
-      const tickers = tickersRes.status === 'fulfilled' ? tickersRes.value : {}
-      if (ratesRes.status === 'rejected') console.error('[buildRates] failed:', ratesRes.reason)
-      if (tickersRes.status === 'rejected') console.error('[buildTickers] failed:', tickersRes.reason)
-      const markets = { ...yahooMarkets, ...rates }
-      console.log(
-        `[daily-update] built ${Object.keys(yahooMarkets).length} yahoo + ${Object.keys(rates).length} rates + ${Object.keys(tickers).length} tickers`,
-      )
-      if (Object.keys(markets).length === 0) throw new Error('no market data could be built')
-      const narrative = await generateNarrative(env, day, markets)
-      console.log(`[daily-update] narrative state=${narrative.state}`)
+      console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
+      const { markets, tickers } = await buildFreeData()
 
-      const payload: DailyPayload = { day, generatedAt: Date.now(), markets, tickers, narrative }
-      // 7 days, not 3: this is now the only thing standing between a guest and
-      // an empty dashboard, and nobody presses refresh on vacation. Storage is
-      // a few MB per day against a 1GB free tier.
-      await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 7 })
+      const payload: DailyPayload = { day, generatedAt: Date.now(), markets, tickers }
+      await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: PAYLOAD_TTL_SECONDS })
       console.log(`[daily-update] KV put ok for ${kvKey}, returning 200`)
-      // Drop the edge copy of the public GET so guests see this build now
-      // rather than up to max-age later.
+      // Drop the edge copy of the public GET so everyone else sees this build
+      // now rather than up to max-age later.
       ctx.waitUntil(caches.default.delete(`${url.origin}${url.pathname}`))
 
       return new Response(JSON.stringify(payload), { headers: { ...cors, 'Content-Type': 'application/json' } })
@@ -657,5 +651,45 @@ export default {
         headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
+  },
+
+  /**
+   * The nightly build, and the only path that normally runs. Fires on the
+   * crons in wrangler.toml shortly after the US close and fetches the keyless
+   * sources — so the dashboard is complete for everyone, guests included,
+   * without anyone pressing anything and without spending a cent.
+   *
+   * There is nothing left for a person to trigger: the site composes the day's
+   * written read in the browser from what this stores.
+   */
+  async scheduled(event: ScheduledController, env: Env): Promise<void> {
+    const day = tradingDayKey()
+    const kvKey = `daily:${day}`
+
+    // Idempotent by design: the schedule includes a later retry pass, and a
+    // family member may have already rebuilt the day by hand.
+    const existing = await env.DAILY_KV.get(kvKey, 'json')
+    if (existing) {
+      console.log(`[cron ${event.cron}] ${kvKey} already present, nothing to do`)
+      return
+    }
+
+    console.log(`[cron ${event.cron}] building ${day}`)
+    const { markets, tickers } = await buildFreeData()
+
+    if (!hasSessionFor(day, markets)) {
+      // A market holiday, or the close hasn't propagated yet. Caching now
+      // would file yesterday's numbers under today's date; the later cron pass
+      // gets another go, and yesterday's cached day keeps serving meanwhile.
+      console.log(`[cron ${event.cron}] no US session closed on ${day} — skipping write`)
+      return
+    }
+
+    const payload: DailyPayload = { day, generatedAt: Date.now(), markets, tickers }
+    await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: PAYLOAD_TTL_SECONDS })
+    console.log(`[cron ${event.cron}] KV put ok for ${kvKey}`)
+    // No edge purge here: a scheduled run has no request URL to build the
+    // cache key from, and the GET's 5-minute max-age expires on its own long
+    // before anyone reads the dashboard the next morning.
   },
 } satisfies ExportedHandler<Env>

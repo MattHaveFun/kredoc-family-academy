@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getNewsSnippets, type NewsResult } from '../data/newsFeed'
-import { getNarrative } from '../data/aiNarrative'
+import { composeDailyRead } from '../data/dailyRead'
 import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
 import { emptyStateHint } from '../data/marketFeed'
 
@@ -8,7 +8,7 @@ function TodayInMarkets() {
   const [news, setNews] = useState<NewsResult | null>(null)
   const [, bumpOnUpdate] = useState(0)
   useEffect(() => subscribeDailyUpdate(() => bumpOnUpdate((n) => n + 1)), [])
-  const narrative = getNarrative()
+  const read = composeDailyRead()
 
   useEffect(() => {
     let cancelled = false
@@ -77,26 +77,25 @@ function TodayInMarkets() {
             What it actually means
           </h3>
 
-          {narrative.state === 'ready' && narrative.text ? (
+          {read ? (
             <div className="animate-fade-in mt-4 space-y-3 text-sm leading-relaxed text-slate-300">
-              {narrative.text.split(/\n{2,}/).map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
+              <p className="text-slate-200">{read.headline}</p>
+              <p>{read.body}</p>
+              <blockquote className="!mt-5 border-l-2 border-sky-400/30 pl-4">
+                <p className="text-sm italic leading-relaxed text-slate-300">"{read.quote.text}"</p>
+                <footer className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  — {read.quote.author}
+                </footer>
+              </blockquote>
               <p className="!mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600">
-                AI-written · educational · never advice
+                Written from the day's numbers · educational · never advice
               </p>
             </div>
-          ) : narrative.state === 'error' ? (
-            <p className="mt-4 text-sm leading-relaxed text-slate-500">
-              Today's narrative couldn't be written — it should turn up on the next daily pull.
-              Meanwhile, the headlines on the left have you covered.
-            </p>
           ) : (
             <div className="mt-4 rounded-xl border border-dashed border-slate-400/20 p-4">
               <p className="text-sm leading-relaxed text-slate-400">
-                This panel holds a daily plain-English read on the markets — 200 words in the spirit
-                of Morgan Housel meets Morning Brew, always answering "so what does this mean for
-                your life?"
+                This panel holds a daily plain-English read on the markets — what moved, what that
+                shape has tended to mean, and a line from someone who thought about it for a living.
               </p>
               <p className="mt-3 text-xs leading-relaxed text-slate-600">{emptyStateHint()}</p>
             </div>

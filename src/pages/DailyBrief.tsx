@@ -6,7 +6,7 @@ import { TOP_COMPANIES } from '../data/companies'
 import { useProfiles } from '../context/ProfileContext'
 import { useQuotes } from '../hooks/useQuotes'
 import { useMarketQuote } from '../hooks/useMarketQuote'
-import { getNarrative } from '../data/aiNarrative'
+import { composeDailyRead } from '../data/dailyRead'
 import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
 import { emptyStateHint } from '../data/marketFeed'
 import MarketMoodGauge from '../components/MarketMoodGauge'
@@ -64,7 +64,7 @@ function DailyBrief() {
   const watchlistQuotes = useQuotes(WATCHLIST, 3)
   const [, bumpOnUpdate] = useState(0)
   useEffect(() => subscribeDailyUpdate(() => bumpOnUpdate((n) => n + 1)), [])
-  const narrative = getNarrative()
+  const read = composeDailyRead()
 
   const spx = spxQuote.quote
   // Only the true VIX level means anything on its famous 12–40 scale.
@@ -100,8 +100,6 @@ function DailyBrief() {
   const quizLesson = activeProfile?.lastLessonId
     ? LESSON_BY_ID[activeProfile.lastLessonId] ?? lessonOfTheDay
     : lessonOfTheDay
-
-  const insight = narrative.state === 'ready' && narrative.text ? narrative.text.split(/\n{2,}/)[0] : null
 
   return (
     <div className="mx-auto max-w-lg snap-y px-4 py-6 sm:px-6">
@@ -148,16 +146,19 @@ function DailyBrief() {
 
         {/* Card 2: insight */}
         <BriefCard step={2} title="Today's insight" delay={80}>
-          {insight ? (
-            <p className="text-sm leading-relaxed text-slate-300">{insight}</p>
-          ) : narrative.state === 'pending' ? (
-            <p className="text-sm leading-relaxed text-slate-500">
-              {emptyStateHint()} Until then: the mood gauge above tells most of today's story.
-            </p>
+          {read ? (
+            <>
+              <p className="text-sm leading-relaxed text-slate-300">{read.body}</p>
+              <blockquote className="mt-4 border-l-2 border-sky-400/30 pl-3">
+                <p className="text-sm italic leading-relaxed text-slate-300">"{read.quote.text}"</p>
+                <footer className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  — {read.quote.author}
+                </footer>
+              </blockquote>
+            </>
           ) : (
             <p className="text-sm leading-relaxed text-slate-500">
-              Today's read couldn't be written — the numbers above are still good, and it should
-              turn up on the next daily pull.
+              {emptyStateHint()} Until then: the mood gauge above tells most of today's story.
             </p>
           )}
         </BriefCard>

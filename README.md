@@ -6,9 +6,9 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
 
 ## What's here
 
-- **Markets Dashboard** — previous trading day's close across four tabs, all refreshed once
-  per trading day by a family member pressing "Get today's update" (see `worker/`). Every
-  data point is labeled honestly with its age.
+- **Markets Dashboard** — previous trading day's close across four tabs, rebuilt
+  automatically once per trading day shortly after the close (see `worker/`). Every data
+  point is labeled honestly with its age.
   - **Markets** — indices and crypto, plus the sector heat map, market mood gauge, and a
     "Today in Markets" panel.
   - **Global** — foreign indices and a live world trading map that follows the sun.
@@ -31,18 +31,23 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
 - **Daily Brief** — the default mobile entry point: five swipeable cards, two minutes.
 - **Open to guests** — nothing on the site is behind a login. Every visitor's browser reads
   the day's market payload straight from the Worker's cache, so a friend the kids bring along
-  sees exactly the same charts, tickers and narrative the family does.
-- **Family passphrase** — guards the *bill*, not the *data*. Serving a day that's already
-  built is free, so it's public; the passphrase is asked for only when someone triggers a
-  build of a day that doesn't exist yet (the one action that spends money). See
-  `worker/README.md`.
+  sees exactly the same charts, tickers and daily read the family does.
+- **Built nightly, free** — a Worker cron runs shortly after each weekday close and fetches
+  the whole dashboard from keyless sources (Yahoo, Treasury.gov). Nobody has to press
+  anything, and it costs nothing.
+- **Daily read, composed from the numbers** — "What it actually means" describes the day's
+  direction, breadth, volatility and sector leadership, explains what that shape has tended
+  to mean, and closes on a quote from someone who thought about markets for a living. Built
+  in the browser from the cached payload: no API, no key, no cost, nothing to trigger.
+- **Family passphrase** — now only guards a manual rebuild, for the rare day the cron
+  misses. Nothing a visitor sees is behind it. See `worker/README.md`.
 
 ## Stack
 
 React 18 · TypeScript (strict) · Vite · Tailwind CSS · React Router v6 (HashRouter, required
-for GitHub Pages) · d3-force (knowledge map, lazy-loaded). Market data and the daily narrative
-come from a separate Cloudflare Worker (`worker/`) — see its README for that half of the stack
-(Yahoo Finance, Gemini, Workers KV).
+for GitHub Pages) · d3-force (knowledge map, lazy-loaded). Market data comes from a separate
+Cloudflare Worker (`worker/`) — see its README for that half of the stack (Yahoo Finance,
+Treasury.gov, Workers KV). The daily read is composed client-side in `src/data/dailyRead.ts`.
 
 ## Getting started
 
@@ -87,8 +92,8 @@ Two independent deploy workflows:
   at build time as `VITE_WORKER_URL`.
 - `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` — used only by `deploy-worker.yml`.
 
-The Worker's own secrets (`FAMILY_ACCESS_TOKEN`, `GEMINI_API_KEY`) are set directly on
-Cloudflare via `wrangler secret put` — see `worker/README.md`. They never pass through
+The Worker's own secret (`FAMILY_ACCESS_TOKEN`) is set directly on
+Cloudflare via `wrangler secret put` — see `worker/README.md`. It never passes through
 GitHub Actions or this repo's build.
 
 ### One-time Pages setup
@@ -100,10 +105,11 @@ GitHub Actions or this repo's build.
 ## Data honesty rules
 
 - The dashboard never shows simulated prices. Numbers are exactly what the Worker fetched
-  from Yahoo Finance at the last "Get today's update" press, labeled with their age.
-- Fetching (and the one Gemini call for the narrative) happens at most once per trading day,
-  cached in Workers KV — see `worker/src/index.ts`. No family member visiting the site ever
-  causes a second real fetch for a day that's already cached.
+  from Yahoo Finance and Treasury.gov on the last scheduled build, labeled with their age.
+- Fetching happens at most once per trading day, on a schedule, cached in Workers KV — see
+  `worker/src/index.ts`. No amount of visitors causes a second real fetch for a cached day.
+- The daily read is derived from those same cached numbers, never generated per visitor, so
+  everyone reads exactly the same thing.
 
 ## Maintenance notes
 

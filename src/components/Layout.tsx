@@ -61,8 +61,8 @@ function Shell() {
 
           <p className="max-w-xs font-mono text-[11px] leading-relaxed text-slate-600">
             Market close data comes from Yahoo Finance, with Treasury yields from the U.S.
-            Treasury, fetched once per trading day by a family member pressing the update button.
-            The daily narrative is written by Gemini. Educational only — never investment advice.
+            Treasury, fetched automatically once per trading day shortly after the close. The daily
+            read is composed from those numbers. Educational only — never investment advice.
           </p>
         </div>
         <div className="border-t border-slate-400/5 py-4 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-slate-700">

@@ -119,9 +119,12 @@ export function peekQuote(symbol: string): QuoteResult {
  * the day hasn't been pulled yet, and somebody in the family does that daily.
  */
 export function emptyStateHint(): string {
+  // Deliberately doesn't quote the button's label: that label changes with
+  // what's actually outstanding ("Get today's update" / "Write today's read" /
+  // "Refresh"), and naming the wrong one sends people hunting.
   return getFamilyToken()
-    ? 'Press "Get today\'s update" up top to pull the latest close.'
-    : "Today's close hasn't been published yet — a family member pulls it once a day."
+    ? 'Use the update button up top to pull the latest close.'
+    : "Today's close hasn't landed yet — it publishes automatically after the market closes."
 }
 
 // --- Badge helpers ------------------------------------------------------------

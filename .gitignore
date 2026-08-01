@@ -34,3 +34,7 @@ pnpm-debug.log*
 
 # Wrangler (Cloudflare Workers) local dev state
 .wrangler
+
+# Wrangler local dev secrets
+worker/.dev.vars
+.dev.vars

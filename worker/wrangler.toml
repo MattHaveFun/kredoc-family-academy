@@ -9,9 +9,40 @@ kv_namespaces = [
 ]
 
 # Secrets (never put these here — set via `wrangler secret put <NAME>`):
-#   FAMILY_ACCESS_TOKEN  — the shared family passphrase, checked verbatim
-#   GEMINI_API_KEY       — Gemini API key used server-side only
+#   FAMILY_ACCESS_TOKEN  — the shared family passphrase, checked verbatim.
+#     Guards only the manual rebuild; reads and the cron never look at it.
+#
+# GEMINI_API_KEY is no longer used — the daily read is composed in the browser
+# from the market data (src/data/dailyRead.ts). If it's still set on the
+# deployed Worker it does nothing, and can be removed with:
+#   npx wrangler secret delete GEMINI_API_KEY
 #
 # Plain (non-secret) vars can live here:
 [vars]
 ALLOWED_ORIGIN = "https://kredoc.me"
+
+# --- Scheduled free build -------------------------------------------------
+#
+# Cloudflare crons are UTC and do NOT follow daylight saving, so the times
+# below are chosen to land in the right window on both sides of the DST
+# switch rather than tracking 5pm ET exactly:
+#
+#   22:00 UTC  =  6:00pm EDT (Mar-Nov)  /  5:00pm EST (Nov-Mar)
+#   23:00 UTC  =  7:00pm EDT            /  6:00pm EST
+#
+# Why that window. US equities close at 4:00pm ET; Yahoo's daily candle for
+# the session settles within roughly half an hour of that as the consolidated
+# tape finishes printing. Treasury.gov posts its daily par yield curve at
+# "on or about 3:30pm ET", but in practice often later in the afternoon. An
+# hour past the close clears both with margin, and still lands in the evening
+# ET — so the numbers are waiting before anyone opens the site that night or
+# the next morning.
+#
+# The second pass is a free retry: if the first run found the close hadn't
+# propagated (or Yahoo was having a moment), it goes again. When the first run
+# succeeded the second sees today's key in KV and exits immediately.
+#
+# Mon-Fri only, so no weekend run files Friday's close under a Saturday date.
+# Market holidays fall through to the hasSessionFor() check in the handler.
+[triggers]
+crons = ["0 22 * * 1-5", "0 23 * * 1-5"]
