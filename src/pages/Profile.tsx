@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LEARNING_MODE_META, useProfiles } from '../context/ProfileContext'
 import { LESSONS, LESSON_BY_ID, type LearningMode } from '../data/lessons'
+import AvatarPicker from '../components/AvatarPicker'
 
 function Profile() {
-  const { activeProfile, setLearningMode, resetProgress, deleteProfile } = useProfiles()
+  const { activeProfile, setLearningMode, setAvatar, resetProgress, deleteProfile } = useProfiles()
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -65,6 +66,14 @@ function Profile() {
           </Link>
         </div>
       )}
+
+      <section className="panel animate-fade-up mt-8 p-6" style={{ animationDelay: '170ms' }}>
+        <h2 className="font-display text-lg font-semibold text-slate-100">Avatars</h2>
+        <p className="mt-1 text-sm text-slate-500">Change your look, or see what's left to earn.</p>
+        <div className="mt-4">
+          <AvatarPicker profile={activeProfile} onSelect={setAvatar} />
+        </div>
+      </section>
 
       <section className="panel animate-fade-up mt-8 p-6" style={{ animationDelay: '200ms' }}>
         <h2 className="font-display text-lg font-semibold text-slate-100">Learning mode</h2>

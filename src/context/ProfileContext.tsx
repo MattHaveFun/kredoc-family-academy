@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { LearningMode } from '../data/lessons'
+import { AVATAR_BY_ID, checkEarnedTimeAvatars, isAvatarUnlocked } from '../data/avatars'
 
 // Family profiles — the site's whole "account system," persisted entirely in
 // localStorage. No login, no server: whoever is at the keyboard picks their
@@ -27,9 +28,12 @@ export interface Profile {
   lastLessonId: string | null
   pollVote: string | null // POLL_OPTIONS id, or "custom:<free text>"
   createdAt: number
+  earnedTimeAvatars: string[] // avatar ids earned by login time (e.g. 'night-owl'), permanent once earned
 }
 
-export const AVATAR_EMOJI = ['🚀', '🦉', '🌟', '🐺', '🌊', '🔥', '🦋', '⚡', '🌙', '🍀', '🎯', '🐝']
+// 🦉 and 🐦 live in the avatar catalog as the Night Owl / Early Bird rewards,
+// not here — they have to be earned, not picked at creation.
+export const AVATAR_EMOJI = ['🚀', '🌟', '🐺', '🌊', '🎈', '🦋', '⚡', '🌙', '🍀', '🧭', '🐝']
 export const AVATAR_COLORS = ['#38bdf8', '#2dd4a7', '#fbbf24', '#a78bfa', '#f472b6', '#fb923c']
 
 interface StoredState {
@@ -56,6 +60,7 @@ function createDefaultGuestProfile(): Profile {
     lastLessonId: null,
     pollVote: null,
     createdAt: Date.now(),
+    earnedTimeAvatars: [],
   }
 }
 
@@ -64,7 +69,13 @@ function loadState(): StoredState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as StoredState
-      if (Array.isArray(parsed.profiles)) return parsed
+      if (Array.isArray(parsed.profiles)) {
+        // Backfill fields for profiles saved before avatars existed.
+        return {
+          ...parsed,
+          profiles: parsed.profiles.map((p) => ({ ...p, earnedTimeAvatars: p.earnedTimeAvatars ?? [] })),
+        }
+      }
     }
   } catch {
     // unreadable — start fresh
@@ -86,6 +97,7 @@ interface ProfileContextValue {
   markCompleted: (lessonId: string, completed: boolean) => void
   recordQuizAnswer: (record: QuizRecord) => void
   setPollVote: (vote: string) => void
+  setAvatar: (avatarId: string) => void
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null)
@@ -134,6 +146,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           lastLessonId: null,
           pollVote: null,
           createdAt: Date.now(),
+          earnedTimeAvatars: [],
         }
         setState((prev) => ({ profiles: [...prev.profiles, profile], activeId: profile.id }))
         return profile
@@ -180,9 +193,33 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           ],
         })),
       setPollVote: (vote) => updateActive((p) => ({ ...p, pollVote: vote })),
+      setAvatar: (avatarId) =>
+        updateActive((p) => {
+          const def = AVATAR_BY_ID[avatarId]
+          if (!def || !isAvatarUnlocked(def, p)) return p
+          return { ...p, emoji: def.emoji, color: def.color }
+        }),
     }),
     [state.profiles, activeProfile, updateActive],
   )
+
+  // Whoever is active earns any time-gated avatars the current clock
+  // qualifies for (Night Owl, Early Bird). Runs once per profile switch —
+  // earning is a permanent stamp, not a live status, so no polling needed.
+  useEffect(() => {
+    if (!state.activeId) return
+    const newlyEarned = checkEarnedTimeAvatars()
+    if (newlyEarned.length === 0) return
+    setState((prev) => ({
+      ...prev,
+      profiles: prev.profiles.map((p) => {
+        if (p.id !== prev.activeId) return p
+        const toAdd = newlyEarned.filter((id) => !p.earnedTimeAvatars.includes(id))
+        return toAdd.length === 0 ? p : { ...p, earnedTimeAvatars: [...p.earnedTimeAvatars, ...toAdd] }
+      }),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.activeId])
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
 }
