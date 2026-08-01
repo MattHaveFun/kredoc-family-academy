@@ -2,7 +2,6 @@ import { NavLink, Outlet } from 'react-router-dom'
 import NavBar from './NavBar'
 import ProfileGate from './ProfileGate'
 import WelcomeBack from './WelcomeBack'
-import FamilyGate from './FamilyGate'
 import DailyUpdatePanel from './DailyUpdatePanel'
 import { FeedStatusProvider } from '../context/FeedStatusContext'
 import { ProfileProvider, useProfiles } from '../context/ProfileContext'
@@ -76,13 +75,11 @@ function Shell() {
 
 function Layout() {
   return (
-    <FamilyGate>
-      <ProfileProvider>
-        <FeedStatusProvider>
-          <Shell />
-        </FeedStatusProvider>
-      </ProfileProvider>
-    </FamilyGate>
+    <ProfileProvider>
+      <FeedStatusProvider>
+        <Shell />
+      </FeedStatusProvider>
+    </ProfileProvider>
   )
 }
 

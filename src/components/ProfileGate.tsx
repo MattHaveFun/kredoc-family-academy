@@ -23,6 +23,18 @@ function ProfileGate() {
     createProfile({ name, emoji, color, learningMode: mode })
   }
 
+  // First-time visitors — including friends the kids bring along — get in
+  // with one click instead of being forced through the name/avatar form.
+  // They can always make a real profile for themselves later from here.
+  const continueAsGuest = () => {
+    createProfile({
+      name: 'Guest',
+      emoji: AVATAR_EMOJI[0],
+      color: AVATAR_COLORS[0],
+      learningMode: 'gut-check',
+    })
+  }
+
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
       <div className="w-full max-w-2xl animate-fade-up">
@@ -167,7 +179,13 @@ function ProfileGate() {
                   ← Back to profiles
                 </button>
               ) : (
-                <span />
+                <button
+                  type="button"
+                  onClick={continueAsGuest}
+                  className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-200"
+                >
+                  Skip — continue as Guest
+                </button>
               )}
               <button
                 type="button"

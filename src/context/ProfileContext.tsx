@@ -39,6 +39,26 @@ interface StoredState {
 
 const STORAGE_KEY = 'kredoc.profiles.v1'
 
+// A brand-new device — including a friend visiting the site for the first
+// time — should land straight on the dashboard, not a "who's learning
+// today?" picker. So the very first profile is created automatically,
+// pre-selected, rather than waiting for someone to click through a gate.
+function createDefaultGuestProfile(): Profile {
+  return {
+    id: `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    name: 'Guest',
+    emoji: AVATAR_EMOJI[0],
+    color: AVATAR_COLORS[0],
+    learningMode: 'gut-check',
+    visitedLessons: [],
+    completedLessons: [],
+    quizAnswers: [],
+    lastLessonId: null,
+    pollVote: null,
+    createdAt: Date.now(),
+  }
+}
+
 function loadState(): StoredState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -49,7 +69,8 @@ function loadState(): StoredState {
   } catch {
     // unreadable — start fresh
   }
-  return { profiles: [], activeId: null }
+  const guest = createDefaultGuestProfile()
+  return { profiles: [guest], activeId: guest.id }
 }
 
 interface ProfileContextValue {
