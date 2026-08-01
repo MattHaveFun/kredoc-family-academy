@@ -218,7 +218,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         return toAdd.length === 0 ? p : { ...p, earnedTimeAvatars: [...p.earnedTimeAvatars, ...toAdd] }
       }),
     }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.activeId])
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
