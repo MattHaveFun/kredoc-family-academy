@@ -3,6 +3,7 @@ import { formatChangeMagnitude, formatPrice, type MarketSymbol, type RangeKey } 
 import { useSeries } from '../hooks/useSeries'
 import { useCountUp } from '../hooks/useCountUp'
 import { CHART_CONCEPTS } from '../data/concepts'
+import { emptyStateHint } from '../data/marketFeed'
 import ChartCanvas from './ChartCanvas'
 import VolumeBars from './VolumeBars'
 import TimeRangeSelector from './TimeRangeSelector'
@@ -263,9 +264,7 @@ function MainChartPanel({
               <>
                 <span className="text-2xl">☕</span>
                 <p className="text-sm font-medium text-slate-300">No numbers loaded yet.</p>
-                <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-                  Press "Get today's update" at the top of the page to pull the latest close.
-                </p>
+                <p className="max-w-sm text-xs leading-relaxed text-slate-600">{emptyStateHint()}</p>
               </>
             )}
           </div>

@@ -8,6 +8,7 @@ import { useQuotes } from '../hooks/useQuotes'
 import { useMarketQuote } from '../hooks/useMarketQuote'
 import { getNarrative } from '../data/aiNarrative'
 import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
+import { emptyStateHint } from '../data/marketFeed'
 import MarketMoodGauge from '../components/MarketMoodGauge'
 import LearningModeCheck from '../components/LearningModeCheck'
 import DataBadge from '../components/DataBadge'
@@ -151,13 +152,12 @@ function DailyBrief() {
             <p className="text-sm leading-relaxed text-slate-300">{insight}</p>
           ) : narrative.state === 'pending' ? (
             <p className="text-sm leading-relaxed text-slate-500">
-              Press "Get today's update" up top to pull today's close and have Gemini write today's
-              read. Until then: the mood gauge above tells most of today's story.
+              {emptyStateHint()} Until then: the mood gauge above tells most of today's story.
             </p>
           ) : (
             <p className="text-sm leading-relaxed text-slate-500">
-              Today's read couldn't be written — the numbers above are still good, try the update
-              button again in a bit.
+              Today's read couldn't be written — the numbers above are still good, and it should
+              turn up on the next daily pull.
             </p>
           )}
         </BriefCard>
@@ -189,9 +189,7 @@ function DailyBrief() {
           </div>
           {movers.length === 0 ? (
             <p className="text-sm text-slate-500">
-              {watchlistQuotes.status === 'unavailable'
-                ? 'No numbers loaded yet — press "Get today\'s update" up top.'
-                : 'Checking the tape…'}
+              {watchlistQuotes.status === 'unavailable' ? emptyStateHint() : 'Checking the tape…'}
             </p>
           ) : (
             <ul className="space-y-3">

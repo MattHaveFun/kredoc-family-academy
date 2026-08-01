@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { formatChangeMagnitude, formatPrice, type MarketSymbol } from '../data/markets'
 import { useSeries } from '../hooks/useSeries'
 import { useCountUp } from '../hooks/useCountUp'
+import { emptyStateHint } from '../data/marketFeed'
 import InfoDisclosure from './InfoDisclosure'
 import DataBadge from './DataBadge'
 
@@ -113,9 +114,7 @@ function MarketCard({ market, selected, onSelect, index }: MarketCardProps) {
         ) : (
           <div className="mx-4 mb-1 mt-3 flex h-[104px] items-center justify-center rounded-xl border border-dashed border-slate-400/10 px-4 text-center">
             <p className="text-xs leading-relaxed text-slate-500">
-              {status === 'loading'
-                ? 'Loading today\'s update…'
-                : 'No numbers loaded yet — press "Get today\'s update" up top.'}
+              {status === 'loading' ? 'Loading today\'s update…' : emptyStateHint()}
             </p>
           </div>
         )}

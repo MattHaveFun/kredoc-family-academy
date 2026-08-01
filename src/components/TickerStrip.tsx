@@ -4,6 +4,7 @@ import { MARKET_SYMBOLS, formatChangeMagnitude, formatPrice } from '../data/mark
 import { useQuotes } from '../hooks/useQuotes'
 import { useMarketQuote } from '../hooks/useMarketQuote'
 import { useMarketQuotes } from '../hooks/useMarketQuotes'
+import { emptyStateHint } from '../data/marketFeed'
 import { useFeedStatus } from '../context/FeedStatusContext'
 
 const STOCK_SYMBOLS = TOP_COMPANIES.map((c) => c.symbol)
@@ -155,10 +156,7 @@ function TickerStrip() {
     [macro],
   )
 
-  const emptyMessage =
-    stockQuotes.status === 'unavailable'
-      ? "No numbers loaded yet — press \"Get today's update\" up top"
-      : 'Tuning in…'
+  const emptyMessage = stockQuotes.status === 'unavailable' ? emptyStateHint() : 'Tuning in…'
 
   return (
     <div className="relative divide-y divide-slate-400/10 border-b border-slate-400/10 bg-ink-900/70">

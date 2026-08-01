@@ -4,9 +4,18 @@ import { getFamilyToken } from './familyAccess'
 // The single client-side entry point for the daily-update Worker. Nothing in
 // this app calls Yahoo, Twelve Data, or Gemini directly anymore — everything
 // market-related comes from one cached payload, refreshed at most once per
-// trading day, only when a family member presses the button (see
-// DailyUpdatePanel). marketFeed.ts reads through this module; nothing else
-// should import it directly.
+// trading day. marketFeed.ts reads through this module; nothing else should
+// import it directly.
+//
+// Two ways in, and the difference matters:
+//   loadPublicDailyUpdate() — GET, no passphrase, runs automatically on load
+//     for everyone. It can only ever read a payload the Worker already built,
+//     so it costs nothing and is safe to hand to guests.
+//   refreshDailyUpdate()    — POST, from the button. Only this one can cause a
+//     new build, and only a new build needs the passphrase.
+//
+// Which is why a guest with no passphrase still gets a full dashboard: the
+// passphrase was never protecting the data, only the bill.
 
 export interface Quote {
   symbol: string
@@ -112,15 +121,95 @@ export interface RefreshResult {
 }
 
 let inFlight: Promise<RefreshResult> | null = null
+let publicInFlight: Promise<RefreshResult> | null = null
+let publicAttempted = false
 
-/** Triggered only by the "Get today's update" button — never automatically. */
+/**
+ * Pull whatever the Worker has already built. No passphrase, no build, no
+ * cost — it reads KV and stops. Called once per page load so that anyone
+ * landing on the site, family or not, sees real markets instead of a wall of
+ * "DATA UNAVAILABLE".
+ *
+ * Skipped entirely when this device already holds today's payload, so the
+ * common case is zero network.
+ */
+export function loadPublicDailyUpdate(): Promise<RefreshResult> {
+  if (publicInFlight) return publicInFlight
+  publicAttempted = true
+
+  const workerUrl = import.meta.env.VITE_WORKER_URL
+  if (!workerUrl) {
+    return Promise.resolve({ ok: false, error: undefined, debug: 'no VITE_WORKER_URL' })
+  }
+
+  publicInFlight = (async () => {
+    try {
+      const res = await fetch(`${workerUrl}/api/daily-update`, { method: 'GET' })
+      if (res.status === 404) {
+        // KV is genuinely empty — nobody has run a build inside the Worker's
+        // lookback window. Not an error the visitor can act on.
+        return { ok: false as const, debug: 'HTTP 404 (nothing built yet)' }
+      }
+      if (!res.ok) return { ok: false as const, debug: `HTTP ${res.status}` }
+
+      const text = await res.text()
+      const payload = JSON.parse(text) as DailyPayload
+      // Never trade down: a device that already has a newer day (because a
+      // family member just refreshed on it) must not be rolled back by the
+      // edge's slightly stale copy. Day strings are YYYY-MM-DD, so they sort.
+      const existing = getCachedPayload()
+      if (existing && existing.day > payload.day) {
+        return { ok: true as const, debug: `HTTP 200, kept newer local day=${existing.day}` }
+      }
+      const { storageOk } = setCachedPayload(payload)
+      return {
+        ok: true as const,
+        debug: `HTTP 200, ${text.length}B, day=${payload.day}, public${storageOk ? '' : ' (memory only)'}`,
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      return { ok: false as const, debug: `public fetch threw: ${msg}` }
+    } finally {
+      publicInFlight = null
+      // Wake the snapshot cache even when the load failed, so badges can move
+      // off "CONNECTING" — a success already notified via setCachedPayload.
+      notify()
+    }
+  })()
+
+  return publicInFlight
+}
+
+/** True once loadPublicDailyUpdate has run this session — keeps the auto-load one-shot. */
+export function hasAttemptedPublicLoad(): boolean {
+  return publicAttempted
+}
+
+/**
+ * True while the public read is in flight. Lets badges say "CONNECTING"
+ * instead of flashing "DATA UNAVAILABLE" during the first second of every
+ * guest's visit.
+ */
+export function isDailyUpdateLoading(): boolean {
+  return publicInFlight !== null
+}
+
+/**
+ * Triggered only by the refresh button — never automatically. This is the one
+ * call that can spend money (a cache miss makes the Worker rebuild the day and
+ * call Gemini), and therefore the one call the passphrase gates.
+ */
 export function refreshDailyUpdate(): Promise<RefreshResult> {
   if (inFlight) return inFlight
 
   const token = getFamilyToken()
   const workerUrl = import.meta.env.VITE_WORKER_URL
   if (!token) {
-    return Promise.resolve({ ok: false, error: 'No family passphrase on file — sign in again.', debug: 'no token' })
+    return Promise.resolve({
+      ok: false,
+      error: 'Add the family passphrase first to pull a brand-new update.',
+      debug: 'no token',
+    })
   }
   if (!workerUrl) {
     return Promise.resolve({
@@ -137,10 +226,13 @@ export function refreshDailyUpdate(): Promise<RefreshResult> {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.status === 401) {
+        // Deliberately not alarming, and deliberately not a dead end: the
+        // passphrase only buys a brand-new build, and everything already on
+        // screen stays exactly where it is.
         return {
           ok: false as const,
-          error: 'That family passphrase was rejected — try entering it again.',
-          debug: 'HTTP 401',
+          error: "That passphrase didn't match. Everything below still works — the passphrase only pulls a brand-new update.",
+          debug: 'HTTP 401 (refresh-locked)',
         }
       }
       if (!res.ok) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getNewsSnippets, type NewsResult } from '../data/newsFeed'
 import { getNarrative } from '../data/aiNarrative'
 import { subscribe as subscribeDailyUpdate } from '../data/dailyUpdate'
+import { emptyStateHint } from '../data/marketFeed'
 
 function TodayInMarkets() {
   const [news, setNews] = useState<NewsResult | null>(null)
@@ -87,8 +88,8 @@ function TodayInMarkets() {
             </div>
           ) : narrative.state === 'error' ? (
             <p className="mt-4 text-sm leading-relaxed text-slate-500">
-              Today's narrative couldn't be written — try pressing "Get today's update" again in a
-              bit. Meanwhile, the headlines on the left have you covered.
+              Today's narrative couldn't be written — it should turn up on the next daily pull.
+              Meanwhile, the headlines on the left have you covered.
             </p>
           ) : (
             <div className="mt-4 rounded-xl border border-dashed border-slate-400/20 p-4">
@@ -97,9 +98,7 @@ function TodayInMarkets() {
                 of Morgan Housel meets Morning Brew, always answering "so what does this mean for
                 your life?"
               </p>
-              <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                Press "Get today's update" up top to have it written for today.
-              </p>
+              <p className="mt-3 text-xs leading-relaxed text-slate-600">{emptyStateHint()}</p>
             </div>
           )}
         </div>

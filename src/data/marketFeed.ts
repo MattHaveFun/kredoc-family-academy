@@ -1,5 +1,6 @@
 import type { Candle, RangeKey } from './markets'
-import { getCachedPayload, todayStamp, type DailyPayload } from './dailyUpdate'
+import { getCachedPayload, isDailyUpdateLoading, todayStamp, type DailyPayload } from './dailyUpdate'
+import { getFamilyToken } from './familyAccess'
 
 // ---------------------------------------------------------------------------
 // marketFeed — the read-only layer every hook goes through. There is no
@@ -54,7 +55,10 @@ export interface MarketSeriesResult extends SeriesResult {
 // disagree for a user well outside US time zones right at midnight — an
 // acceptable approximation for badging freshness, not for the data itself.
 function statusFor(payload: DailyPayload | null): DataStatus {
-  if (!payload) return 'unavailable'
+  // Nothing yet, but the public read is still on the wire — every visitor now
+  // starts here, so calling it "unavailable" would libel a dashboard that is
+  // about to fill in.
+  if (!payload) return isDailyUpdateLoading() ? 'loading' : 'unavailable'
   return payload.day === todayStamp() ? 'live' : 'cached'
 }
 
@@ -103,6 +107,21 @@ export function peekQuote(symbol: string): QuoteResult {
     status: statusFor(payload),
     fetchedAt: payload?.generatedAt ?? null,
   }
+}
+
+// --- Empty-state copy ---------------------------------------------------------
+/**
+ * What an empty panel should tell the person actually looking at it.
+ *
+ * "Press Get today's update" is only true for someone holding the passphrase —
+ * a guest has no such button, so that wording sent them hunting for a control
+ * that isn't on their screen. Everyone else gets told what's really going on:
+ * the day hasn't been pulled yet, and somebody in the family does that daily.
+ */
+export function emptyStateHint(): string {
+  return getFamilyToken()
+    ? 'Press "Get today\'s update" up top to pull the latest close.'
+    : "Today's close hasn't been published yet — a family member pulls it once a day."
 }
 
 // --- Badge helpers ------------------------------------------------------------

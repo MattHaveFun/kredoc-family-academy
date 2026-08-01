@@ -1,19 +1,31 @@
 // Kredoc Family Academy — daily-update Worker.
 //
 // The whole point of this Worker: do the expensive stuff (market data +
-// Gemini narrative) server-side, at most once per trading day, behind a
-// shared family passphrase — so no client ever holds an API key, and no
-// amount of outside traffic can run up a bill beyond one extra generation.
+// Gemini narrative) server-side, at most once per trading day — so no client
+// ever holds an API key, and no amount of outside traffic can run up a bill
+// beyond one generation per day.
+//
+// The passphrase guards the *bill*, not the *data*. Once a day's payload
+// exists in KV, handing it to whoever asks costs nothing, so it is public:
+// a guest who has never seen the passphrase still gets the same charts and
+// the same narrative as the family. Only the one operation that spends money
+// — building a day that isn't cached yet — asks for the passphrase.
+//
+// GET /api/daily-update
+//   No auth. Returns the most recent cached payload (today's if it exists,
+//   otherwise the newest of the last few days), or 404 if KV is empty.
+//   Edge-cached briefly so repeat visitors don't even reach KV.
 //
 // POST /api/daily-update
-//   Authorization: Bearer <FAMILY_ACCESS_TOKEN>
+//   Authorization: Bearer <FAMILY_ACCESS_TOKEN> (only checked on a cache miss)
 //   -> { day, generatedAt, markets, tickers, narrative }
 //
-// Flow: check the token -> check KV for today's (market-calendar) entry ->
-// if present, return it untouched (zero external calls) -> if absent, pull
-// Yahoo's chart endpoint directly (server-side, so no CORS relay needed —
-// that relay was the actual source of the flakiness this replaces), build
-// the payload, ask Gemini for the narrative, cache it, return it.
+// Flow: check KV for today's (market-calendar) entry -> if present, return it
+// untouched, to anyone (zero external calls) -> if absent, require the
+// passphrase, then pull Yahoo's chart endpoint directly (server-side, so no
+// CORS relay needed — that relay was the actual source of the flakiness this
+// replaces), build the payload, ask Gemini for the narrative, cache it,
+// return it.
 
 export interface Env {
   DAILY_KV: KVNamespace
@@ -480,18 +492,47 @@ function tradingDayKey(): string {
   return `${get('year')}-${get('month')}-${get('day')}`
 }
 
+// "2026-08-01" -> "2026-07-31". Calendar days, not trading days — walking back
+// over a weekend just costs a couple of cheap KV misses.
+function previousDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d) - 86_400_000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`
+}
+
+// How far back to look for a usable payload. Sized to clear a long weekend
+// plus a holiday, so a guest arriving on a Monday morning — before anyone has
+// pressed refresh — still sees Friday's close instead of an empty dashboard.
+const MAX_LOOKBACK_DAYS = 6
+
+/**
+ * Newest payload KV still holds, at or before `day`. Reads are the cheap half
+ * of this Worker (no external calls, no Gemini), which is exactly why they
+ * don't need the passphrase — this is the function guests hit.
+ */
+async function readLatestCached(env: Env, day: string): Promise<DailyPayload | null> {
+  let key = day
+  for (let i = 0; i <= MAX_LOOKBACK_DAYS; i++) {
+    const hit = (await env.DAILY_KV.get(`daily:${key}`, 'json')) as DailyPayload | null
+    if (hit) return hit
+    key = previousDay(key)
+  }
+  return null
+}
+
 function corsHeaders(env: Env, origin: string | null): HeadersInit {
   const allow = origin === env.ALLOWED_ORIGIN ? origin : env.ALLOWED_ORIGIN
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     Vary: 'Origin',
   }
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const origin = request.headers.get('Origin')
     const cors = corsHeaders(env, origin)
 
@@ -500,32 +541,80 @@ export default {
     }
 
     const url = new URL(request.url)
-    if (url.pathname !== '/api/daily-update' || request.method !== 'POST') {
+    if (url.pathname !== '/api/daily-update' || (request.method !== 'GET' && request.method !== 'POST')) {
       return new Response('Not found', { status: 404, headers: cors })
-    }
-
-    const auth = request.headers.get('Authorization') ?? ''
-    // .trim() guards against a stray trailing newline/space baked into the
-    // secret when it was set (e.g. via `echo "x" | wrangler secret put`) —
-    // an invisible mismatch that would otherwise 401 every request forever.
-    const expectedAuth = `Bearer ${(env.FAMILY_ACCESS_TOKEN ?? '').trim()}`
-    console.log(`[daily-update] request received, origin=${origin}, authMatches=${auth === expectedAuth}`)
-    if (auth !== expectedAuth) {
-      console.log('[daily-update] rejecting: passphrase mismatch')
-      return new Response(JSON.stringify({ error: 'Invalid family passphrase' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
     }
 
     const day = tradingDayKey()
     const kvKey = `daily:${day}`
 
+    // --- GET: the public read path -------------------------------------------
+    // Free to serve and free to build (it's already built), so it asks for
+    // nothing. Every visitor — guest or family — loads the dashboard through
+    // this; the passphrase only ever comes up on the POST path below.
+    if (request.method === 'GET') {
+      const cache = caches.default
+      // Cache on the bare path: the payload is identical for every caller, so
+      // one edge copy serves everyone and repeat visits never touch KV.
+      const cacheKey = new Request(`${url.origin}${url.pathname}`, { method: 'GET' })
+      const edgeHit = await cache.match(cacheKey)
+      if (edgeHit) {
+        console.log('[daily-update] GET edge cache hit')
+        return edgeHit
+      }
+
+      const latest = await readLatestCached(env, day)
+      if (!latest) {
+        console.log('[daily-update] GET: nothing cached within lookback window')
+        return new Response(
+          JSON.stringify({ error: 'No daily update has been generated yet.', code: 'no-cache-yet' }),
+          { status: 404, headers: { ...cors, 'Content-Type': 'application/json' } },
+        )
+      }
+      console.log(`[daily-update] GET serving cached day=${latest.day}`)
+      const res = new Response(JSON.stringify(latest), {
+        headers: {
+          ...cors,
+          'Content-Type': 'application/json',
+          // Short enough that a fresh build shows up within minutes, long
+          // enough that a burst of visitors costs one KV read between them.
+          'Cache-Control': 'public, max-age=300',
+        },
+      })
+      ctx.waitUntil(cache.put(cacheKey, res.clone()))
+      return res
+    }
+
+    // --- POST: the refresh path ----------------------------------------------
     const cached = await env.DAILY_KV.get(kvKey, 'json')
     if (cached) {
+      // Today is already built, so this costs nothing — hand it over without
+      // asking who's calling. The passphrase exists to cap spending, and there
+      // is no spending on this branch.
       console.log(`[daily-update] cache hit for ${kvKey}`)
       return new Response(JSON.stringify(cached), { headers: { ...cors, 'Content-Type': 'application/json' } })
     }
+
+    // Cache miss — from here on the request costs real money (26 Yahoo chart
+    // fetches, ~6 Treasury years, 2 spark chunks, 1 Gemini call). This is the
+    // only place the passphrase is checked.
+    const auth = request.headers.get('Authorization') ?? ''
+    // .trim() guards against a stray trailing newline/space baked into the
+    // secret when it was set (e.g. via `echo "x" | wrangler secret put`) —
+    // an invisible mismatch that would otherwise 401 every request forever.
+    const expectedAuth = `Bearer ${(env.FAMILY_ACCESS_TOKEN ?? '').trim()}`
+    console.log(`[daily-update] refresh requested, origin=${origin}, authMatches=${auth === expectedAuth}`)
+    if (auth !== expectedAuth) {
+      console.log('[daily-update] rejecting refresh: passphrase mismatch')
+      return new Response(
+        JSON.stringify({
+          error: "Today's update hasn't been built yet, and that takes the family passphrase.",
+          code: 'refresh-locked',
+        }),
+        { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } },
+      )
+    }
+
     console.log(`[daily-update] cache miss for ${kvKey}, building fresh payload`)
 
     try {
@@ -551,8 +640,14 @@ export default {
       console.log(`[daily-update] narrative state=${narrative.state}`)
 
       const payload: DailyPayload = { day, generatedAt: Date.now(), markets, tickers, narrative }
-      await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 3 })
+      // 7 days, not 3: this is now the only thing standing between a guest and
+      // an empty dashboard, and nobody presses refresh on vacation. Storage is
+      // a few MB per day against a 1GB free tier.
+      await env.DAILY_KV.put(kvKey, JSON.stringify(payload), { expirationTtl: 60 * 60 * 24 * 7 })
       console.log(`[daily-update] KV put ok for ${kvKey}, returning 200`)
+      // Drop the edge copy of the public GET so guests see this build now
+      // rather than up to max-age later.
+      ctx.waitUntil(caches.default.delete(`${url.origin}${url.pathname}`))
 
       return new Response(JSON.stringify(payload), { headers: { ...cors, 'Content-Type': 'application/json' } })
     } catch (err) {

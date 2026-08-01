@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useMarketQuotes } from '../hooks/useMarketQuotes'
+import { emptyStateHint } from '../data/marketFeed'
 import InfoDisclosure from './InfoDisclosure'
 import DataBadge from './DataBadge'
 
@@ -135,8 +136,7 @@ function YieldCurvePanel() {
               </p>
             ) : (
               <p className="max-w-xs px-4 text-xs leading-relaxed text-slate-500">
-                No numbers loaded yet — press "Get today's update" up top to draw the 2Y / 10Y / 30Y
-                curve.
+                Nothing to draw the 2Y / 10Y / 30Y curve from yet. {emptyStateHint()}
               </p>
             )}
           </div>

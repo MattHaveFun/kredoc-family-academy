@@ -29,8 +29,13 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
 - **Family profiles** — up to 6 local profiles (no accounts, localStorage only) tracking
   progress, quiz answers, and votes on what to build next.
 - **Daily Brief** — the default mobile entry point: five swipeable cards, two minutes.
-- **Family gate** — the whole site sits behind a shared family passphrase (see `FamilyGate`),
-  separate from profiles. It's a front door, not the cost control — see `worker/README.md`.
+- **Open to guests** — nothing on the site is behind a login. Every visitor's browser reads
+  the day's market payload straight from the Worker's cache, so a friend the kids bring along
+  sees exactly the same charts, tickers and narrative the family does.
+- **Family passphrase** — guards the *bill*, not the *data*. Serving a day that's already
+  built is free, so it's public; the passphrase is asked for only when someone triggers a
+  build of a day that doesn't exist yet (the one action that spends money). See
+  `worker/README.md`.
 
 ## Stack
 

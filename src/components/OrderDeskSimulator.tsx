@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { MarketSymbol } from '../data/markets'
 import { formatPrice } from '../data/markets'
 import { useSeries } from '../hooks/useSeries'
+import { emptyStateHint } from '../data/marketFeed'
 import {
   ORDER_DURATIONS,
   ORDER_TYPES,
@@ -202,8 +203,7 @@ function OrderDeskSimulator({ market }: { market: MarketSymbol }) {
                 <span className="text-2xl">🎟️</span>
                 <p className="text-sm font-medium text-slate-300">The order desk needs price history.</p>
                 <p className="max-w-sm text-xs leading-relaxed text-slate-600">
-                  Press "Get today's update" at the top of the page and this fills in with a real
-                  year of {market.symbol}.
+                  {emptyStateHint()} Then this fills in with a real year of {market.symbol}.
                 </p>
               </>
             )}
