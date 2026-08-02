@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CATEGORY_META, CHAPTERS, LESSONS, POLL_OPTIONS, lessonsInChapter } from '../data/lessons'
 import { useProfiles } from '../context/ProfileContext'
+import { ALL_AVATARS, AVATAR_FOR_LESSON, CHAPTER_AVATARS, isAvatarUnlocked } from '../data/avatars'
 
 // Aggregates every profile's vote into the "what should we build next?" bars.
 function PollPanel() {
@@ -124,6 +125,19 @@ function PollPanel() {
 function AcademyHome() {
   const { activeProfile } = useProfiles()
 
+  // A five-tile teaser: what's already earned first, then the next locks — so
+  // the strip shows momentum rather than a wall of padlocks.
+  const { earnedCount, avatarStrip } = useMemo(() => {
+    if (!activeProfile) return { earnedCount: 0, avatarStrip: [] }
+    const marked = ALL_AVATARS.map((a) => ({ ...a, earned: isAvatarUnlocked(a, activeProfile) }))
+    const earned = marked.filter((a) => a.earned)
+    const locked = marked.filter((a) => !a.earned)
+    return {
+      earnedCount: earned.length,
+      avatarStrip: [...earned.slice(-3), ...locked.slice(0, 2)].slice(0, 5),
+    }
+  }, [activeProfile])
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <header className="max-w-3xl animate-fade-up">
@@ -137,6 +151,41 @@ function AcademyHome() {
         </p>
       </header>
 
+      {/* Avatar program — one quiet line, not a billboard. */}
+      {activeProfile && (
+        <Link
+          to="/profile"
+          className="animate-fade-up group mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-400/10 bg-ink-950/40 p-4 transition-colors hover:border-sky-400/30"
+          style={{ animationDelay: '60ms' }}
+        >
+          <span className="flex -space-x-2">
+            {avatarStrip.map((a) => (
+              <span
+                key={a.id}
+                className={`grid h-8 w-8 place-items-center rounded-full text-sm ring-2 ring-ink-950 ${
+                  a.earned ? '' : 'opacity-40 grayscale'
+                }`}
+                style={{ backgroundColor: a.earned ? `${a.color}22` : 'rgba(148,163,184,0.1)' }}
+                title={a.label}
+              >
+                {a.earned ? a.emoji : '🔒'}
+              </span>
+            ))}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-slate-100">
+              {earnedCount} of {ALL_AVATARS.length} avatars earned
+            </span>
+            <span className="block text-xs text-slate-500">
+              Every lesson pays out one, plus milestones, chapters, streaks and a crown for the whole set.
+            </span>
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-sky-400/80 transition-transform duration-200 group-hover:translate-x-0.5">
+            See the collection →
+          </span>
+        </Link>
+      )}
+
       {/* Chapters */}
       <div className="mt-10 space-y-5">
         {CHAPTERS.map((chapter, ci) => {
@@ -145,6 +194,10 @@ function AcademyHome() {
           const visited = lessons.filter((l) => activeProfile?.visitedLessons.includes(l.id)).length
           const firstUnvisited =
             lessons.find((l) => !activeProfile?.visitedLessons.includes(l.id)) ?? lessons[0]
+          const chapterAvatar = CHAPTER_AVATARS.find((a) => a.id === `chapter-${chapter.number}`)
+          const chapterEarned = Boolean(
+            chapterAvatar && activeProfile && isAvatarUnlocked(chapterAvatar, activeProfile),
+          )
           return (
             <section
               key={chapter.number}
@@ -178,6 +231,27 @@ function AcademyHome() {
                 <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
                   {done}/{lessons.length} complete
                 </span>
+                {/* The chapter's own avatar — the prize for not stopping at eight of nine. */}
+                {chapterAvatar && (
+                  <span
+                    title={
+                      chapterEarned
+                        ? `${chapterAvatar.label} — earned`
+                        : `${chapterAvatar.label} — finish all ${lessons.length} lessons to unlock`
+                    }
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-base ${
+                      chapterEarned ? '' : 'opacity-30 grayscale'
+                    }`}
+                    style={{
+                      backgroundColor: chapterEarned ? `${chapterAvatar.color}1a` : 'rgba(148,163,184,0.08)',
+                      boxShadow: chapterEarned
+                        ? `inset 0 0 0 2px ${chapterAvatar.color}55`
+                        : 'inset 0 0 0 2px rgba(148,163,184,0.15)',
+                    }}
+                  >
+                    {chapterEarned ? chapterAvatar.emoji : '🔒'}
+                  </span>
+                )}
               </div>
             </section>
           )
@@ -205,8 +279,8 @@ function AcademyHome() {
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {LESSONS.map((lesson, i) => {
           const category = CATEGORY_META[lesson.category]
-          const isVisited = activeProfile?.visitedLessons.includes(lesson.id)
           const isDone = activeProfile?.completedLessons.includes(lesson.id)
+          const reward = AVATAR_FOR_LESSON[lesson.id]
           return (
             <Link
               key={lesson.id}
@@ -221,8 +295,12 @@ function AcademyHome() {
                 >
                   {lesson.tag}
                 </span>
-                <span className="font-mono text-[10px] text-slate-600">
-                  {isDone ? '✓ done' : isVisited ? '· visited' : ''}
+                {/* The lesson's reward, worn on the card: earned, or still locked. */}
+                <span
+                  className={`text-sm leading-none ${isDone ? '' : 'opacity-25 grayscale'}`}
+                  title={reward ? `${reward.label} — ${isDone ? 'earned' : 'locked'}` : undefined}
+                >
+                  {isDone ? reward?.emoji ?? '✓' : '🔒'}
                 </span>
               </div>
               <h3 className="mt-3 font-display text-lg font-semibold text-slate-100 group-hover:text-sky-200">

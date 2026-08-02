@@ -18,6 +18,7 @@
 // POST /api/daily-update
 //   Manual rebuild, for when the cron missed a day. Returns a cached day to
 //   anyone; a genuine rebuild wants Authorization: Bearer <FAMILY_ACCESS_TOKEN>.
+//   The site no longer calls this — it's a curl from a terminal now.
 //   -> { day, generatedAt, markets, tickers }
 //
 // scheduled()

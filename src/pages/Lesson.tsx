@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CATEGORY_META, CHAPTERS, LESSON_BY_ID, lessonsInChapter } from '../data/lessons'
 import { MARKET_SYMBOLS, formatChangeMagnitude, formatPrice } from '../data/markets'
 import { useProfiles } from '../context/ProfileContext'
+import { AVATAR_FOR_LESSON } from '../data/avatars'
 import { useSeries } from '../hooks/useSeries'
 import LearningModeCheck from '../components/LearningModeCheck'
+import LessonAvatarReward from '../components/LessonAvatarReward'
 import DataBadge from '../components/DataBadge'
 
 // Small live chart pulled from the same dashboard data, anchoring the lesson
@@ -111,6 +113,7 @@ function Lesson() {
   const { activeProfile, markVisited, markCompleted } = useProfiles()
   const [copied, setCopied] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
+  const checkRef = useRef<HTMLDivElement>(null)
 
   const lesson = lessonId ? LESSON_BY_ID[lessonId] : undefined
   const chapterLessons = useMemo(() => lessonsInChapter(lesson?.chapter ?? 1), [lesson?.chapter])
@@ -144,6 +147,13 @@ function Lesson() {
     activeProfile?.completedLessons.includes(l.id),
   ).length
   const category = CATEGORY_META[lesson.category]
+  // Any recorded answer counts, right or wrong — the point is to make the
+  // reader commit to a guess before the lesson is filed away as "done".
+  const answered = activeProfile?.quizAnswers.some((q) => q.lessonId === lesson.id) ?? false
+
+  const jumpToQuestion = () => {
+    checkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const copyPrompt = async () => {
     try {
@@ -189,23 +199,26 @@ function Lesson() {
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-600">
             Chapter {lesson.chapter} · {chapterTitle}
           </p>
+          {/* Each row wears its own reward: the avatar once the lesson is done,
+              a lock until then. The chapter reads as a row of prizes to open. */}
           <ul className="mt-4 space-y-0.5 border-l border-slate-400/10">
-            {chapterLessons.map((l, i) => {
+            {chapterLessons.map((l) => {
               const isActive = l.id === lesson.id
-              const isVisited = activeProfile?.visitedLessons.includes(l.id)
               const isDone = activeProfile?.completedLessons.includes(l.id)
+              const reward = AVATAR_FOR_LESSON[l.id]
               return (
                 <li key={l.id}>
                   <Link
                     to={`/academy/lesson/${l.id}`}
+                    title={isDone ? `${reward?.label} — earned` : `${reward?.label} — locked`}
                     className={`-ml-px flex items-baseline gap-2.5 border-l-2 py-1.5 pl-4 text-xs transition-all duration-200 ${
                       isActive
                         ? 'border-sky-400 font-semibold text-sky-300'
                         : 'border-transparent text-slate-500 hover:border-slate-400/40 hover:text-slate-200'
                     }`}
                   >
-                    <span className="font-mono text-[10px] tabular-nums text-slate-600">
-                      {isDone ? '✓' : isVisited ? '·' : String(i + 1).padStart(2, '0')}
+                    <span className={`text-[11px] leading-none ${isDone ? '' : 'opacity-30 grayscale'}`}>
+                      {isDone ? reward?.emoji ?? '✓' : '🔒'}
                     </span>
                     {l.title}
                   </Link>
@@ -229,20 +242,26 @@ function Lesson() {
             </button>
             {tocOpen && (
               <ul className="animate-fade-in mt-2 space-y-1 rounded-xl border border-slate-400/10 bg-ink-950/50 p-3">
-                {chapterLessons.map((l, i) => (
-                  <li key={l.id}>
-                    <Link
-                      to={`/academy/lesson/${l.id}`}
-                      onClick={() => setTocOpen(false)}
-                      className={`block rounded-lg px-3 py-2 text-sm ${
-                        l.id === lesson.id ? 'bg-sky-400/10 text-sky-300' : 'text-slate-400'
-                      }`}
-                    >
-                      {String(i + 1).padStart(2, '0')} · {l.title}
-                      {activeProfile?.completedLessons.includes(l.id) && ' ✓'}
-                    </Link>
-                  </li>
-                ))}
+                {chapterLessons.map((l) => {
+                  const isDone = activeProfile?.completedLessons.includes(l.id)
+                  const reward = AVATAR_FOR_LESSON[l.id]
+                  return (
+                    <li key={l.id}>
+                      <Link
+                        to={`/academy/lesson/${l.id}`}
+                        onClick={() => setTocOpen(false)}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                          l.id === lesson.id ? 'bg-sky-400/10 text-sky-300' : 'text-slate-400'
+                        }`}
+                      >
+                        <span className={isDone ? '' : 'opacity-30 grayscale'}>
+                          {isDone ? reward?.emoji ?? '✓' : '🔒'}
+                        </span>
+                        {l.title}
+                      </Link>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -303,7 +322,7 @@ function Lesson() {
           </div>
 
           {/* LEARNING MODE CHECK */}
-          <div className="mt-8">
+          <div className="mt-8" ref={checkRef}>
             <LearningModeCheck lesson={lesson} />
           </div>
 
@@ -344,18 +363,30 @@ function Lesson() {
             </button>
           </div>
 
+          {/* AVATAR REWARD */}
+          <div className="mt-8">
+            <LessonAvatarReward lesson={lesson} answered={answered} onJumpToQuestion={jumpToQuestion} />
+          </div>
+
           {/* COMPLETE + PREV/NEXT */}
           <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-400/10 pt-6">
+            {/* Completing means having taken a position on the question first —
+                that's the whole reason the avatar is worth anything. Undo is
+                never blocked, and lessons finished before this rule existed
+                keep their ✓. */}
             <button
               type="button"
-              onClick={() => markCompleted(lesson.id, !completed)}
+              onClick={() => (completed || answered ? markCompleted(lesson.id, !completed) : jumpToQuestion())}
+              title={completed || answered ? undefined : 'Answer the check question first'}
               className={`rounded-xl px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider ring-1 ring-inset transition-all duration-200 ${
                 completed
                   ? 'bg-up/10 text-up ring-up/40 hover:bg-up/15'
-                  : 'bg-sky-400/10 text-sky-300 ring-sky-400/40 hover:bg-sky-400/20'
+                  : answered
+                    ? 'bg-sky-400/10 text-sky-300 ring-sky-400/40 hover:bg-sky-400/20'
+                    : 'bg-slate-400/[0.06] text-slate-500 ring-slate-400/20 hover:text-slate-300'
               }`}
             >
-              {completed ? '✓ Completed — tap to undo' : 'Mark complete'}
+              {completed ? '✓ Completed — tap to undo' : answered ? 'Mark complete' : 'Answer the question first ↑'}
             </button>
             <div className="flex gap-2">
               {prev && (

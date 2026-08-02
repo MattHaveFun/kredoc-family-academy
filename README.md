@@ -8,7 +8,9 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
 
 - **Markets Dashboard** — previous trading day's close across four tabs, rebuilt
   automatically once per trading day shortly after the close (see `worker/`). Every data
-  point is labeled honestly with its age.
+  point is labeled honestly with the date of the close it came from — "Data based on
+  close of 07/31/2026", never "today's close", which could be read as a claim about a
+  session that hasn't finished.
   - **Markets** — indices and crypto, plus the sector heat map, market mood gauge, and a
     "Today in Markets" panel.
   - **Global** — foreign indices and a live world trading map that follows the sun.
@@ -39,8 +41,24 @@ chapter-based Academy that helps young adults build judgment — not stock tips.
   direction, breadth, volatility and sector leadership, explains what that shape has tended
   to mean, and closes on a quote from someone who thought about markets for a living. Built
   in the browser from the cached payload: no API, no key, no cost, nothing to trigger.
-- **Family passphrase** — now only guards a manual rebuild, for the rare day the cron
-  misses. Nothing a visitor sees is behind it. See `worker/README.md`.
+- **Avatar rewards** — 69 avatars, and everything but the 11 starters has to be earned:
+  one per lesson, six lesson-count milestones, one per chapter, habit badges (three and
+  five lessons in a day, three and seven days shown up, ten and twenty-five questions
+  right), odd-hours / weekend / market-hours badges, an Ambassador for sharing the site,
+  and a crown for holding all sixty-eight others. Every locked avatar says how to earn it
+  and links straight to the lesson that does. Lessons show their own reward inline —
+  locked until the check question is answered and the lesson marked complete — and
+  anything earned mid-session announces itself in a corner toast.
+
+  The whole program runs in the browser off data already on the device: no network, no
+  server, no account, nothing to deploy or keep running. A verified-invite tier (prove a
+  friend actually opened your link) was built and deliberately removed — it needed a
+  signed code, a server round trip and a device id in localStorage, and clearing your
+  browser data would silently kill every link you'd already sent. Too many moving parts,
+  and too confusing a failure, for one badge.
+- **No passphrase anywhere** — the daily payload is built by cron and read by everyone.
+  The Worker still accepts an authenticated rebuild for the rare day the cron misses, but
+  that's a `curl` from a terminal now, not a control in the header. See `worker/README.md`.
 
 ## Stack
 

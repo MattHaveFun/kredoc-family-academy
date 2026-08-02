@@ -1,5 +1,4 @@
 import type { Candle } from './markets'
-import { getFamilyToken } from './familyAccess'
 
 // The single client-side entry point for the daily-update Worker. Nothing in
 // this app calls a market or AI API directly — everything market-related comes
@@ -7,12 +6,14 @@ import { getFamilyToken } from './familyAccess'
 // marketFeed.ts reads through this module; nothing else should import it
 // directly.
 //
-// Two ways in:
-//   loadPublicDailyUpdate() — GET, no passphrase, runs automatically on load
-//     for everyone. Reads a payload the cron already built, so it costs
-//     nothing and is safe to hand to guests. This is the normal path.
-//   refreshDailyUpdate()    — POST, from the button. A manual rebuild for the
-//     day the cron missed; ~35 outbound fetches, so it keeps the passphrase.
+// One way in: loadPublicDailyUpdate() — GET, no credentials, runs
+// automatically on load for everyone. It reads a payload the cron already
+// built, so it costs nothing and is safe to hand to guests.
+//
+// The client can no longer *trigger* a rebuild. The Worker still accepts an
+// authenticated POST for the rare day the cron misses (see worker/README.md),
+// but that's a terminal command now, not a button and a passphrase every
+// visitor had to scroll past.
 
 export interface Quote {
   symbol: string
@@ -120,7 +121,6 @@ export interface RefreshResult {
   debug: string
 }
 
-let inFlight: Promise<RefreshResult> | null = null
 let publicInFlight: Promise<RefreshResult> | null = null
 let publicAttempted = false
 
@@ -192,86 +192,4 @@ export function hasAttemptedPublicLoad(): boolean {
  */
 export function isDailyUpdateLoading(): boolean {
   return publicInFlight !== null
-}
-
-/**
- * Triggered only by the rebuild button — never automatically. Nothing here
- * costs money; a cache miss just makes the Worker refetch ~35 endpoints, which
- * is why it keeps the passphrase.
- */
-export function refreshDailyUpdate(): Promise<RefreshResult> {
-  if (inFlight) return inFlight
-
-  const token = getFamilyToken()
-  const workerUrl = import.meta.env.VITE_WORKER_URL
-  if (!token) {
-    return Promise.resolve({
-      ok: false,
-      error: 'Add the family passphrase first to rebuild by hand.',
-      debug: 'no token',
-    })
-  }
-  if (!workerUrl) {
-    return Promise.resolve({
-      ok: false,
-      error: 'Site is not configured with a Worker URL yet.',
-      debug: 'no VITE_WORKER_URL',
-    })
-  }
-
-  inFlight = (async () => {
-    try {
-      const res = await fetch(`${workerUrl}/api/daily-update`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.status === 401) {
-        // Deliberately not alarming, and deliberately not a dead end: the
-        // passphrase only triggers a manual rebuild, and everything already on
-        // screen stays exactly where it is.
-        return {
-          ok: false as const,
-          error: "That passphrase didn't match. Nothing's lost — everything below still works, and the day's numbers publish on their own after the close.",
-          debug: 'HTTP 401 (refresh-locked)',
-        }
-      }
-      if (!res.ok) {
-        return {
-          ok: false as const,
-          error: `Update failed (${res.status}). Try again in a moment.`,
-          debug: `HTTP ${res.status}`,
-        }
-      }
-      const text = await res.text()
-      let payload: DailyPayload
-      try {
-        payload = JSON.parse(text) as DailyPayload
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        return {
-          ok: false as const,
-          error: 'Update service returned an unreadable response. Try again in a moment.',
-          debug: `HTTP ${res.status}, ${text.length}B, JSON parse failed: ${msg}`,
-        }
-      }
-      const { storageOk, storageError } = setCachedPayload(payload)
-      return {
-        ok: true as const,
-        debug: storageOk
-          ? `HTTP ${res.status}, ${text.length}B, day=${payload.day}, saved`
-          : `HTTP ${res.status}, ${text.length}B, day=${payload.day}, storage failed (${storageError}) — using session memory only`,
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-      return {
-        ok: false as const,
-        error: 'Could not reach the update service — check your connection.',
-        debug: `fetch threw: ${msg}`,
-      }
-    } finally {
-      inFlight = null
-    }
-  })()
-
-  return inFlight
 }

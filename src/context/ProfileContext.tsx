@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { LearningMode } from '../data/lessons'
-import { AVATAR_BY_ID, checkEarnedTimeAvatars, isAvatarUnlocked } from '../data/avatars'
+import { ALL_AVATARS, AVATAR_BY_ID, checkEarnedTimeAvatars, isAvatarUnlocked } from '../data/avatars'
 
 // Family profiles — the site's whole "account system," persisted entirely in
 // localStorage. No login, no server: whoever is at the keyboard picks their
@@ -21,14 +21,20 @@ export interface Profile {
   name: string
   emoji: string
   color: string // accent hex used for the avatar ring
+  avatarId: string | null // which catalog avatar is equipped; emoji/color are its cached look
   learningMode: LearningMode
   visitedLessons: string[]
   completedLessons: string[]
+  /** lessonId -> ms timestamp of completion. Powers the "3 lessons in one day" avatars. */
+  lessonCompletions: Record<string, number>
+  /** Local YYYY-MM-DD days this profile has opened the site. Powers the "come back" avatars. */
+  activeDays: string[]
   quizAnswers: QuizRecord[]
   lastLessonId: string | null
   pollVote: string | null // POLL_OPTIONS id, or "custom:<free text>"
   createdAt: number
   earnedTimeAvatars: string[] // avatar ids earned by login time (e.g. 'night-owl'), permanent once earned
+  invitedFriend: boolean // has shared the site at least once — unlocks Ambassador
 }
 
 // 🦉 and 🐦 live in the avatar catalog as the Night Owl / Early Bird rewards,
@@ -53,14 +59,43 @@ function createDefaultGuestProfile(): Profile {
     name: 'Guest',
     emoji: AVATAR_EMOJI[0],
     color: AVATAR_COLORS[0],
+    avatarId: 'starter-rocket',
     learningMode: 'gut-check',
     visitedLessons: [],
     completedLessons: [],
+    lessonCompletions: {},
+    activeDays: [],
     quizAnswers: [],
     lastLessonId: null,
     pollVote: null,
     createdAt: Date.now(),
     earnedTimeAvatars: [],
+    invitedFriend: false,
+  }
+}
+
+/** Local calendar day — the unit the "come back" and "in one day" avatars count in. */
+export function localDayStamp(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+// Profiles saved before a field existed still have to work. Every new avatar
+// signal is additive and defaults to "nothing earned yet" — nobody loses an
+// avatar they already have, and nobody is retroactively handed one.
+function migrateProfile(p: Profile): Profile {
+  const emoji = p.emoji
+  const color = p.color
+  return {
+    ...p,
+    earnedTimeAvatars: p.earnedTimeAvatars ?? [],
+    lessonCompletions: p.lessonCompletions ?? {},
+    invitedFriend: p.invitedFriend ?? false,
+    // A day per visit, but bounded: the "come back" avatars only need 7, and
+    // an array nobody trims is a localStorage leak measured in years.
+    activeDays: (p.activeDays ?? []).slice(-400),
+    // Equipped avatar used to be inferred from emoji+color, which two avatars
+    // can share. Record it once, then stop guessing.
+    avatarId: p.avatarId ?? ALL_AVATARS.find((a) => a.emoji === emoji && a.color === color)?.id ?? null,
   }
 }
 
@@ -70,11 +105,7 @@ function loadState(): StoredState {
     if (raw) {
       const parsed = JSON.parse(raw) as StoredState
       if (Array.isArray(parsed.profiles)) {
-        // Backfill fields for profiles saved before avatars existed.
-        return {
-          ...parsed,
-          profiles: parsed.profiles.map((p) => ({ ...p, earnedTimeAvatars: p.earnedTimeAvatars ?? [] })),
-        }
+        return { ...parsed, profiles: parsed.profiles.map(migrateProfile) }
       }
     }
   } catch {
@@ -98,6 +129,7 @@ interface ProfileContextValue {
   recordQuizAnswer: (record: QuizRecord) => void
   setPollVote: (vote: string) => void
   setAvatar: (avatarId: string) => void
+  markInvitedFriend: () => void
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null)
@@ -121,10 +153,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const updateActive = useCallback((updater: (profile: Profile) => Profile) => {
     setState((prev) => {
       if (!prev.activeId) return prev
-      return {
-        ...prev,
-        profiles: prev.profiles.map((p) => (p.id === prev.activeId ? updater(p) : p)),
-      }
+      let changed = false
+      const profiles = prev.profiles.map((p) => {
+        if (p.id !== prev.activeId) return p
+        const next = updater(p)
+        if (next !== p) changed = true
+        return next
+      })
+      // Several updaters deliberately return the profile untouched (an avatar
+      // already worn, a friend already credited). Returning a fresh object
+      // anyway would re-render the whole app and hand every consumer a new
+      // context value — enough, for anything keyed on a context callback's
+      // identity, to spin a render-fetch-render loop.
+      return changed ? { ...prev, profiles } : prev
     })
   }, [])
 
@@ -139,14 +180,18 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           name: input.name.trim().slice(0, 24) || 'Guest',
           emoji: input.emoji,
           color: input.color,
+          avatarId: ALL_AVATARS.find((a) => a.emoji === input.emoji && a.color === input.color)?.id ?? null,
           learningMode: input.learningMode,
           visitedLessons: [],
           completedLessons: [],
+          lessonCompletions: {},
+          activeDays: [],
           quizAnswers: [],
           lastLessonId: null,
           pollVote: null,
           createdAt: Date.now(),
           earnedTimeAvatars: [],
+          invitedFriend: false,
         }
         setState((prev) => ({ profiles: [...prev.profiles, profile], activeId: profile.id }))
         return profile
@@ -163,7 +208,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           ...prev,
           profiles: prev.profiles.map((p) =>
             p.id === id
-              ? { ...p, visitedLessons: [], completedLessons: [], quizAnswers: [], lastLessonId: null, pollVote: null }
+              ? {
+                  ...p,
+                  visitedLessons: [],
+                  completedLessons: [],
+                  // Must mirror completedLessons or the "lessons in one day"
+                  // avatars would keep counting lessons that no longer exist.
+                  lessonCompletions: {},
+                  quizAnswers: [],
+                  lastLessonId: null,
+                  pollVote: null,
+                }
               : p,
           ),
         })),
@@ -175,14 +230,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             : { ...p, visitedLessons: [...p.visitedLessons, lessonId], lastLessonId: lessonId },
         ),
       markCompleted: (lessonId, completed) =>
-        updateActive((p) => ({
-          ...p,
-          completedLessons: completed
-            ? p.completedLessons.includes(lessonId)
-              ? p.completedLessons
-              : [...p.completedLessons, lessonId]
-            : p.completedLessons.filter((id) => id !== lessonId),
-        })),
+        updateActive((p) => {
+          const completions = { ...p.lessonCompletions }
+          if (completed) completions[lessonId] = completions[lessonId] ?? Date.now()
+          else delete completions[lessonId]
+          return {
+            ...p,
+            completedLessons: completed
+              ? p.completedLessons.includes(lessonId)
+                ? p.completedLessons
+                : [...p.completedLessons, lessonId]
+              : p.completedLessons.filter((id) => id !== lessonId),
+            lessonCompletions: completions,
+          }
+        }),
       recordQuizAnswer: (record) =>
         updateActive((p) => ({
           ...p,
@@ -197,25 +258,35 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         updateActive((p) => {
           const def = AVATAR_BY_ID[avatarId]
           if (!def || !isAvatarUnlocked(def, p)) return p
-          return { ...p, emoji: def.emoji, color: def.color }
+          return { ...p, emoji: def.emoji, color: def.color, avatarId: def.id }
         }),
+      // Ambassador rewards the act of sharing, so the click is the proof —
+      // see data/invite.ts for why verifying the arrival isn't worth its cost.
+      markInvitedFriend: () => updateActive((p) => (p.invitedFriend ? p : { ...p, invitedFriend: true })),
     }),
     [state.profiles, activeProfile, updateActive],
   )
 
   // Whoever is active earns any time-gated avatars the current clock
-  // qualifies for (Night Owl, Early Bird). Runs once per profile switch —
-  // earning is a permanent stamp, not a live status, so no polling needed.
+  // qualifies for (Night Owl, Early Bird, Weekend Warrior, Opening Bell) and
+  // gets today stamped on their attendance record. Runs once per profile
+  // switch — earning is a permanent stamp, not a live status, so no polling.
   useEffect(() => {
     if (!state.activeId) return
     const newlyEarned = checkEarnedTimeAvatars()
-    if (newlyEarned.length === 0) return
+    const today = localDayStamp()
     setState((prev) => ({
       ...prev,
       profiles: prev.profiles.map((p) => {
         if (p.id !== prev.activeId) return p
         const toAdd = newlyEarned.filter((id) => !p.earnedTimeAvatars.includes(id))
-        return toAdd.length === 0 ? p : { ...p, earnedTimeAvatars: [...p.earnedTimeAvatars, ...toAdd] }
+        const needsDay = !p.activeDays.includes(today)
+        if (toAdd.length === 0 && !needsDay) return p
+        return {
+          ...p,
+          earnedTimeAvatars: toAdd.length ? [...p.earnedTimeAvatars, ...toAdd] : p.earnedTimeAvatars,
+          activeDays: needsDay ? [...p.activeDays, today].slice(-400) : p.activeDays,
+        }
       }),
     }))
   }, [state.activeId])

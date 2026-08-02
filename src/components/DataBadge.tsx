@@ -1,4 +1,4 @@
-import { describeStatus, type DataStatus } from '../data/marketFeed'
+import { describeStatus, describeStatusTitle, type DataStatus } from '../data/marketFeed'
 
 interface DataBadgeProps {
   status: DataStatus
@@ -18,8 +18,10 @@ const STYLES: Record<DataStatus, { className: string; dot: string; pulse: boolea
   },
 }
 
-// The site's honesty label: every market number carries TODAY'S CLOSE, CACHED
-// · Xm ago, or DATA UNAVAILABLE — never a fake feed dressed up as real.
+// The site's honesty label: every market number carries the date of the close
+// it came from, or says DATA UNAVAILABLE — never a fake feed dressed up as
+// real. The dot colour still separates the current session's close (green)
+// from an older one (blue), but the date is what actually tells you.
 function DataBadge({ status, fetchedAt, compact = false }: DataBadgeProps) {
   const style = STYLES[status]
   const label = describeStatus(status, fetchedAt)
@@ -29,7 +31,7 @@ function DataBadge({ status, fetchedAt, compact = false }: DataBadgeProps) {
       className={`inline-flex items-center gap-1.5 rounded-full border font-mono font-semibold uppercase tracking-wider ${style.className} ${
         compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
       }`}
-      title={`Data status: ${label}`}
+      title={describeStatusTitle(status, fetchedAt)}
     >
       <span className="relative flex h-1.5 w-1.5">
         {style.pulse && (

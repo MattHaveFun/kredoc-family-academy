@@ -46,6 +46,17 @@ keeps serving.
   rejects with `{ code: 'refresh-locked' }` otherwise. Not money, just not
   something to leave open to the whole internet.
 
+  **The site no longer calls this.** The passphrase box and rebuild button
+  are gone from the header — the cron made them dead weight, and a control
+  nobody needs is a control everybody has to wonder about. On the rare day
+  both cron passes miss, run it by hand:
+
+  ```bash
+  curl -X POST https://kredoc-daily-update.<subdomain>.workers.dev/api/daily-update -H "Authorization: Bearer $FAMILY_ACCESS_TOKEN"
+  ```
+
+  Visitors pick the new payload up on their next page load.
+
 Payloads carry a 7-day TTL, which is also the window a visitor still sees
 something through a stretch with no sessions.
 

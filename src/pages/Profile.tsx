@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { LEARNING_MODE_META, useProfiles } from '../context/ProfileContext'
 import { LESSONS, LESSON_BY_ID, type LearningMode } from '../data/lessons'
 import AvatarPicker from '../components/AvatarPicker'
+import { ALL_AVATARS, isAvatarUnlocked } from '../data/avatars'
 
 function Profile() {
-  const { activeProfile, setLearningMode, setAvatar, resetProgress, deleteProfile } = useProfiles()
+  const { activeProfile, setLearningMode, setAvatar, resetProgress, deleteProfile, markInvitedFriend } =
+    useProfiles()
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
@@ -17,6 +19,7 @@ function Profile() {
   const quizCount = activeProfile.quizAnswers.length
   const quizRight = activeProfile.quizAnswers.filter((q) => q.correct).length
   const lastLesson = activeProfile.lastLessonId ? LESSON_BY_ID[activeProfile.lastLessonId] : null
+  const avatarsEarned = ALL_AVATARS.filter((a) => isAvatarUnlocked(a, activeProfile)).length
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -35,12 +38,13 @@ function Profile() {
         </div>
       </header>
 
-      <dl className="animate-fade-up mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-400/10 bg-slate-400/10 sm:grid-cols-4" style={{ animationDelay: '80ms' }}>
+      <dl className="animate-fade-up mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-400/10 bg-slate-400/10 sm:grid-cols-3 lg:grid-cols-5" style={{ animationDelay: '80ms' }}>
         {[
           { label: 'Lessons visited', value: `${visited}/${total}` },
           { label: 'Completed', value: `${completed}/${total}` },
           { label: 'Questions tried', value: String(quizCount) },
           { label: 'Nailed it', value: quizCount ? `${quizRight}/${quizCount}` : '—' },
+          { label: 'Avatars earned', value: `${avatarsEarned}/${ALL_AVATARS.length}` },
         ].map((stat) => (
           <div key={stat.label} className="bg-ink-900/90 px-4 py-3.5">
             <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-slate-600">{stat.label}</dt>
@@ -71,7 +75,7 @@ function Profile() {
         <h2 className="font-display text-lg font-semibold text-slate-100">Avatars</h2>
         <p className="mt-1 text-sm text-slate-500">Change your look, or see what's left to earn.</p>
         <div className="mt-4">
-          <AvatarPicker profile={activeProfile} onSelect={setAvatar} />
+          <AvatarPicker profile={activeProfile} onSelect={setAvatar} onInvited={markInvitedFriend} />
         </div>
       </section>
 
@@ -109,7 +113,8 @@ function Profile() {
           <div>
             <p className="text-sm font-semibold text-slate-200">Reset my progress</p>
             <p className="mt-0.5 text-xs text-slate-500">
-              Wipes lessons, quiz answers, and votes for {activeProfile.name} only. Other profiles are untouched.
+              Wipes lessons, quiz answers, and votes for {activeProfile.name} only — which also relocks every
+              avatar those earned. Other profiles are untouched.
             </p>
           </div>
           {confirmingReset ? (

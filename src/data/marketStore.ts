@@ -15,9 +15,9 @@ import { subscribe as subscribeDailyUpdate } from './dailyUpdate'
 // forever if getSnapshot returns a new object reference on every call even
 // when nothing changed).
 //
-// There is no fetching or polling here anymore. One Worker call (triggered
-// only by the "Get today's update" button — see DailyUpdatePanel) refreshes
-// every market/ticker at once, so there's only ever one payload for every
+// There is no fetching or polling here anymore. One Worker read on page load
+// (see DailyUpdatePanel) supplies every market/ticker at once, so there's only
+// ever one payload for every
 // consumer to read — the whole "two components land on different sources"
 // problem this module used to solve doesn't exist when there's a single
 // source of truth. want* functions are kept as no-ops purely so the existing

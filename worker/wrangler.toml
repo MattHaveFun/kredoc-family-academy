@@ -10,7 +10,8 @@ kv_namespaces = [
 
 # Secrets (never put these here — set via `wrangler secret put <NAME>`):
 #   FAMILY_ACCESS_TOKEN  — the shared family passphrase, checked verbatim.
-#     Guards only the manual rebuild; reads and the cron never look at it.
+#     Guards only the manual rebuild, which is now a curl from a terminal —
+#     the site itself never sends it. Reads and the cron never look at it.
 #
 # GEMINI_API_KEY is no longer used — the daily read is composed in the browser
 # from the market data (src/data/dailyRead.ts). If it's still set on the

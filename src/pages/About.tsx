@@ -48,7 +48,7 @@ function About() {
           spotting bad arguments, sizing risks, thinking in decades. The Academy grows one chapter
           at a time, and the family votes on what gets built next. Every chart links to a lesson,
           every lesson connects to a knowledge map, and every number on the site is labeled honestly
-          — today's close, cached, or unavailable — because a site about clear thinking shouldn't
+          — stamped with the exact date of the close it came from — because a site about clear thinking shouldn't
           fake anything, ever.
         </p>
 

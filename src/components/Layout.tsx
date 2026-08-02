@@ -3,6 +3,7 @@ import NavBar from './NavBar'
 import ProfileGate from './ProfileGate'
 import WelcomeBack from './WelcomeBack'
 import DailyUpdatePanel from './DailyUpdatePanel'
+import AvatarUnlockToast from './AvatarUnlockToast'
 import { FeedStatusProvider } from '../context/FeedStatusContext'
 import { ProfileProvider, useProfiles } from '../context/ProfileContext'
 
@@ -24,6 +25,7 @@ function Shell() {
           <>
             <WelcomeBack />
             <Outlet />
+            <AvatarUnlockToast />
           </>
         ) : (
           <ProfileGate />

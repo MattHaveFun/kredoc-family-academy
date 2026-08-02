@@ -1,14 +1,13 @@
 import type { Candle, RangeKey } from './markets'
 import { getCachedPayload, isDailyUpdateLoading, todayStamp, type DailyPayload } from './dailyUpdate'
-import { getFamilyToken } from './familyAccess'
 
 // ---------------------------------------------------------------------------
 // marketFeed — the read-only layer every hook goes through. There is no
-// fetching logic here anymore: everything comes from the single payload
-// dailyUpdate.ts caches after a family member presses "Get today's update"
-// (see DailyUpdatePanel + worker/src/index.ts). This module's only job is
-// shaping that payload into what marketStore's snapshot cache expects, so
-// hooks (useMarketQuote/useSeries/useQuotes) didn't need to change at all.
+// fetching logic here: everything comes from the single payload the Worker's
+// cron builds once per trading day and dailyUpdate.ts caches (see
+// worker/src/index.ts). This module's only job is shaping that payload into
+// what marketStore's snapshot cache expects, so the hooks
+// (useMarketQuote/useSeries/useQuotes) never had to change.
 // ---------------------------------------------------------------------------
 
 export type DataStatus = 'loading' | 'live' | 'cached' | 'unavailable'
@@ -110,36 +109,51 @@ export function peekQuote(symbol: string): QuoteResult {
 }
 
 // --- Empty-state copy ---------------------------------------------------------
-/**
- * What an empty panel should tell the person actually looking at it.
- *
- * "Press Get today's update" is only true for someone holding the passphrase —
- * a guest has no such button, so that wording sent them hunting for a control
- * that isn't on their screen. Everyone else gets told what's really going on:
- * the day hasn't been pulled yet, and somebody in the family does that daily.
- */
+/** What an empty panel should tell the person actually looking at it. */
 export function emptyStateHint(): string {
-  // Deliberately doesn't quote the button's label: that label changes with
-  // what's actually outstanding ("Get today's update" / "Write today's read" /
-  // "Refresh"), and naming the wrong one sends people hunting.
-  return getFamilyToken()
-    ? 'Use the update button up top to pull the latest close.'
-    : "Today's close hasn't landed yet — it publishes automatically after the market closes."
+  return "The latest close hasn't landed yet — it publishes automatically after the market closes."
 }
 
 // --- Badge helpers ------------------------------------------------------------
-/** Human label for a badge: "TODAY'S CLOSE", "CACHED · Xm ago" / "· Xh ago" / "· Xd ago", or "DATA UNAVAILABLE". */
+
+/** The trading day the cached payload represents, as MM/DD/YYYY. Null if nothing is cached. */
+export function dataCloseDate(): string | null {
+  const day = getCachedPayload()?.day
+  if (!day) return null
+  const [year, month, date] = day.split('-')
+  return year && month && date ? `${month}/${date}/${year}` : null
+}
+
+/**
+ * Human label for a badge.
+ *
+ * It used to read "TODAY'S CLOSE", which invited the wrong reading twice over:
+ * the numbers are the *previous* session's close, and "today" tells you
+ * nothing on a Monday looking at Friday's tape. Naming the actual date can't
+ * be misread — and it does the honest job the old label was meant to do,
+ * since a stale date announces itself.
+ */
 export function describeStatus(status: DataStatus, fetchedAt: number | null): string {
-  if (status === 'live') return "TODAY'S CLOSE"
-  if (status === 'cached' && fetchedAt) {
-    const mins = Math.max(0, Math.round((Date.now() - fetchedAt) / 60_000))
-    if (mins < 1) return 'CACHED · just now'
-    if (mins < 60) return `CACHED · ${mins}m ago`
-    const hours = Math.round(mins / 60)
-    if (hours < 24) return `CACHED · ${hours}h ago`
-    const days = Math.round(hours / 24)
-    return `CACHED · ${days}d ago`
+  void fetchedAt // freshness now comes from the data's own date, not when we fetched it
+  if (status === 'live' || status === 'cached') {
+    const date = dataCloseDate()
+    return date ? `CLOSE ${date}` : 'MARKET CLOSE'
   }
   if (status === 'loading') return 'CONNECTING'
   return 'DATA UNAVAILABLE'
+}
+
+/** The long form, for the badge's tooltip. */
+export function describeStatusTitle(status: DataStatus, fetchedAt: number | null): string {
+  if (status === 'loading') return 'Loading the latest market data'
+  if (status === 'unavailable') return 'No market data available yet'
+  const date = dataCloseDate()
+  const base = date ? `Data based on close of ${date}` : 'Data based on the most recent market close'
+  if (status === 'cached' && fetchedAt) {
+    const mins = Math.max(0, Math.round((Date.now() - fetchedAt) / 60_000))
+    const age =
+      mins < 1 ? 'just now' : mins < 60 ? `${mins}m ago` : mins < 1440 ? `${Math.round(mins / 60)}h ago` : `${Math.round(mins / 1440)}d ago`
+    return `${base} · fetched ${age}`
+  }
+  return base
 }
